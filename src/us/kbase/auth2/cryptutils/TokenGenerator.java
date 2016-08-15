@@ -1,6 +1,7 @@
 package us.kbase.auth2.cryptutils;
 
 import java.nio.charset.StandardCharsets;
+import java.security.NoSuchAlgorithmException;
 import java.security.SecureRandom;
 import java.util.Base64; // requires java 8
 
@@ -16,8 +17,8 @@ public class TokenGenerator {
 	// note SecureRandom is thread safe
 	private final SecureRandom random;
 	
-	public TokenGenerator() {
-		random = new SecureRandom();
+	public TokenGenerator() throws NoSuchAlgorithmException {
+		random = SecureRandom.getInstance("SHA1PRNG");
 	}
 	
 	public String getToken() {
