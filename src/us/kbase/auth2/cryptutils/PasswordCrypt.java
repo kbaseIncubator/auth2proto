@@ -17,16 +17,20 @@ public class PasswordCrypt {
 	//TODO ONMOVE unit tests
 	//TODO ONMOVE docs
 	
-	/* PBKDF2 with SHA-1 as the hashing algorithm. Note that the NIST
-	 * specifically names SHA-1 as an acceptable hashing algorithm for
-	 * PBKDF2
+	// PBKDF2 with SHA-256 as the hashing algorithm.
+	private static final String CRYPTALG = "PBKDF2WithHmacSHA256";
+	// sha256 will make 256 byte keys, surprisingly
+	private static final int DERIVED_KEY_LENGTH = 256;
+	/* The NIST recommends at least 1,000 iterations:
+	 * http://csrc.nist.gov/publications/nistpubs/800-132/nist-sp800-132.pdf
+	 * iOS 4.x reportedly uses 10,000:
+	 * http://blog.crackpassword.com/2010/09/smartphone-forensics-cracking-blackberry-backup-passwords/
 	 */
-	private static final String CRYPTALG = "PBKDF2WithHmacSHA1";
+	private static final int ITERATIONS = 20000;
 	private final SecretKeyFactory keyfac;
 	
 	// VERY important to use SecureRandom instead of just Random
 	private final SecureRandom random;
-	
 
 	public PasswordCrypt() throws NoSuchAlgorithmException {
 		random = SecureRandom.getInstance("SHA1PRNG");
@@ -75,17 +79,8 @@ public class PasswordCrypt {
 		if (password == null || salt == null) {
 			throw new NullPointerException("password and salt cannot be null");
 		}
-		// SHA-1 generates 160 bit hashes, so that's what makes sense here
-		final int derivedKeyLength = 160;
-		/* The NIST recommends at least 1,000 iterations:
-		 * http://csrc.nist.gov/publications/nistpubs/800-132/nist-sp800-132.pdf
-		 * iOS 4.x reportedly uses 10,000:
-		 * http://blog.crackpassword.com/2010/09/smartphone-forensics-cracking-blackberry-backup-passwords/
-		 */
-		final int iterations = 20000;
-
 		final KeySpec spec = new PBEKeySpec(password, salt,
-				iterations, derivedKeyLength);
+				ITERATIONS, DERIVED_KEY_LENGTH);
 		try {
 			return keyfac.generateSecret(spec).getEncoded();
 		} catch (InvalidKeySpecException e) {
@@ -102,14 +97,18 @@ public class PasswordCrypt {
 	
 	//TODO ONMOVE remove
 	public static void main(String[] args) throws Exception {
-		String pwd = "foobar";
-		String attpwd = "foobar";
+		test("foobar", "foobar");
+		test("foobar", "foobor");
+	}
+
+	private static void test(String pwd, String attpwd) throws Exception {
 		PasswordCrypt pc = new PasswordCrypt();
 		byte[] salt = pc.generateSalt();
 		byte[] encr = pc.getEncryptedPassword(pwd.toCharArray(), salt);
 		boolean auth = pc.authenticate(attpwd.toCharArray(), encr, salt);
+		System.out.println(encr.length);
 		System.out.println(toHex(salt));
-		System.out.println(toHex(encr));
+		System.out.println(toHex(encr) + " " + toHex(encr).length());
 		System.out.println(auth);
 	}
 	
