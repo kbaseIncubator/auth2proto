@@ -1,9 +1,9 @@
 package us.kbase.auth2.cryptutils;
 
-import java.nio.charset.StandardCharsets;
 import java.security.NoSuchAlgorithmException;
 import java.security.SecureRandom;
-import java.util.Base64; // requires java 8
+
+import org.apache.commons.codec.binary.Base32;
 
 
 public class TokenGenerator {
@@ -22,10 +22,9 @@ public class TokenGenerator {
 	}
 	
 	public String getToken() {
-		final byte[] b = new byte[21]; //168 bits so 28 b64 chars
+		final byte[] b = new byte[20]; //160 bits so 32 b32 chars
 		random.nextBytes(b);
-		return new String(Base64.getEncoder().encode(b),
-				StandardCharsets.UTF_8);
+		return new Base32().encodeAsString(b);
 	}
 	
 	//TODO ONMOVE remove
