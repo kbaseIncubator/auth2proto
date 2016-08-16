@@ -97,7 +97,7 @@
     <!-- Remove uncompressed class files and libs-->
     <delete dir="${war.dir}/lib"/>
     <!-- copy war to jettybase -->
-    <copy todir="./jettybase/webapps" file="${dist}/${war.file}" />
+    <copy tofile="./jettybase/webapps/auth.war" file="${dist}/${war.file}" />
   </target>
 
   <target name="javadoc" description="build javadocs">
