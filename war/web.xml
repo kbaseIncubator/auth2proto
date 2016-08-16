@@ -1,0 +1,10 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<web-app>
+    <servlet>
+        <servlet-name>us.kbase.auth2.HelloApp</servlet-name>
+    </servlet>
+    <servlet-mapping>
+        <servlet-name>us.kbase.auth2.HelloApp</servlet-name>
+        <url-pattern>/api</url-pattern>
+    </servlet-mapping>
+</web-app>
