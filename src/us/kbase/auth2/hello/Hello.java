@@ -17,27 +17,20 @@ import javax.ws.rs.core.MediaType;
 //Sets the path to base URL + /hello
 @Path("/hello")
 public class Hello {
+	
+	//TODO NOW this fails the first time.
 
-  // This method is called if TEXT_PLAIN is request
-  @GET
-  @Produces(MediaType.TEXT_PLAIN)
-  public String sayPlainTextHello() {
-    return "Hello Jersey";
-  }
+	@GET
+	@Produces(MediaType.APPLICATION_JSON)
+	public HelloJson sayHello() {
+		return new HelloJson("Hello doodyhead");
+	}
 
-  // This method is called if XML is request
-  @GET
-  @Produces(MediaType.TEXT_XML)
-  public String sayXMLHello() {
-    return "<?xml version=\"1.0\"?>" + "<hello> Hello Jersey" + "</hello>";
-  }
-
-  // This method is called if HTML is request
-  @GET
-  @Produces(MediaType.TEXT_HTML)
-  public String sayHtmlHello() {
-    return "<html> " + "<title>" + "Hello Jersey" + "</title>"
-        + "<body><h1>" + "Hello Jersey" + "</body></h1>" + "</html> ";
-  }
+	// This method is called if TEXT_PLAIN is request
+//	@GET
+//	@Produces(MediaType.TEXT_HTML)
+//	public HelloJson sayHelloHTML() {
+//		return new HelloJson("Hello doodyhead");
+//	}
 
 } 
