@@ -32,5 +32,6 @@
 	<classpathentry kind="lib" path="lib/jerseyjackson/jersey-media-json-jackson-2.23.2.jar"/>
 	<classpathentry kind="lib" path="lib/jackson/jackson-core-2.5.4.jar"/>
 	<classpathentry kind="lib" path="lib/jackson/jackson-databind-2.5.4.jar"/>
+	<classpathentry kind="lib" path="lib/jackson/jackson-module-jaxb-annotations-2.5.4.jar"/>
 	<classpathentry kind="output" path="bin"/>
 </classpath>
