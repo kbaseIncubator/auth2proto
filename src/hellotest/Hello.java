@@ -6,6 +6,8 @@ import javax.ws.rs.POST;
 import javax.ws.rs.Path;
 import javax.ws.rs.Produces;
 import javax.ws.rs.core.MediaType;
+import javax.ws.rs.core.Response;
+
 
 // Plain old Java Object it does not extend as class or implements 
 // an interface
@@ -23,13 +25,21 @@ public class Hello {
 	@GET
 	@Produces(MediaType.APPLICATION_JSON)
 	public HelloJson sayHello() {
-		return new HelloJson("Hello doodyhead woo", "foopy");
+		return new HelloJson("Hello there!", "buttface");
 	}
 	
 	@POST
-	@Consumes(MediaType.APPLICATION_JSON)
+	@Consumes({MediaType.APPLICATION_JSON, MediaType.TEXT_PLAIN}) // text doesn't work
 	@Produces(MediaType.APPLICATION_JSON)
 	public HelloJson sayHelloPost(HelloJson h) {
 		return new HelloJson(h.getBar() + "p", h.getWhee() + "p");
+	}
+	
+	@Path("/error")
+	@GET
+	@Produces(MediaType.APPLICATION_JSON)
+	public Response sayHelloError() {
+		return Response.status(401).entity(
+				new HelloError(401, "unauthorized")).build();
 	}
 } 
