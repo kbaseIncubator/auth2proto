@@ -41,7 +41,10 @@
   </fileset>
 
   <fileset dir="./lib" id="intlib">
-    <include name="*/*.jar"/>
+    <include name="jackson/*.jar"/>
+    <include name="jersey/*.jar"/>
+    <include name="jerseyjackson/*.jar"/>
+    <!-- don't compile with the jetty jar, just use for test code -->
   </fileset>
 
   <union id="serverside">
@@ -68,7 +71,10 @@
     <!-- Compile class files-->
     <javac destdir="${classes}" includeantruntime="false"
       debug="true" classpathref="compile.classpath" target="1.8" source="1.8">
-      <src path="${src}"/>
+      <src path="${src}">
+        <!-- this would normally just be in test code -->
+        <exclude name="hellotest/HelloServer.java"/>
+      </src>
     </javac>
     <!-- Copy resource files-->
       <copy todir="${classes}">
