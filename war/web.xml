@@ -7,7 +7,7 @@
         <servlet-class>org.glassfish.jersey.servlet.ServletContainer</servlet-class>
         <init-param>
             <param-name>javax.ws.rs.Application</param-name>
-            <param-value>us.kbase.auth2.HelloApp</param-value>
+            <param-value>hellotest.HelloApp</param-value>
         </init-param>
     </servlet>
     <servlet-mapping>

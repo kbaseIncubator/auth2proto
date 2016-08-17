@@ -2,11 +2,17 @@ package hellotest;
 
 public class HelloJson {
 
-	private final String bar;
-	private final String whee = "whoo";
+	private String bar;
+	private String whee;
 	
-	public HelloJson(String foo) {
+	
+//	 for jackson
+	@SuppressWarnings("unused")
+	private HelloJson() {}
+	
+	public HelloJson(String foo, String baz) {
 		bar = foo;
+		whee = baz;
 	}
 
 	public String getBar() {
