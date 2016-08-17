@@ -18,19 +18,10 @@ import javax.ws.rs.core.MediaType;
 @Path("/hello")
 public class Hello {
 	
-	//TODO NOW this fails the first time.
-
 	@GET
 	@Produces(MediaType.APPLICATION_JSON)
 	public HelloJson sayHello() {
 		return new HelloJson("Hello doodyhead");
 	}
-
-	// This method is called if TEXT_PLAIN is request
-//	@GET
-//	@Produces(MediaType.TEXT_HTML)
-//	public HelloJson sayHelloHTML() {
-//		return new HelloJson("Hello doodyhead");
-//	}
 
 } 
