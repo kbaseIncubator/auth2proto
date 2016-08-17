@@ -1,4 +1,4 @@
-package us.kbase.auth2.hello;
+package hellotest;
 
 public class HelloJson {
 

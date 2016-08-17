@@ -1,4 +1,4 @@
-package us.kbase.auth2;
+package hellotest;
 
 import org.glassfish.jersey.jackson.JacksonFeature;
 import org.glassfish.jersey.server.ResourceConfig;

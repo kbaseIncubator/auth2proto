@@ -1,4 +1,4 @@
-package us.kbase.auth2.hello;
+package hellotest;
 
 import javax.ws.rs.GET;
 import javax.ws.rs.Path;
