@@ -7,7 +7,5 @@ public class AuthApp {
 	//TODO AUTH handle admin user somehow (spec chars unallowed in usernames?)
 	//TODO AUTH root should return server version (and urls for endpoints?)
 	//TODO AUTH check workspace for other useful things like the schema manager
-	
-	
 
 }
