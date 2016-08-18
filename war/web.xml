@@ -12,6 +12,6 @@
     </servlet>
     <servlet-mapping>
         <servlet-name>Auth</servlet-name>
-        <url-pattern>/rest/*</url-pattern>
+        <url-pattern>/*</url-pattern>
     </servlet-mapping>
 </web-app>
