@@ -69,12 +69,14 @@
 
   <target name="compile" depends="init" description="compile the source">
     <!-- Compile class files-->
-    <javac destdir="${classes}" includeantruntime="false"
-      debug="true" classpathref="compile.classpath" target="1.8" source="1.8">
-      <src path="${src}">
-        <!-- this would normally just be in test code -->
-        <exclude name="hellotest/HelloServer.java"/>
-      </src>
+    <javac srcdir="${src}"
+           destdir="${classes}"
+           excludes="helloserver/**"
+           includeantruntime="false"
+           debug="true"
+           classpathref="compile.classpath"
+           target="1.8"
+           source="1.8">
     </javac>
     <!-- Copy resource files-->
       <copy todir="${classes}">
