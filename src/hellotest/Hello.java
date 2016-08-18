@@ -1,5 +1,6 @@
 package hellotest;
 
+import javax.inject.Inject;
 import javax.ws.rs.Consumes;
 import javax.ws.rs.GET;
 import javax.ws.rs.POST;
@@ -22,10 +23,13 @@ import javax.ws.rs.core.Response;
 @Path("/hello")
 public class Hello {
 	
+	@Inject
+	private HelloApplicationResources res;
+	
 	@GET
 	@Produces(MediaType.APPLICATION_JSON)
 	public HelloJson sayHello() {
-		return new HelloJson("Hello there!", "buttface");
+		return new HelloJson("Hello there!", "res: " + res);
 	}
 	
 	@POST
