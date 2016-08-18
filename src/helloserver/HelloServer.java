@@ -6,6 +6,8 @@ import org.eclipse.jetty.servlet.ServletContextHandler;
 import org.eclipse.jetty.servlet.ServletHolder;
 import org.glassfish.jersey.servlet.ServletContainer;
 
+import hellotest.RootServlet;
+
 public class HelloServer {
 
 	public static void main(String[] args) throws Exception {
@@ -23,7 +25,8 @@ public class HelloServer {
 		jerseyServlet.setInitParameter(
 				"javax.ws.rs.Application", "hellotest.HelloApp");
 		context.addServlet(
-				DefaultServlet.class, "/*");
+				DefaultServlet.class, "/assets/*");
+		context.addServlet(RootServlet.class, "/*");
 		server.start();
 		server.join();
 	}

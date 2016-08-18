@@ -12,7 +12,7 @@
     </servlet>
     <servlet-mapping>
         <servlet-name>Hello</servlet-name>
-        <url-pattern>/r/*</url-pattern>
+        <url-pattern>/auth/*</url-pattern>
     </servlet-mapping>
     <servlet>
         <servlet-name>DefaultServlet</servlet-name>
