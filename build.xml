@@ -106,6 +106,12 @@
     <delete dir="${war.dir}/lib"/>
     <!-- copy war to jettybase -->
     <copy tofile="./jettybase/webapps/auth.war" file="${dist}/${war.file}" />
+    <delete>
+      <fileset dir="./jettybase/webapps/assets" includes="**"/>
+    </delete>
+    <copy todir="./jettybase/webapps/assets">
+      <fileset dir="./webapps/assets" includes="**"/>  
+    </copy>
   </target>
 
   <target name="javadoc" description="build javadocs">
