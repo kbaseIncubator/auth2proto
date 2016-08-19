@@ -12,7 +12,7 @@
     </servlet>
     <servlet-mapping>
         <servlet-name>Hello</servlet-name>
-        <url-pattern>/auth/*</url-pattern>
+        <url-pattern>/*</url-pattern>
     </servlet-mapping>
     <servlet>
         <servlet-name>DefaultServlet</servlet-name>
@@ -21,13 +21,5 @@
     <servlet-mapping>
         <servlet-name>DefaultServlet</servlet-name>
         <url-pattern>/assets/*</url-pattern>
-    </servlet-mapping>
-    <servlet>
-        <servlet-name>RootServlet</servlet-name>
-        <servlet-class>hellotest.RootServlet</servlet-class>
-    </servlet>
-    <servlet-mapping>
-        <servlet-name>RootServlet</servlet-name>
-        <url-pattern>/*</url-pattern>
     </servlet-mapping>
 </web-app>
