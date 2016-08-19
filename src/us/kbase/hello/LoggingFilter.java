@@ -14,6 +14,8 @@ import org.slf4j.LoggerFactory;
 import us.kbase.common.service.JsonServerSyslog;
 import us.kbase.common.service.JsonServerSyslog.RpcInfo;
 
+// NOTE must be in us.kbase package for the JsonServerSyslog to work
+
 public class LoggingFilter implements ContainerRequestFilter,
 		ContainerResponseFilter {
 	
@@ -27,7 +29,6 @@ public class LoggingFilter implements ContainerRequestFilter,
 	@Override
 	public void filter(final ContainerRequestContext reqcon)
 			throws IOException {
-		System.out.println("\n***** in lf req ***** \n");
 		final RpcInfo rpc = JsonServerSyslog.getCurrentRpcInfo();
 		rpc.setId(("" + Math.random()).substring(2));
 		//TODO AUTH get config and set ignoreIPs appropriately
@@ -58,7 +59,6 @@ public class LoggingFilter implements ContainerRequestFilter,
 			final ContainerRequestContext reqcon,
 			final ContainerResponseContext rescon)
 			throws IOException {
-		System.out.println("\n***** in lf res ***** \n");
 		LoggerFactory.getLogger(getClass()).info("{} {} {}",
 				reqcon.getUriInfo().getAbsolutePath(),
 				rescon.getStatus(),
