@@ -38,12 +38,15 @@
 
   <fileset dir="${jardir}" id="extlib">
     <include name="apache_commons/commons-codec-1.8.jar"/>
+    <include name="google/guava-18.0.jar"/>
   </fileset>
 
   <fileset dir="./lib" id="intlib">
     <include name="jackson/*.jar"/>
     <include name="jersey/*.jar"/>
     <include name="jerseyjackson/*.jar"/>
+    <include name="mustache/*.jar"/>
+    <include name="jerseymustache/*.jar"/>
     <!-- don't compile with the jetty jar, just use for test code -->
   </fileset>
 
@@ -106,11 +109,16 @@
     <delete dir="${war.dir}/lib"/>
     <!-- copy war to jettybase -->
     <copy tofile="./jettybase/webapps/ROOT.war" file="${dist}/${war.file}" />
-    <delete>
-      <fileset dir="./jettybase/webapps/assets" includes="**"/>
-    </delete>
+    <!-- probably a better way to do this -->
+    <delete dir="./jettybase/webapps/assets"/>
+    <mkdir dir="./jettybase/webapps/assets"/>
     <copy todir="./jettybase/webapps/assets">
       <fileset dir="./webapps/assets" includes="**"/>  
+    </copy>
+    <delete dir="./jettybase/templates"/>
+    <mkdir dir="./jettybase/templates"/>
+    <copy todir="./jettybase/templates">
+      <fileset dir="./webapps/templates" includes="**"/>  
     </copy>
   </target>
 

@@ -6,16 +6,19 @@ import javax.ws.rs.Path;
 import javax.ws.rs.Produces;
 import javax.ws.rs.core.MediaType;
 
-@Path("/hello2")
-public class Hello2 {
+import org.glassfish.jersey.server.mvc.Template;
+
+@Path("/hellotemplate")
+public class HelloTemplate {
 	
 	@Inject
 	private HelloApplicationResources res;
 	
 	@GET
-	@Produces(MediaType.APPLICATION_JSON)
+	@Produces(MediaType.TEXT_HTML)
+	@Template(name = "/hello")
 	public HelloJson sayHello() {
-		System.out.println("hello2");
+		System.out.println("hellotemplate");
 		return new HelloJson("Hello there!", "res: " + res);
 	}
 }
