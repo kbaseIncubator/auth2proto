@@ -36,7 +36,7 @@ public class LoggingFilter implements ContainerRequestFilter,
 		rpc.setMethod(reqcon.getMethod());
 	}
 	
-	//TODO AUTH TEST
+	//TODO AUTH TEST xff and realip headers
 	public String getIpAddress(
 			final ContainerRequestContext request,
 			final boolean ignoreIPsInHeaders) {
