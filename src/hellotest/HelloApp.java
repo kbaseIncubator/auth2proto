@@ -15,6 +15,7 @@ public class HelloApp extends ResourceConfig {
 		register(JacksonFeature.class);
 		register(MustacheMvcFeature.class);
 		property(MustacheMvcFeature.TEMPLATE_BASE_PATH, "templates");
+		register(LoggingFilter.class);
 		register(new AbstractBinder() {
 			@Override
 			protected void configure() {
