@@ -1,4 +1,4 @@
-package hellotest;
+package us.kbase.hello;
 
 import java.io.IOException;
 

@@ -5,6 +5,8 @@ import org.glassfish.jersey.jackson.JacksonFeature;
 import org.glassfish.jersey.server.ResourceConfig;
 import org.glassfish.jersey.server.mvc.mustache.MustacheMvcFeature;
 
+import us.kbase.hello.LoggingFilter;
+
 //TODO WAIT accept json in text/plain and application/x-www-form-urlencoded or manually handle it
 //TODO NOW logging
 //TODO NOW handle uncaught errors globally
