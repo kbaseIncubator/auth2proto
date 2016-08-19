@@ -1,9 +1,16 @@
 package hellotest;
 
+import us.kbase.common.service.JsonServerSyslog;
+
 public class HelloApplicationResources {
 
+	final JsonServerSyslog logger;
+	
 	public HelloApplicationResources() {
-		// do nothing, just checking that the injected instance is the same instance for each call
+		//TODO AUTH configure name
+		//TODO KBASECOMMON allow null for the fake config prop arg
+		logger = new JsonServerSyslog("HelloApp",
+				"thisisafakekeythatshouldntexistihope",
+				JsonServerSyslog.LOG_LEVEL_INFO, true);
 	}
-
 }
