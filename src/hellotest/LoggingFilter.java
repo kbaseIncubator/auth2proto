@@ -59,10 +59,10 @@ public class LoggingFilter implements ContainerRequestFilter,
 			final ContainerResponseContext rescon)
 			throws IOException {
 		System.out.println("\n***** in lf res ***** \n");
-		LoggerFactory.getLogger(getClass()).info(String.format("%s %s %s",
+		LoggerFactory.getLogger(getClass()).info("{} {} {}",
 				reqcon.getUriInfo().getAbsolutePath(),
 				rescon.getStatus(),
-				reqcon.getHeaderString(USER_AGENT)));
+				reqcon.getHeaderString(USER_AGENT));
 	}
 
 }
