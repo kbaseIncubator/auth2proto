@@ -35,4 +35,19 @@ public class ErrorMessage {
 		return exception;
 	}
 
+	@Override
+	public String toString() {
+		StringBuilder builder = new StringBuilder();
+		builder.append("ErrorMessage [code=");
+		builder.append(code);
+		builder.append(", status=");
+		builder.append(status);
+		builder.append(", message=");
+		builder.append(message);
+		builder.append(", exception=");
+		builder.append(exception);
+		builder.append("]");
+		return builder.toString();
+	}
+
 }

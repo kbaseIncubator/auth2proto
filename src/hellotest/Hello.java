@@ -51,9 +51,7 @@ public class Hello {
 			throw new WebApplicationException(Response.status(502).build());
 		}
 		
-		return Response.status(401).entity(
-				new HelloError(401, "unauthorized")).build();
-		
+		throw new WebApplicationException(Response.status(401).build());
 	}
 	
 	@Path("/error")
@@ -65,9 +63,6 @@ public class Hello {
 		} else if ("web".equals(exp)) {
 			throw new WebApplicationException(Response.status(502).build());
 		}
-		
-		return Response.status(401).entity(
-				new HelloError(401, "unauthorized")).build();
-		
+		throw new WebApplicationException(Response.status(401).build());
 	}
 } 

@@ -1,5 +1,6 @@
 package us.kbase.hello;
 
+import java.io.File;
 import java.io.PrintWriter;
 import java.io.StringWriter;
 import java.util.List;
@@ -22,6 +23,8 @@ import com.github.mustachejava.MustacheFactory;
 
 public class UncaughtExceptionHandler implements ExceptionMapper<Throwable> {
 
+	//TODO AUTH make an application wide exception for handling known errors
+	
 	@Context
 	private HttpHeaders headers;
 	private final ObjectMapper mapper = new ObjectMapper(); 
@@ -30,7 +33,6 @@ public class UncaughtExceptionHandler implements ExceptionMapper<Throwable> {
 	public Response toResponse(Throwable ex) {
 
 		final MediaType mt = getMediaType();
-		System.out.println("\n***" + mt + "****\n");
 
 		final ErrorMessage em = getError(ex);
 		String ret;
@@ -44,17 +46,19 @@ public class UncaughtExceptionHandler implements ExceptionMapper<Throwable> {
 				LoggerFactory.getLogger(getClass()).error(ret, e);
 			}
 		} else {
-			final MustacheFactory mf = new DefaultMustacheFactory();
-			final Mustache mus = mf.compile("uncaughtexception");
+			//TODO AUTH mustach template locs should be set the same way as in the app init
+			final MustacheFactory mf = new DefaultMustacheFactory(
+					new File("./webapps/templates")); //TODO NOW this won't work for jetty
+			final Mustache mus = mf.compile("uncaughtexception.mustache");
 			final StringWriter wr = new StringWriter();
-			mus.execute(wr, ex);
+			mus.execute(wr, em);
 			ret = wr.toString();
 		}
 		LoggerFactory.getLogger(getClass()).error("Uncaught exception", ex);
 		
 		return Response.status(em.getCode())
 				.entity(ret)
-				.type(MediaType.APPLICATION_JSON)
+				.type(mt)
 				.build();
 	}
 
@@ -79,21 +83,24 @@ public class UncaughtExceptionHandler implements ExceptionMapper<Throwable> {
 	}
 	
 	private ErrorMessage getError(final Throwable ex) {
-		final StringWriter errorStackTrace = new StringWriter();
-		ex.printStackTrace(new PrintWriter(errorStackTrace));
+		final StringWriter st = new StringWriter();
+		ex.printStackTrace(new PrintWriter(st));
+		//TODO AUTH remove substring
+//		final String stack = st.toString();
+		final String stack = st.toString().substring(0, 100);
 		if (ex instanceof WebApplicationException) {
 			final Response res = ((WebApplicationException) ex).getResponse();
 			//TODO AUTH only return exception in debug mode
 			return new ErrorMessage(res.getStatus(),
 					res.getStatusInfo().getReasonPhrase(), ex.getMessage(),
-					errorStackTrace.toString());
+					stack);
 		} else {
 			//defaults to internal server error 500
 			return new ErrorMessage(
 					Response.Status.INTERNAL_SERVER_ERROR.getStatusCode(),
 					Response.Status.INTERNAL_SERVER_ERROR.getReasonPhrase(),
 					ex.getMessage(),
-					errorStackTrace.toString());
+					stack);
 		}
 	}
 }
