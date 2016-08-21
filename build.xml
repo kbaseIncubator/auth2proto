@@ -124,7 +124,7 @@
     <delete dir="./jettybase/templates"/>
     <mkdir dir="./jettybase/templates"/>
     <copy todir="./jettybase/templates">
-      <fileset dir="./webapps/templates" includes="**"/>  
+      <fileset dir="./templates" includes="**"/>  
     </copy>
   </target>
 

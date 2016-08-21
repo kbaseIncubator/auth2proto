@@ -6,6 +6,8 @@ import javax.ws.rs.GET;
 import javax.ws.rs.POST;
 import javax.ws.rs.Path;
 import javax.ws.rs.Produces;
+import javax.ws.rs.QueryParam;
+import javax.ws.rs.WebApplicationException;
 import javax.ws.rs.core.MediaType;
 import javax.ws.rs.core.Response;
 
@@ -42,8 +44,25 @@ public class Hello {
 	@Path("/error")
 	@GET
 	@Produces(MediaType.APPLICATION_JSON)
-	public Response sayHelloError() {
-		return Response.status(401).entity(
-				new HelloError(401, "unauthorized")).build();
+	public Response sayHelloError(@QueryParam("exp") String exp) {
+		if ("args".equals(exp)) {
+			throw new IllegalArgumentException("args");
+		} else if ("web".equals(exp)) {
+			throw new WebApplicationException(Response.status(502).build());
+		}
+		
+		throw new WebApplicationException(Response.status(401).build());
+	}
+	
+	@Path("/error")
+	@GET
+	@Produces(MediaType.TEXT_HTML)
+	public Response sayHelloErrorHTML(@QueryParam("exp") String exp) {
+		if ("args".equals(exp)) {
+			throw new IllegalArgumentException("args");
+		} else if ("web".equals(exp)) {
+			throw new WebApplicationException(Response.status(502).build());
+		}
+		throw new WebApplicationException(Response.status(401).build());
 	}
 } 

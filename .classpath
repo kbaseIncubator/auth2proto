@@ -34,8 +34,8 @@
 	<classpathentry kind="lib" path="lib/jackson/jackson-databind-2.5.4.jar"/>
 	<classpathentry kind="lib" path="lib/jackson/jackson-module-jaxb-annotations-2.5.4.jar"/>
 	<classpathentry kind="lib" path="lib/jetty/jetty-all-9.3.11.v20160721-uber.jar"/>
-	<classpathentry kind="lib" path="lib/jerseymustache/jersey-mvc-2.23.2.jar"/>
-	<classpathentry kind="lib" path="lib/jerseymustache/jersey-mvc-mustache-2.23.2.jar"/>
+	<classpathentry kind="lib" path="lib/jerseymustache/jersey-mvc-2.23.2.jar" sourcepath="lib/jerseymustache/jersey-mvc-2.23.2-sources.jar"/>
+	<classpathentry kind="lib" path="lib/jerseymustache/jersey-mvc-mustache-2.23.2.jar" sourcepath="lib/jerseymustache/jersey-mvc-mustache-2.23.2-sources.jar"/>
 	<classpathentry kind="lib" path="lib/mustache/compiler-0.9.3.jar"/>
 	<classpathentry kind="lib" path="/jars/lib/jars/google/guava-18.0.jar"/>
 	<classpathentry kind="lib" path="/jars/lib/jars/kbase/common/kbase-common-0.0.20.jar"/>
