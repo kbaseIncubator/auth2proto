@@ -1,10 +1,10 @@
 package us.kbase.hello;
 
-import java.io.File;
 import java.io.PrintWriter;
 import java.io.StringWriter;
 import java.util.List;
 
+import javax.inject.Inject;
 import javax.ws.rs.WebApplicationException;
 import javax.ws.rs.core.Context;
 import javax.ws.rs.core.HttpHeaders;
@@ -16,9 +16,8 @@ import org.slf4j.LoggerFactory;
 
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
-import com.github.mustachejava.DefaultMustacheFactory;
-import com.github.mustachejava.Mustache;
-import com.github.mustachejava.MustacheFactory;
+
+import us.kbase.auth2.service.mustache.MustacheProcessor;
 
 
 public class UncaughtExceptionHandler implements ExceptionMapper<Throwable> {
@@ -27,8 +26,10 @@ public class UncaughtExceptionHandler implements ExceptionMapper<Throwable> {
 	
 	@Context
 	private HttpHeaders headers;
-	private final ObjectMapper mapper = new ObjectMapper(); 
-	
+	@Inject
+	private MustacheProcessor mustache;
+	private final ObjectMapper mapper = new ObjectMapper();
+
 	@Override
 	public Response toResponse(Throwable ex) {
 
@@ -46,13 +47,7 @@ public class UncaughtExceptionHandler implements ExceptionMapper<Throwable> {
 				LoggerFactory.getLogger(getClass()).error(ret, e);
 			}
 		} else {
-			//TODO AUTH mustach template locs should be set the same way as in the app init
-			final MustacheFactory mf = new DefaultMustacheFactory(
-					new File("./webapps/templates")); //TODO NOW this won't work for jetty
-			final Mustache mus = mf.compile("uncaughtexception.mustache");
-			final StringWriter wr = new StringWriter();
-			mus.execute(wr, em);
-			ret = wr.toString();
+			ret = mustache.process("uncaughtexception", em);
 		}
 		LoggerFactory.getLogger(getClass()).error("Uncaught exception", ex);
 		
@@ -82,12 +77,13 @@ public class UncaughtExceptionHandler implements ExceptionMapper<Throwable> {
 		return mt;
 	}
 	
+	//TODO NOW just pass the error into ErrorMessage and do processing there
 	private ErrorMessage getError(final Throwable ex) {
 		final StringWriter st = new StringWriter();
 		ex.printStackTrace(new PrintWriter(st));
 		//TODO AUTH remove substring
-//		final String stack = st.toString();
-		final String stack = st.toString().substring(0, 100);
+		final String stack = st.toString();
+//		final String stack = st.toString().substring(0, 100);
 		if (ex instanceof WebApplicationException) {
 			final Response res = ((WebApplicationException) ex).getResponse();
 			//TODO AUTH only return exception in debug mode
