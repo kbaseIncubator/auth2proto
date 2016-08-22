@@ -11,6 +11,11 @@ import javax.ws.rs.WebApplicationException;
 import javax.ws.rs.core.MediaType;
 import javax.ws.rs.core.Response;
 
+import us.kbase.auth2.service.exceptions.AuthException;
+import us.kbase.auth2.service.exceptions.AuthenticationException;
+import us.kbase.auth2.service.exceptions.AuthError;
+import us.kbase.auth2.service.exceptions.UnauthorizedException;
+
 
 // Plain old Java Object it does not extend as class or implements 
 // an interface
@@ -43,26 +48,28 @@ public class Hello {
 	
 	@Path("/error")
 	@GET
-	@Produces(MediaType.APPLICATION_JSON)
-	public Response sayHelloError(@QueryParam("exp") String exp) {
-		if ("args".equals(exp)) {
-			throw new IllegalArgumentException("args");
-		} else if ("web".equals(exp)) {
-			throw new WebApplicationException(Response.status(502).build());
+	@Produces({MediaType.APPLICATION_JSON, MediaType.TEXT_HTML})
+	public Response sayHelloError(@QueryParam("exp") final String exp)
+			throws AuthException {
+		if (exp == null) {
+			throw new WebApplicationException(Response.status(401).build());
 		}
-		
-		throw new WebApplicationException(Response.status(401).build());
-	}
-	
-	@Path("/error")
-	@GET
-	@Produces(MediaType.TEXT_HTML)
-	public Response sayHelloErrorHTML(@QueryParam("exp") String exp) {
-		if ("args".equals(exp)) {
-			throw new IllegalArgumentException("args");
-		} else if ("web".equals(exp)) {
-			throw new WebApplicationException(Response.status(502).build());
+		switch (exp) {
+			case "args":
+				throw new IllegalArgumentException("args");
+			case "web":
+				throw new WebApplicationException(Response.status(502)
+						.build());
+			case "badreq":
+				throw new AuthException(AuthError.BAD_INPUT, "badreq",
+						new IllegalArgumentException("badreq"));
+			case "auth":
+				throw new AuthenticationException(AuthError.AUTHENICATION_FAILED,
+						"auth", new IllegalArgumentException("auth"));
+			case "unauth":
+				throw new UnauthorizedException(AuthError.UNAUTHORIZED, "unauth",
+						new IllegalArgumentException("unauth"));
 		}
-		throw new WebApplicationException(Response.status(401).build());
+		throw new IllegalArgumentException("foo");
 	}
-} 
+}
