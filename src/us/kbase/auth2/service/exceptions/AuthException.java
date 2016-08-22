@@ -6,9 +6,9 @@ package us.kbase.auth2.service.exceptions;
 @SuppressWarnings("serial")
 public class AuthException extends Exception {
 	
-	private final Error err;
+	private final AuthError err;
 	
-	public AuthException(final Error err, final String message) {
+	public AuthException(final AuthError err, final String message) {
 		super(message);
 		if (err == null) {
 			throw new NullPointerException("err");
@@ -17,7 +17,7 @@ public class AuthException extends Exception {
 	}
 	
 	public AuthException(
-			final Error err,
+			final AuthError err,
 			final String message,
 			final Throwable cause) {
 		super(message, cause);
@@ -27,7 +27,7 @@ public class AuthException extends Exception {
 		this.err = err;
 	}
 
-	public Error getErr() {
+	public AuthError getErr() {
 		return err;
 	}
 }

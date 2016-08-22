@@ -13,7 +13,7 @@ import javax.ws.rs.core.Response;
 
 import us.kbase.auth2.service.exceptions.AuthException;
 import us.kbase.auth2.service.exceptions.AuthenticationException;
-import us.kbase.auth2.service.exceptions.Error;
+import us.kbase.auth2.service.exceptions.AuthError;
 import us.kbase.auth2.service.exceptions.UnauthorizedException;
 
 
@@ -61,13 +61,13 @@ public class Hello {
 				throw new WebApplicationException(Response.status(502)
 						.build());
 			case "badreq":
-				throw new AuthException(Error.BAD_INPUT, "badreq",
+				throw new AuthException(AuthError.BAD_INPUT, "badreq",
 						new IllegalArgumentException("badreq"));
 			case "auth":
-				throw new AuthenticationException(Error.AUTHENICATION_FAILED,
+				throw new AuthenticationException(AuthError.AUTHENICATION_FAILED,
 						"auth", new IllegalArgumentException("auth"));
 			case "unauth":
-				throw new UnauthorizedException(Error.UNAUTHORIZED, "unauth",
+				throw new UnauthorizedException(AuthError.UNAUTHORIZED, "unauth",
 						new IllegalArgumentException("unauth"));
 		}
 		throw new IllegalArgumentException("foo");

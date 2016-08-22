@@ -7,12 +7,12 @@ package us.kbase.auth2.service.exceptions;
 public class AuthenticationException extends AuthException {
 	
 	
-	public AuthenticationException(final Error err, final String message) {
+	public AuthenticationException(final AuthError err, final String message) {
 		super(err, message);
 	}
 	
 	public AuthenticationException(
-			final Error err,
+			final AuthError err,
 			final String message,
 			final Throwable cause) {
 		super(err, message, cause);

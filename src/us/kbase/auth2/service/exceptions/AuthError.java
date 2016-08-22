@@ -1,6 +1,6 @@
 package us.kbase.auth2.service.exceptions;
 
-public enum Error {
+public enum AuthError {
 	
 	//TODO TEST unit tests
 	//TODO JAVADOC
@@ -12,7 +12,7 @@ public enum Error {
 	private final int errcode;
 	private final String error;
 	
-	Error(final int errcode, final String error) {
+	AuthError(final int errcode, final String error) {
 		this.errcode = errcode;
 		this.error = error;
 	}
