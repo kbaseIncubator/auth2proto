@@ -8,10 +8,15 @@ import java.util.List;
 
 import javax.ws.rs.WebApplicationException;
 import javax.ws.rs.core.Response;
+import javax.ws.rs.core.Response.StatusType;
 
 import com.fasterxml.jackson.annotation.JsonIgnore;
 import com.fasterxml.jackson.annotation.JsonInclude;
 import com.fasterxml.jackson.annotation.JsonInclude.Include;
+
+import us.kbase.auth2.service.exceptions.AuthException;
+import us.kbase.auth2.service.exceptions.AuthenticationException;
+import us.kbase.auth2.service.exceptions.UnauthorizedException;
 
 @JsonInclude(Include.NON_NULL)
 public class ErrorMessage {
@@ -22,7 +27,7 @@ public class ErrorMessage {
 	private final int httpCode;
 	private final String httpStatus;
 	private final Integer appCode;
-	private final String appErr;
+	private final String appError;
 	private final String message;
 	private final String exception;
 	@JsonIgnore
@@ -46,23 +51,31 @@ public class ErrorMessage {
 			exceptionLines = null;
 			hasException = false;
 		}
-		//TODO NOW handle AuthException and subclasses
-		if (ex instanceof WebApplicationException) {
-			final Response res = ((WebApplicationException) ex).getResponse();
+		message = ex.getMessage();
+		final StatusType status;
+		if (ex instanceof AuthException) {
+			final AuthException ae = (AuthException) ex;
+			appCode = ae.getErr().getErrorCode();
+			appError = ae.getErr().getError();
+			if (ae instanceof AuthenticationException) {
+				status = Response.Status.UNAUTHORIZED;
+			} else if (ae instanceof UnauthorizedException) {
+				status = Response.Status.FORBIDDEN;
+			} else {
+				status = Response.Status.BAD_REQUEST;
+			}
+		} else if (ex instanceof WebApplicationException) {
 			appCode = null;
-			appErr = null;
-			httpCode = res.getStatus();
-			httpStatus = res.getStatusInfo().getReasonPhrase();
-			message = ex.getMessage();
+			appError = null;
+			status = ((WebApplicationException) ex).getResponse()
+					.getStatusInfo();
 		} else {
-			//defaults to internal server error 500
 			appCode = null;
-			appErr = null;
-			httpCode = Response.Status.INTERNAL_SERVER_ERROR.getStatusCode();
-			httpStatus = Response.Status.INTERNAL_SERVER_ERROR
-					.getReasonPhrase();
-			message = ex.getMessage();
+			appError = null;
+			status = Response.Status.INTERNAL_SERVER_ERROR;
 		}
+		httpCode = status.getStatusCode();
+		httpStatus = status.getReasonPhrase();
 	}
 
 	public int getHttpCode() {
@@ -77,8 +90,8 @@ public class ErrorMessage {
 		return appCode;
 	}
 
-	public String getAppErr() {
-		return appErr;
+	public String getAppError() {
+		return appError;
 	}
 
 	public String getMessage() {
@@ -106,8 +119,8 @@ public class ErrorMessage {
 		builder.append(httpStatus);
 		builder.append(", appCode=");
 		builder.append(appCode);
-		builder.append(", appErr=");
-		builder.append(appErr);
+		builder.append(", appError=");
+		builder.append(appError);
 		builder.append(", message=");
 		builder.append(message);
 		builder.append(", exception=");
