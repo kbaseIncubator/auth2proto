@@ -21,7 +21,6 @@ import us.kbase.auth2.service.template.TemplateProcessor;
 
 public class ExceptionHandler implements ExceptionMapper<Throwable> {
 
-	//TODO AUTH make an application wide exception for handling known errors
 	//TODO TEST unit tests
 	//TODO JAVADOC
 	
