@@ -6,14 +6,24 @@
   </head>
   <body>
     <p>
-    Gosh, I sure am sorry, but an unexpected error occurred. Golly!
+    Gee whiz, I sure am sorry, but an unexpected error occurred. Gosh!
     </p>
-    Code: {{code}}<br/>
-    Status: {{status}}<br/>
+    Http code: {{httpCode}}<br/>
+    Http status: {{httpStatus}}<br/>
+    {{#appCode}}
+        Application code: {{appCode}}</br>
+    {{/appCode}}
+    {{#appErr}}
+        Application error: {{appErr}}</br>
+    {{/appErr}}
     Message: {{message}}<br/>
+    {{#hasException}}
     Exception:<br/>
-    <code>
-    {{exception}}
-    </code>
+    <pre>
+    {{#exceptionLines}}
+        {{{.}}}
+    {{/exceptionLines}}
+    </pre>
+    {{/hasException}}
   </body>
 </html>

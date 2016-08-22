@@ -1,13 +1,10 @@
 package us.kbase.auth2.service;
 
-import java.io.PrintWriter;
-import java.io.StringWriter;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
 import javax.inject.Inject;
-import javax.ws.rs.WebApplicationException;
 import javax.ws.rs.core.Context;
 import javax.ws.rs.core.HttpHeaders;
 import javax.ws.rs.core.MediaType;
@@ -40,7 +37,8 @@ public class ExceptionHandler implements ExceptionMapper<Throwable> {
 		final MediaType mt = getMediaType();
 		LoggerFactory.getLogger(getClass()).error("Uncaught exception", ex);
 
-		final ErrorMessage em = getError(ex);
+		//TODO AUTH make including trace configurable
+		final ErrorMessage em = new ErrorMessage(ex, true);
 		String ret;
 		if (mt.equals(MediaType.APPLICATION_JSON_TYPE)) {
 			final Map<String, Object> err = new HashMap<>();
@@ -57,7 +55,7 @@ public class ExceptionHandler implements ExceptionMapper<Throwable> {
 			ret = template.process("error", em);
 		}
 		
-		return Response.status(em.getCode()).entity(ret).type(mt).build();
+		return Response.status(em.getHttpCode()).entity(ret).type(mt).build();
 	}
 
 	// either html or json
@@ -78,26 +76,5 @@ public class ExceptionHandler implements ExceptionMapper<Throwable> {
 			mt = MediaType.TEXT_HTML_TYPE;
 		}
 		return mt;
-	}
-	
-	//TODO NOW just pass the error into ErrorMessage and do processing there
-	private ErrorMessage getError(final Throwable ex) {
-		final StringWriter st = new StringWriter();
-		ex.printStackTrace(new PrintWriter(st));
-		final String stack = st.toString();
-		if (ex instanceof WebApplicationException) {
-			final Response res = ((WebApplicationException) ex).getResponse();
-			//TODO AUTH only return exception in debug mode
-			return new ErrorMessage(res.getStatus(),
-					res.getStatusInfo().getReasonPhrase(), ex.getMessage(),
-					stack);
-		} else {
-			//defaults to internal server error 500
-			return new ErrorMessage(
-					Response.Status.INTERNAL_SERVER_ERROR.getStatusCode(),
-					Response.Status.INTERNAL_SERVER_ERROR.getReasonPhrase(),
-					ex.getMessage(),
-					stack);
-		}
 	}
 }
