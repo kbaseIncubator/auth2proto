@@ -1,4 +1,4 @@
-package us.kbase.auth2.service;
+package us.kbase.auth2.service.exceptions.handler;
 
 import java.io.PrintWriter;
 import java.io.StringWriter;

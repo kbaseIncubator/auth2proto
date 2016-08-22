@@ -1,4 +1,4 @@
-package us.kbase.auth2.service;
+package us.kbase.auth2.service.exceptions;
 
 public enum Error {
 	
