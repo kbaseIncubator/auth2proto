@@ -14,8 +14,8 @@ public class PasswordCrypt {
 	 * https://www.javacodegeeks.com/2012/05/secure-password-storage-donts-dos-and.html
 	 */
 
-	//TODO ONMOVE unit tests
-	//TODO ONMOVE docs
+	//TODO TEST unit tests
+	//TODO JAVADOC
 	
 	// PBKDF2 with SHA-256 as the hashing algorithm.
 	private static final String CRYPTALG = "PBKDF2WithHmacSHA256";

@@ -19,6 +19,9 @@ import us.kbase.common.service.JsonServerSyslog.RpcInfo;
 public class LoggingFilter implements ContainerRequestFilter,
 		ContainerResponseFilter {
 	
+	//TODO TEST unit tests
+	//TODO JAVADOC
+	
 	private static final String X_FORWARDED_FOR = "X-Forwarded-For";
 	private static final String X_REAL_IP = "X-Real-IP";
 	private static final String USER_AGENT = "User-Agent";

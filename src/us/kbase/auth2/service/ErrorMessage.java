@@ -1,6 +1,9 @@
 package us.kbase.auth2.service;
 
 public class ErrorMessage {
+	
+	//TODO TEST unit tests
+	//TODO JAVADOC
 
 	private final int code;
 	private final String status;

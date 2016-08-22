@@ -11,6 +11,7 @@ import org.slf4j.LoggerFactory;
 import ch.qos.logback.classic.Level;
 import ch.qos.logback.classic.Logger;
 import us.kbase.auth2.service.LoggingFilter;
+import us.kbase.auth2.service.template.TemplateProcessor;
 import us.kbase.auth2.service.template.mustache.MustacheProcessor;
 import us.kbase.auth2.service.ExceptionHandler;
 
@@ -34,7 +35,7 @@ public class HelloApp extends ResourceConfig {
 					.to(HelloApplicationResources.class);
 				bind(new MustacheProcessor(Paths.get("templates")
 						.toAbsolutePath()))
-					.to(MustacheProcessor.class);
+					.to(TemplateProcessor.class);
 			}
 		});
 	}

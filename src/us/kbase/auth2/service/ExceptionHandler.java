@@ -2,7 +2,9 @@ package us.kbase.auth2.service;
 
 import java.io.PrintWriter;
 import java.io.StringWriter;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 
 import javax.inject.Inject;
 import javax.ws.rs.WebApplicationException;
@@ -17,17 +19,19 @@ import org.slf4j.LoggerFactory;
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
 
-import us.kbase.auth2.service.template.mustache.MustacheProcessor;
+import us.kbase.auth2.service.template.TemplateProcessor;
 
 
 public class ExceptionHandler implements ExceptionMapper<Throwable> {
 
 	//TODO AUTH make an application wide exception for handling known errors
+	//TODO TEST unit tests
+	//TODO JAVADOC
 	
 	@Context
 	private HttpHeaders headers;
 	@Inject
-	private MustacheProcessor mustache;
+	private TemplateProcessor template;
 	private final ObjectMapper mapper = new ObjectMapper();
 
 	@Override
@@ -39,8 +43,10 @@ public class ExceptionHandler implements ExceptionMapper<Throwable> {
 		final ErrorMessage em = getError(ex);
 		String ret;
 		if (mt.equals(MediaType.APPLICATION_JSON_TYPE)) {
+			final Map<String, Object> err = new HashMap<>();
+			err.put("error", em);
 			try {
-				ret = mapper.writeValueAsString(em);
+				ret = mapper.writeValueAsString(err);
 			} catch (JsonProcessingException e) {
 				ret = "An error occured in the error handler when " +
 						"processing the error object to JSON. " +
@@ -48,7 +54,7 @@ public class ExceptionHandler implements ExceptionMapper<Throwable> {
 				LoggerFactory.getLogger(getClass()).error(ret, e);
 			}
 		} else {
-			ret = mustache.process("error", em);
+			ret = template.process("error", em);
 		}
 		
 		return Response.status(em.getCode()).entity(ret).type(mt).build();
