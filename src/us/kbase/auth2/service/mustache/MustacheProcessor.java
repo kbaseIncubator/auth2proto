@@ -14,6 +14,7 @@ public class MustacheProcessor {
 
 	//TODO TEST unit tests
 	//TODO JAVADOC
+	//TODO NOW make TemplateProcessor interface and use that instead
 	
 	private static final String SUFFIX = ".mustache";
 	

@@ -81,9 +81,7 @@ public class UncaughtExceptionHandler implements ExceptionMapper<Throwable> {
 	private ErrorMessage getError(final Throwable ex) {
 		final StringWriter st = new StringWriter();
 		ex.printStackTrace(new PrintWriter(st));
-		//TODO AUTH remove substring
 		final String stack = st.toString();
-//		final String stack = st.toString().substring(0, 100);
 		if (ex instanceof WebApplicationException) {
 			final Response res = ((WebApplicationException) ex).getResponse();
 			//TODO AUTH only return exception in debug mode
