@@ -1,4 +1,4 @@
-package us.kbase.hello;
+package us.kbase.auth2.service;
 
 import java.io.PrintWriter;
 import java.io.StringWriter;
@@ -17,10 +17,10 @@ import org.slf4j.LoggerFactory;
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
 
-import us.kbase.auth2.service.mustache.MustacheProcessor;
+import us.kbase.auth2.service.template.mustache.MustacheProcessor;
 
 
-public class UncaughtExceptionHandler implements ExceptionMapper<Throwable> {
+public class ExceptionHandler implements ExceptionMapper<Throwable> {
 
 	//TODO AUTH make an application wide exception for handling known errors
 	

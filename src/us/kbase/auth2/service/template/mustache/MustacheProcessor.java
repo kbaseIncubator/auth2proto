@@ -1,4 +1,4 @@
-package us.kbase.auth2.service.mustache;
+package us.kbase.auth2.service.template.mustache;
 
 import java.io.StringWriter;
 import java.nio.file.Path;

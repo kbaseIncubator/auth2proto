@@ -1,4 +1,4 @@
-package us.kbase.hello;
+package us.kbase.auth2.service;
 
 public class ErrorMessage {
 
