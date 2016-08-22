@@ -34,6 +34,7 @@ public class UncaughtExceptionHandler implements ExceptionMapper<Throwable> {
 	public Response toResponse(Throwable ex) {
 
 		final MediaType mt = getMediaType();
+		LoggerFactory.getLogger(getClass()).error("Uncaught exception", ex);
 
 		final ErrorMessage em = getError(ex);
 		String ret;
@@ -47,14 +48,10 @@ public class UncaughtExceptionHandler implements ExceptionMapper<Throwable> {
 				LoggerFactory.getLogger(getClass()).error(ret, e);
 			}
 		} else {
-			ret = mustache.process("uncaughtexception", em);
+			ret = mustache.process("error", em);
 		}
-		LoggerFactory.getLogger(getClass()).error("Uncaught exception", ex);
 		
-		return Response.status(em.getCode())
-				.entity(ret)
-				.type(mt)
-				.build();
+		return Response.status(em.getCode()).entity(ret).type(mt).build();
 	}
 
 	// either html or json
