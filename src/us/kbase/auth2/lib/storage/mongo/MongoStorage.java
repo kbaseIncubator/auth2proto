@@ -27,6 +27,32 @@ import us.kbase.auth2.service.exceptions.AuthException;
 
 public class MongoStorage implements AuthStorage {
 
+	/* To add provider:
+	 * 1) pull the document
+	 * 		If it's a local account fail
+	 * 2) Add the provider to the array if it's not there already
+	 * 		If it is and non-indexed fields are the same, no-op, otherwise replace and proceed
+	 * 3) update the document with the new array, querying on the contents of the old array with $all and $elemMatch to assure no changes have been made
+	 * 4) If fail, go to 1
+	 * 		Except if it's a duplicate key, then fail permanently
+	 * 
+	 * This ensures that the same provider / user id combination only exists in the users db once at most
+	 * $addToSet will add the same provider /user id combo to an array if the email etc. is different
+	 * Unique indexes don't ensure that the contents of arrays are unique, just that no two documents have the same array elements
+	 * Splitting the user doc from the provider docs has a whole host of other issues, mostly wrt deletion
+	 * 
+	 * To remove provider:
+	 * 1) pull the document
+	 * 2) Remove the provider from the array
+	 * 		If it's already gone no-op
+	 * 3) update the document with $pull, querying on the contents of the updated array with $elemMatch to be sure at least one provider still exists
+	 * 4) If fail fail permanently
+	 *
+	 *	This ensures that all accounts always have one provider
+	 * 
+	 * 
+	 */
+	
 	//TODO TEST unit tests
 	//TODO JAVADOC
 	
@@ -49,7 +75,12 @@ public class MongoStorage implements AuthStorage {
 		//find users and ensure user names are unique
 		users.put(Arrays.asList(Fields.USER_NAME), IDX_UNIQ);
 		//find user by provider and ensure providers are 1:1 with users
-		users.put(Arrays.asList(Fields.USER_ID_PROVIDERS), IDX_UNIQ_SPARSE);
+		users.put(Arrays.asList(
+				Fields.USER_ID_PROVIDERS + Fields.FIELD_SEP +
+					Fields.PROVIDER_FULL_NAME,
+				Fields.USER_ID_PROVIDERS + Fields.FIELD_SEP +
+					Fields.PROVIDER_USER_ID),
+				IDX_UNIQ_SPARSE);
 		INDEXES.put(COL_USERS, users);
 		
 		//config indexes
@@ -151,6 +182,7 @@ public class MongoStorage implements AuthStorage {
 		final String salt = Base64.getEncoder().encodeToString(
 				local.getSalt());
 		final Document u = new Document(Fields.USER_NAME, local.getUserName())
+				.append(Fields.USER_LOCAL, true)
 				.append(Fields.USER_EMAIL, local.getEmail())
 				.append(Fields.USER_FULL_NAME, local.getFullName())
 				.append(Fields.USER_RESET_PWD, local.forceReset())
