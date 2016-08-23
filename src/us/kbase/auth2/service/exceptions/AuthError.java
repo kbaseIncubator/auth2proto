@@ -8,7 +8,8 @@ public enum AuthError {
 	AUTHENICATION_FAILED	(10000, "Authentication failed"),
 	UNAUTHORIZED			(20000, "Unauthorized"),
 	MISSING_PARAMETER		(30000, "Missing input parameter"),
-	USER_ALREADY_EXISTS		(30001, "User already exists");
+	USER_ALREADY_EXISTS		(30001, "User already exists"),
+	NO_SUCH_USER			(30002, "No such user");
 	
 	private final int errcode;
 	private final String error;

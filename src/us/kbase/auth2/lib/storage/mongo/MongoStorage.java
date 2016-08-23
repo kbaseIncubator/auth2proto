@@ -18,15 +18,43 @@ import com.mongodb.client.MongoDatabase;
 import com.mongodb.client.model.Filters;
 import com.mongodb.client.model.IndexOptions;
 
+import us.kbase.auth2.lib.AuthToken;
 import us.kbase.auth2.lib.LocalUser;
 import us.kbase.auth2.lib.storage.AuthStorage;
 import us.kbase.auth2.lib.storage.exceptions.AuthStorageException;
 import us.kbase.auth2.lib.storage.exceptions.StorageInitException;
 import us.kbase.auth2.service.exceptions.AuthError;
 import us.kbase.auth2.service.exceptions.AuthException;
+import us.kbase.auth2.service.exceptions.AuthenticationException;
 
 public class MongoStorage implements AuthStorage {
 
+	/* To add provider:
+	 * 1) pull the document
+	 * 		If it's a local account fail
+	 * 2) Add the provider to the array if it's not there already
+	 * 		If it is and non-indexed fields are the same, no-op, otherwise replace and proceed
+	 * 3) update the document with the new array, querying on the contents of the old array with $all and $elemMatch to assure no changes have been made
+	 * 4) If fail, go to 1
+	 * 		Except if it's a duplicate key, then fail permanently
+	 * 
+	 * This ensures that the same provider / user id combination only exists in the users db once at most
+	 * $addToSet will add the same provider /user id combo to an array if the email etc. is different
+	 * Unique indexes don't ensure that the contents of arrays are unique, just that no two documents have the same array elements
+	 * Splitting the user doc from the provider docs has a whole host of other issues, mostly wrt deletion
+	 * 
+	 * To remove provider:
+	 * 1) pull the document
+	 * 2) Remove the provider from the array
+	 * 		If it's already gone no-op
+	 * 3) update the document with $pull, querying on the contents of the updated array with $elemMatch to be sure at least one provider still exists
+	 * 4) If fail fail permanently
+	 *
+	 *	This ensures that all accounts always have one provider
+	 * 
+	 * 
+	 */
+	
 	//TODO TEST unit tests
 	//TODO JAVADOC
 	
@@ -34,6 +62,7 @@ public class MongoStorage implements AuthStorage {
 	
 	private static final String COL_USERS = "users";
 	private static final String COL_CONFIG = "config";
+	private static final String COL_TOKEN = "tokens";
 	
 	private static final Map<String, Map<List<String>, IndexOptions>> INDEXES;
 	private static final IndexOptions IDX_UNIQ =
@@ -49,8 +78,19 @@ public class MongoStorage implements AuthStorage {
 		//find users and ensure user names are unique
 		users.put(Arrays.asList(Fields.USER_NAME), IDX_UNIQ);
 		//find user by provider and ensure providers are 1:1 with users
-		users.put(Arrays.asList(Fields.USER_ID_PROVIDERS), IDX_UNIQ_SPARSE);
+		users.put(Arrays.asList(
+				Fields.USER_ID_PROVIDERS + Fields.FIELD_SEP +
+					Fields.PROVIDER_FULL_NAME,
+				Fields.USER_ID_PROVIDERS + Fields.FIELD_SEP +
+					Fields.PROVIDER_USER_ID),
+				IDX_UNIQ_SPARSE);
 		INDEXES.put(COL_USERS, users);
+		
+		//token indexes
+		final Map<List<String>, IndexOptions> token = new HashMap<>();
+		token.put(Arrays.asList(Fields.TOKEN_USER_NAME), null);
+		token.put(Arrays.asList(Fields.TOKEN_TOKEN), IDX_UNIQ);
+		INDEXES.put(COL_TOKEN, token);
 		
 		//config indexes
 		final Map<List<String>, IndexOptions> cfg = new HashMap<>();
@@ -151,6 +191,7 @@ public class MongoStorage implements AuthStorage {
 		final String salt = Base64.getEncoder().encodeToString(
 				local.getSalt());
 		final Document u = new Document(Fields.USER_NAME, local.getUserName())
+				.append(Fields.USER_LOCAL, true)
 				.append(Fields.USER_EMAIL, local.getEmail())
 				.append(Fields.USER_FULL_NAME, local.getFullName())
 				.append(Fields.USER_RESET_PWD, local.forceReset())
@@ -170,7 +211,32 @@ public class MongoStorage implements AuthStorage {
 			throw new AuthStorageException(
 					"Connection to database failed", me);
 		}
-				
+	}
+	
+	@Override
+	public LocalUser getLocalUser(final String userName)
+			throws AuthStorageException, AuthenticationException {
+		final Document user;
+		try {
+			// assume here that the indexes work and there can't be two users
+			// with the same name
+			user = db.getCollection(COL_USERS).find(
+					new Document(Fields.USER_NAME, userName)).first();
+		} catch (MongoException me) {
+			throw new AuthStorageException(
+					"Connection to database failed", me);
+		}
+		if (user == null || !user.getBoolean(Fields.USER_LOCAL)) {
+			throw new AuthenticationException(AuthError.NO_SUCH_USER,
+					userName);
+		}
+		return new LocalUser(user.getString(Fields.USER_NAME),
+				user.getString(Fields.USER_EMAIL),
+				user.getString(Fields.USER_FULL_NAME),
+				Base64.getDecoder().decode(
+						user.getString(Fields.USER_PWD_HSH)),
+				Base64.getDecoder().decode(user.getString(Fields.USER_SALT)),
+				user.getBoolean(Fields.USER_RESET_PWD));
 	}
 
 	private boolean isDuplicateKeyException(final MongoWriteException mwe) {
@@ -178,4 +244,21 @@ public class MongoStorage implements AuthStorage {
 				ErrorCategory.DUPLICATE_KEY);
 	}
 
+	@Override
+	public void storeToken(final AuthToken t) throws AuthStorageException {
+		final Document td = new Document(
+				Fields.TOKEN_USER_NAME, t.getUserName())
+				.append(Fields.TOKEN_TOKEN, t.getToken())
+				.append(Fields.TOKEN_EXPIRY, t.getExpirationDate());
+		try {
+			db.getCollection(COL_TOKEN).insertOne(td);
+			/* could catch a duplicate key exception here but that indicates
+			 * a programming error - should never try to insert a duplicate
+			 *  token
+			 */
+		} catch (MongoException me) {
+			throw new AuthStorageException(
+					"Connection to database failed", me);
+		}
+	}
 }

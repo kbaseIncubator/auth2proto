@@ -1,12 +1,17 @@
 package us.kbase.auth2.lib;
 
+import static us.kbase.auth2.lib.Utils.clear;
+
 import java.security.NoSuchAlgorithmException;
+import java.util.Date;
 
 import us.kbase.auth2.cryptutils.PasswordCrypt;
 import us.kbase.auth2.cryptutils.TokenGenerator;
 import us.kbase.auth2.lib.storage.AuthStorage;
 import us.kbase.auth2.lib.storage.exceptions.AuthStorageException;
+import us.kbase.auth2.service.exceptions.AuthError;
 import us.kbase.auth2.service.exceptions.AuthException;
+import us.kbase.auth2.service.exceptions.AuthenticationException;
 import us.kbase.auth2.service.exceptions.MissingParameterException;
 
 public class Authentication {
@@ -56,5 +61,21 @@ public class Authentication {
 		if (s == null || s.isEmpty()) {
 			throw new MissingParameterException("Missing parameter: " + name);
 		}
+	}
+
+	public AuthToken localLogin(final String userName, final char[] pwd)
+			throws AuthenticationException, AuthStorageException {
+		final LocalUser u = storage.getLocalUser(userName);
+		if (!pwdcrypt.authenticate(pwd, u.getPasswordHash(), u.getSalt())) {
+			throw new AuthenticationException(AuthError.AUTHENICATION_FAILED,
+					"Username / password mismatch");
+		}
+		clear(pwd);
+		//TODO NOW if reset required, make reset token
+		final AuthToken t = new AuthToken(tokens.getToken(), userName,
+				//TODO CONFIG make token lifetime configurable
+				new Date(new Date().getTime() + (14 * 24 * 60 * 60)));
+		storage.storeToken(t);
+		return t;
 	}
 }
