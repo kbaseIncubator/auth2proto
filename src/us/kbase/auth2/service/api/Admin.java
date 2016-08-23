@@ -52,6 +52,7 @@ public class Admin {
 			@FormParam("full") final String fullName,
 			@FormParam("email") final String email)
 			throws AuthException, AuthStorageException {
+		//TODO NOW check user is admin
 		
 		final char[] pwd = auth.createLocalUser(userName, fullName, email);
 		
