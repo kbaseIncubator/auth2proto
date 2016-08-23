@@ -54,6 +54,7 @@ public class Admin {
 			@FormParam("email") final String email)
 			throws AuthException, AuthStorageException {
 		//TODO NOW check user is admin
+		//TODO NOW log
 		
 		final char[] pwd = auth.createLocalUser(userName, fullName, email);
 		final Map<String, String> ret = ImmutableMap.of(

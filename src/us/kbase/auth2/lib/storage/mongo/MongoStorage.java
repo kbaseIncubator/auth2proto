@@ -18,12 +18,14 @@ import com.mongodb.client.MongoDatabase;
 import com.mongodb.client.model.Filters;
 import com.mongodb.client.model.IndexOptions;
 
+import us.kbase.auth2.lib.AuthToken;
 import us.kbase.auth2.lib.LocalUser;
 import us.kbase.auth2.lib.storage.AuthStorage;
 import us.kbase.auth2.lib.storage.exceptions.AuthStorageException;
 import us.kbase.auth2.lib.storage.exceptions.StorageInitException;
 import us.kbase.auth2.service.exceptions.AuthError;
 import us.kbase.auth2.service.exceptions.AuthException;
+import us.kbase.auth2.service.exceptions.AuthenticationException;
 
 public class MongoStorage implements AuthStorage {
 
@@ -60,6 +62,7 @@ public class MongoStorage implements AuthStorage {
 	
 	private static final String COL_USERS = "users";
 	private static final String COL_CONFIG = "config";
+	private static final String COL_TOKEN = "tokens";
 	
 	private static final Map<String, Map<List<String>, IndexOptions>> INDEXES;
 	private static final IndexOptions IDX_UNIQ =
@@ -82,6 +85,12 @@ public class MongoStorage implements AuthStorage {
 					Fields.PROVIDER_USER_ID),
 				IDX_UNIQ_SPARSE);
 		INDEXES.put(COL_USERS, users);
+		
+		//token indexes
+		final Map<List<String>, IndexOptions> token = new HashMap<>();
+		token.put(Arrays.asList(Fields.TOKEN_USER_NAME), null);
+		token.put(Arrays.asList(Fields.TOKEN_TOKEN), IDX_UNIQ);
+		INDEXES.put(COL_TOKEN, token);
 		
 		//config indexes
 		final Map<List<String>, IndexOptions> cfg = new HashMap<>();
@@ -202,7 +211,32 @@ public class MongoStorage implements AuthStorage {
 			throw new AuthStorageException(
 					"Connection to database failed", me);
 		}
-				
+	}
+	
+	@Override
+	public LocalUser getLocalUser(final String userName)
+			throws AuthStorageException, AuthenticationException {
+		final Document user;
+		try {
+			// assume here that the indexes work and there can't be two users
+			// with the same name
+			user = db.getCollection(COL_USERS).find(
+					new Document(Fields.USER_NAME, userName)).first();
+		} catch (MongoException me) {
+			throw new AuthStorageException(
+					"Connection to database failed", me);
+		}
+		if (user == null || !user.getBoolean(Fields.USER_LOCAL)) {
+			throw new AuthenticationException(AuthError.NO_SUCH_USER,
+					userName);
+		}
+		return new LocalUser(user.getString(Fields.USER_NAME),
+				user.getString(Fields.USER_EMAIL),
+				user.getString(Fields.USER_FULL_NAME),
+				Base64.getDecoder().decode(
+						user.getString(Fields.USER_PWD_HSH)),
+				Base64.getDecoder().decode(user.getString(Fields.USER_SALT)),
+				user.getBoolean(Fields.USER_RESET_PWD));
 	}
 
 	private boolean isDuplicateKeyException(final MongoWriteException mwe) {
@@ -210,4 +244,21 @@ public class MongoStorage implements AuthStorage {
 				ErrorCategory.DUPLICATE_KEY);
 	}
 
+	@Override
+	public void storeToken(final AuthToken t) throws AuthStorageException {
+		final Document td = new Document(
+				Fields.TOKEN_USER_NAME, t.getUserName())
+				.append(Fields.TOKEN_TOKEN, t.getToken())
+				.append(Fields.TOKEN_EXPIRY, t.getExpirationDate());
+		try {
+			db.getCollection(COL_TOKEN).insertOne(td);
+			/* could catch a duplicate key exception here but that indicates
+			 * a programming error - should never try to insert a duplicate
+			 *  token
+			 */
+		} catch (MongoException me) {
+			throw new AuthStorageException(
+					"Connection to database failed", me);
+		}
+	}
 }

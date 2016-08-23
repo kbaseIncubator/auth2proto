@@ -27,6 +27,11 @@ public class Fields {
 	public static final String PROVIDER_FULL_NAME = "ufull";
 
 	//token fields
+	public static final String TOKEN_USER_NAME = "user";
+	public static final String TOKEN_TOKEN = "token";
+	public static final String TOKEN_EXPIRY = "expires";
+	
+	
 	
 	// configuration fields
 	public static final String CONFIG_KEY = "config";

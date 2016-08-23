@@ -22,6 +22,8 @@ import com.google.common.collect.ImmutableMap;
 
 import us.kbase.auth2.lib.AuthToken;
 import us.kbase.auth2.lib.Authentication;
+import us.kbase.auth2.lib.storage.exceptions.AuthStorageException;
+import us.kbase.auth2.service.exceptions.AuthenticationException;
 
 @Path("/localaccount")
 public class LocalAccounts {
@@ -44,9 +46,12 @@ public class LocalAccounts {
 			@FormParam("user") final String userName,
 			@FormParam("pwd") String pwd, //char makes Jersey puke
 			//checkbox, so "on" = checked, null = not checked
-			@FormParam("stayLoggedIn") final String stayLoggedIn) {
+			@FormParam("stayLoggedIn") final String stayLoggedIn)
+			throws AuthenticationException, AuthStorageException {
 		final AuthToken t = auth.localLogin(userName, pwd.toCharArray());
-		pwd = null;
+		//TODO NOW log
+		pwd = null; // try to get pwd GC'd as quickly as possible
+		//TODO NOW if reset required, do reset
 		return Response.ok(
 				new Viewable("/localloginresult",
 						ImmutableMap.of("user", t.getUserName())))

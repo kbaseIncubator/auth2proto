@@ -9,7 +9,9 @@ import us.kbase.auth2.cryptutils.PasswordCrypt;
 import us.kbase.auth2.cryptutils.TokenGenerator;
 import us.kbase.auth2.lib.storage.AuthStorage;
 import us.kbase.auth2.lib.storage.exceptions.AuthStorageException;
+import us.kbase.auth2.service.exceptions.AuthError;
 import us.kbase.auth2.service.exceptions.AuthException;
+import us.kbase.auth2.service.exceptions.AuthenticationException;
 import us.kbase.auth2.service.exceptions.MissingParameterException;
 
 public class Authentication {
@@ -61,11 +63,19 @@ public class Authentication {
 		}
 	}
 
-
-	public AuthToken localLogin(final String userName, final char[] pwd) {
-		final AuthToken t = new AuthToken("faketoken", "fakename", new Date(1000000000000000000L));
+	public AuthToken localLogin(final String userName, final char[] pwd)
+			throws AuthenticationException, AuthStorageException {
+		final LocalUser u = storage.getLocalUser(userName);
+		if (!pwdcrypt.authenticate(pwd, u.getPasswordHash(), u.getSalt())) {
+			throw new AuthenticationException(AuthError.AUTHENICATION_FAILED,
+					"Username / password mismatch");
+		}
 		clear(pwd);
+		//TODO NOW if reset required, make reset token
+		final AuthToken t = new AuthToken(tokens.getToken(), userName,
+				//TODO CONFIG make token lifetime configurable
+				new Date(new Date().getTime() + (14 * 24 * 60 * 60)));
+		storage.storeToken(t);
 		return t;
-		// TODO NOW finish method
 	}
 }

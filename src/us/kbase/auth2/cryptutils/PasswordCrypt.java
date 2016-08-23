@@ -40,8 +40,7 @@ public class PasswordCrypt {
 	public boolean authenticate(
 			final char[] attemptedPassword,
 			final byte[] encryptedPassword,
-			final byte[] salt)
-			throws NoSuchAlgorithmException, InvalidKeySpecException {
+			final byte[] salt) {
 		// Encrypt the clear-text password using the same salt that was used to
 		// encrypt the original password
 		byte[] encryptedAttemptedPassword =
