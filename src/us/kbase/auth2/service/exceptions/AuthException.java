@@ -9,10 +9,7 @@ public class AuthException extends Exception {
 	private final AuthError err;
 	
 	public AuthException(final AuthError err, final String message) {
-		super(message);
-		if (err == null) {
-			throw new NullPointerException("err");
-		}
+		super(err.getErrorCode() + " " + err.getError() + ": " + message);
 		this.err = err;
 	}
 	
@@ -20,10 +17,8 @@ public class AuthException extends Exception {
 			final AuthError err,
 			final String message,
 			final Throwable cause) {
-		super(message, cause);
-		if (err == null) {
-			throw new NullPointerException("err");
-		}
+		super(err.getErrorCode() + " " + err.getError() + ": " + message,
+				cause);
 		this.err = err;
 	}
 

@@ -5,6 +5,8 @@ import java.security.NoSuchAlgorithmException;
 import us.kbase.auth2.cryptutils.PasswordCrypt;
 import us.kbase.auth2.cryptutils.TokenGenerator;
 import us.kbase.auth2.lib.storage.AuthStorage;
+import us.kbase.auth2.lib.storage.exceptions.AuthStorageException;
+import us.kbase.auth2.service.exceptions.AuthException;
 import us.kbase.auth2.service.exceptions.MissingParameterException;
 
 public class Authentication {
@@ -24,9 +26,6 @@ public class Authentication {
 		} catch (NoSuchAlgorithmException e) {
 			throw new RuntimeException("This should be impossible", e);
 		}
-		//TODO CONFIG configure name
-		//TODO KBASECOMMON allow null for the fake config prop arg
-		
 		if (storage == null) {
 			throw new NullPointerException("storage");
 		}
@@ -38,7 +37,7 @@ public class Authentication {
 			final String userName,
 			final String fullName,
 			final String email)
-			throws MissingParameterException {
+			throws AuthException, AuthStorageException {
 		//TODO NOW check minimum user name length, check email
 		checkString(userName, "user name");
 		checkString(fullName, "full name");

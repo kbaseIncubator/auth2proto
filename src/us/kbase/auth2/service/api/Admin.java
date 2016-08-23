@@ -16,7 +16,8 @@ import javax.ws.rs.core.MediaType;
 import org.glassfish.jersey.server.mvc.Template;
 
 import us.kbase.auth2.lib.Authentication;
-import us.kbase.auth2.service.exceptions.MissingParameterException;
+import us.kbase.auth2.lib.storage.exceptions.AuthStorageException;
+import us.kbase.auth2.service.exceptions.AuthException;
 
 @Path("/admin")
 public class Admin {
@@ -50,7 +51,7 @@ public class Admin {
 			@FormParam("user") final String userName,
 			@FormParam("full") final String fullName,
 			@FormParam("email") final String email)
-			throws MissingParameterException {
+			throws AuthException, AuthStorageException {
 		
 		final char[] pwd = auth.createLocalUser(userName, fullName, email);
 		

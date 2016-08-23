@@ -9,11 +9,13 @@ import org.glassfish.jersey.server.mvc.mustache.MustacheMvcFeature;
 import org.slf4j.LoggerFactory;
 
 import com.mongodb.MongoClient;
+import com.mongodb.client.MongoDatabase;
 
 import ch.qos.logback.classic.Level;
 import ch.qos.logback.classic.Logger;
 import us.kbase.auth2.lib.Authentication;
 import us.kbase.auth2.lib.storage.AuthStorage;
+import us.kbase.auth2.lib.storage.exceptions.StorageInitException;
 import us.kbase.auth2.lib.storage.mongo.MongoStorage;
 import us.kbase.auth2.service.LoggingFilter;
 import us.kbase.auth2.service.exceptions.handler.ExceptionHandler;
@@ -29,24 +31,31 @@ public class AuthenticationService extends ResourceConfig {
 	@SuppressWarnings("unused")
 	private final JsonServerSyslog logger; //keep a reference to prevent GC
 	
-	public AuthenticationService() {
+	//TODO NOW log the init exception
+	public AuthenticationService() throws StorageInitException {
 		((Logger) LoggerFactory.getLogger(Logger.ROOT_LOGGER_NAME))
 			.setLevel(Level.INFO);
-		//TODO AUTH allow setting name
+		//TODO CONFIG configure name
+		//TODO KBASECOMMON allow null for the fake config prop arg
 		logger = new JsonServerSyslog("KBaseAuth2",
 				"thisisafakekeythatshouldntexistihope",
 				JsonServerSyslog.LOG_LEVEL_INFO, true);
-		mc = buildMongo();
+		synchronized(this) {
+			if (mc == null) {
+				mc = buildMongo();
+			}
+		}
 		packages("us.kbase.auth2.service.api");
 		register(JacksonFeature.class);
 		register(MustacheMvcFeature.class);
 		property(MustacheMvcFeature.TEMPLATE_BASE_PATH, "templates");
 		register(LoggingFilter.class);
 		register(ExceptionHandler.class);
+		final Authentication auth = buildAuth();
 		register(new AbstractBinder() {
 			@Override
 			protected void configure() {
-				bind(buildAuth()).to(Authentication.class);
+				bind(auth).to(Authentication.class);
 				bind(new MustacheProcessor(Paths.get("templates")
 						.toAbsolutePath()))
 					.to(TemplateProcessor.class);
@@ -59,10 +68,12 @@ public class AuthenticationService extends ResourceConfig {
 		return new MongoClient("localhost:27017");
 	}
 	
-	private Authentication buildAuth() {
+	private Authentication buildAuth() throws StorageInitException {
 		//TODO CONFIG make a configuration parsing class
 		//TODO CONFIG make a builder class that takes a config and returns an Authentication
-		final AuthStorage s = new MongoStorage(mc.getDatabase("kbaseauth"));
+		//TODO TEST authenticate to db
+		final MongoDatabase db = mc.getDatabase("kbaseauth");
+		final AuthStorage s = new MongoStorage(db);
 		return new Authentication(s);
 	}
 	
