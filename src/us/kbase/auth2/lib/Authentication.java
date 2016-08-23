@@ -1,6 +1,9 @@
 package us.kbase.auth2.lib;
 
+import static us.kbase.auth2.lib.Utils.clear;
+
 import java.security.NoSuchAlgorithmException;
+import java.util.Date;
 
 import us.kbase.auth2.cryptutils.PasswordCrypt;
 import us.kbase.auth2.cryptutils.TokenGenerator;
@@ -56,5 +59,13 @@ public class Authentication {
 		if (s == null || s.isEmpty()) {
 			throw new MissingParameterException("Missing parameter: " + name);
 		}
+	}
+
+
+	public AuthToken localLogin(final String userName, final char[] pwd) {
+		final AuthToken t = new AuthToken("faketoken", "fakename", new Date(1000000000000000000L));
+		clear(pwd);
+		return t;
+		// TODO NOW finish method
 	}
 }
