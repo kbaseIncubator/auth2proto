@@ -61,7 +61,7 @@ public class Hello {
 				throw new WebApplicationException(Response.status(502)
 						.build());
 			case "badreq":
-				throw new AuthException(AuthError.BAD_INPUT, "badreq",
+				throw new AuthException(AuthError.MISSING_PARAMETER, "badreq",
 						new IllegalArgumentException("badreq"));
 			case "auth":
 				throw new AuthenticationException(AuthError.AUTHENICATION_FAILED,

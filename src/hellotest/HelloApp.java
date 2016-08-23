@@ -15,8 +15,6 @@ import us.kbase.auth2.service.exceptions.handler.ExceptionHandler;
 import us.kbase.auth2.service.template.TemplateProcessor;
 import us.kbase.auth2.service.template.mustache.MustacheProcessor;
 
-//TODO WAIT accept json in text/plain and application/x-www-form-urlencoded or manually handle it
-
 public class HelloApp extends ResourceConfig {
 	
 	public HelloApp() {

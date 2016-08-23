@@ -7,7 +7,8 @@ public enum AuthError {
 	
 	AUTHENICATION_FAILED	(10000, "Authentication failed"),
 	UNAUTHORIZED			(20000, "Unauthorized"),
-	BAD_INPUT				(30000, "Bad Input"); //this should go
+	MISSING_PARAMETER		(30000, "Missing input parameter"),
+	USER_ALREADY_EXISTS		(30001, "User already exists");
 	
 	private final int errcode;
 	private final String error;

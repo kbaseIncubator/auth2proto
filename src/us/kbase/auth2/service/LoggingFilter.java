@@ -62,7 +62,8 @@ public class LoggingFilter implements ContainerRequestFilter,
 			final ContainerRequestContext reqcon,
 			final ContainerResponseContext rescon)
 			throws IOException {
-		LoggerFactory.getLogger(getClass()).info("{} {} {}",
+		LoggerFactory.getLogger(getClass()).info("{} {} {} {}",
+				reqcon.getMethod(),
 				reqcon.getUriInfo().getAbsolutePath(),
 				rescon.getStatus(),
 				reqcon.getHeaderString(USER_AGENT));
