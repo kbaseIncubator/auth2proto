@@ -53,6 +53,7 @@
     <include name="jerseyjackson/*.jar"/>
     <include name="mustache/*.jar"/>
     <include name="jerseymustache/*.jar"/>
+    <include name="mongo/*.jar"/>
     <!-- don't compile with the jetty jar, just use for test code -->
   </fileset>
 
@@ -80,7 +81,7 @@
     <!-- Compile class files-->
     <javac srcdir="${src}"
            destdir="${classes}"
-           excludes="helloserver/**"
+           excludes="helloserver/**, us/kbase/test/auth2/**"
            includeantruntime="false"
            debug="true"
            classpathref="compile.classpath"
