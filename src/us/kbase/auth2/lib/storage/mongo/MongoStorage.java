@@ -18,7 +18,7 @@ import com.mongodb.client.MongoDatabase;
 import com.mongodb.client.model.Filters;
 import com.mongodb.client.model.IndexOptions;
 
-import us.kbase.auth2.lib.AuthToken;
+import us.kbase.auth2.lib.HashedToken;
 import us.kbase.auth2.lib.LocalUser;
 import us.kbase.auth2.lib.storage.AuthStorage;
 import us.kbase.auth2.lib.storage.exceptions.AuthStorageException;
@@ -245,7 +245,7 @@ public class MongoStorage implements AuthStorage {
 	}
 
 	@Override
-	public void storeToken(final AuthToken t) throws AuthStorageException {
+	public void storeToken(final HashedToken t) throws AuthStorageException {
 		final Document td = new Document(
 				Fields.TOKEN_USER_NAME, t.getUserName())
 				.append(Fields.TOKEN_TOKEN, t.getToken())

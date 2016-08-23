@@ -1,6 +1,6 @@
 package us.kbase.auth2.lib.storage;
 
-import us.kbase.auth2.lib.AuthToken;
+import us.kbase.auth2.lib.HashedToken;
 import us.kbase.auth2.lib.LocalUser;
 import us.kbase.auth2.lib.storage.exceptions.AuthStorageException;
 import us.kbase.auth2.service.exceptions.AuthException;
@@ -18,7 +18,7 @@ public interface AuthStorage {
 	 * @param t the token to store.
 	 * @throws AuthStorageException if the token could not be stored.
 	 */
-	void storeToken(AuthToken t) throws AuthStorageException;
+	void storeToken(HashedToken t) throws AuthStorageException;
 
 	LocalUser getLocalUser(String userName)
 			throws AuthStorageException, AuthenticationException;

@@ -18,6 +18,10 @@ public class Authentication {
 
 	//TODO TEST unit tests
 	//TODO JAVADOC 
+	//TODO AUTH schema version
+	//TODO AUTH handle root user somehow (spec chars unallowed in usernames?)
+	//TODO AUTH server root should return server version (and urls for endpoints?)
+	//TODO AUTH check workspace for other useful things like the schema manager
 	
 	private final AuthStorage storage;
 	private final TokenGenerator tokens;
@@ -74,8 +78,8 @@ public class Authentication {
 		//TODO NOW if reset required, make reset token
 		final AuthToken t = new AuthToken(tokens.getToken(), userName,
 				//TODO CONFIG make token lifetime configurable
-				new Date(new Date().getTime() + (14 * 24 * 60 * 60)));
-		storage.storeToken(t);
+				new Date(new Date().getTime() + (14 * 24 * 60 * 60 * 1000)));
+		storage.storeToken(t.getHashedToken());
 		return t;
 	}
 }

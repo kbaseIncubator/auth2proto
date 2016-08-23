@@ -68,10 +68,14 @@ public class LocalAccounts {
 		if (session) {
 			return NewCookie.DEFAULT_MAX_AGE;
 		}
-		final long exp = t.getExpirationDate().getTime() -
-				new Date().getTime();
+		final long exp = (long) Math.floor((
+				t.getExpirationDate().getTime() - new Date().getTime()) /
+				1000.0);
 		if (exp > Integer.MAX_VALUE) {
 			return Integer.MAX_VALUE;
+		}
+		if (exp < 0) {
+			return 0;
 		}
 		return (int) exp;
 	}

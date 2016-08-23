@@ -1,5 +1,9 @@
 package us.kbase.auth2.lib;
 
+import java.nio.charset.StandardCharsets;
+import java.security.MessageDigest;
+import java.security.NoSuchAlgorithmException;
+import java.util.Base64;
 import java.util.Date;
 
 public class AuthToken {
@@ -30,6 +34,19 @@ public class AuthToken {
 
 	public Date getExpirationDate() {
 		return expirationDate;
+	}
+
+	public HashedToken getHashedToken() {
+		final MessageDigest digest;
+		try {
+			digest = MessageDigest.getInstance("SHA-256");
+		} catch (NoSuchAlgorithmException e) {
+			throw new RuntimeException("This should be impossible", e);
+		}
+		final byte[] hash = digest.digest(
+				token.getBytes(StandardCharsets.UTF_8));
+		final String b64hash = Base64.getEncoder().encodeToString(hash);
+		return new HashedToken(b64hash, userName, expirationDate);
 	}
 
 }
