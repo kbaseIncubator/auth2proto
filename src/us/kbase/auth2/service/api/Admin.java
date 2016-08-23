@@ -39,6 +39,7 @@ public class Admin {
 		//TODO NOW get adminName from token
 		final Map<String, String> ret = new HashMap<>();
 		ret.put("name", adminName);
+		ret.put("targeturl", "/admin/localaccount/create");
 		return ret;
 		
 	}
