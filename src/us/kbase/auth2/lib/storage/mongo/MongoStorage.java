@@ -246,7 +246,7 @@ public class MongoStorage implements AuthStorage {
 				Fields.TOKEN_USER_NAME, t.getUserName())
 				.append(Fields.TOKEN_ID, t.getId().toString())
 				.append(Fields.TOKEN_NAME, t.getTokenName())
-				.append(Fields.TOKEN_TOKEN, t.getToken())
+				.append(Fields.TOKEN_TOKEN, t.getTokenHash())
 				.append(Fields.TOKEN_EXPIRY, t.getExpirationDate());
 		try {
 			db.getCollection(COL_TOKEN).insertOne(td);
@@ -277,7 +277,7 @@ public class MongoStorage implements AuthStorage {
 	public HashedToken getToken(final IncomingHashedToken token)
 			throws AuthStorageException {
 		final Document t = findOne(COL_TOKEN, new Document(
-				Fields.TOKEN_TOKEN, token.getToken()));
+				Fields.TOKEN_TOKEN, token.getTokenHash()));
 		if (t == null) {
 			throw new NoSuchTokenException("Token not found");
 		}

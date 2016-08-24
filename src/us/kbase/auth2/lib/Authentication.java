@@ -74,7 +74,7 @@ public class Authentication {
 		}
 		clear(pwd);
 		//TODO NOW if reset required, make reset token
-		final AuthToken t = new AuthToken(null, tokens.getToken(), userName,
+		final AuthToken t = new AuthToken(tokens.getToken(), userName,
 				//TODO CONFIG make token lifetime configurable
 				new Date(new Date().getTime() + (14 * 24 * 60 * 60 * 1000)));
 		storage.storeToken(t.getHashedToken());

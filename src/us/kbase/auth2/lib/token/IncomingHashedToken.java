@@ -7,16 +7,16 @@ public class IncomingHashedToken {
 	//TODO TEST
 	//TODO JAVADOC
 
-	private final String token;
+	private final String tokenHash;
 
-	public IncomingHashedToken(String token) {
+	IncomingHashedToken(final String tokenHash) {
 		super();
-		checkString(token, "token", true);
-		this.token = token;
+		checkString(tokenHash, "token", true);
+		this.tokenHash = tokenHash;
 	}
 
-	public String getToken() {
-		return token;
+	public String getTokenHash() {
+		return tokenHash;
 	}
 
 }
