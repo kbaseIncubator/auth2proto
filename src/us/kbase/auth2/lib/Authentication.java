@@ -15,7 +15,7 @@ import us.kbase.auth2.lib.exceptions.AuthenticationException;
 import us.kbase.auth2.lib.storage.AuthStorage;
 import us.kbase.auth2.lib.storage.exceptions.AuthStorageException;
 import us.kbase.auth2.lib.storage.exceptions.NoSuchTokenException;
-import us.kbase.auth2.lib.token.AuthToken;
+import us.kbase.auth2.lib.token.NewToken;
 import us.kbase.auth2.lib.token.HashedToken;
 import us.kbase.auth2.lib.token.IncomingToken;
 
@@ -65,7 +65,7 @@ public class Authentication {
 		return pwd;
 	}
 	
-	public AuthToken localLogin(final String userName, final char[] pwd)
+	public NewToken localLogin(final String userName, final char[] pwd)
 			throws AuthenticationException, AuthStorageException {
 		final LocalUser u = storage.getLocalUser(userName);
 		if (!pwdcrypt.authenticate(pwd, u.getPasswordHash(), u.getSalt())) {
@@ -74,7 +74,7 @@ public class Authentication {
 		}
 		clear(pwd);
 		//TODO NOW if reset required, make reset token
-		final AuthToken t = new AuthToken(tokens.getToken(), userName,
+		final NewToken t = new NewToken(tokens.getToken(), userName,
 				//TODO CONFIG make token lifetime configurable
 				new Date(new Date().getTime() + (14 * 24 * 60 * 60 * 1000)));
 		storage.storeToken(t.getHashedToken());

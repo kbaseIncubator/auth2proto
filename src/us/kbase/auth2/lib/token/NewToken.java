@@ -5,7 +5,7 @@ import static us.kbase.auth2.lib.Utils.checkString;
 import java.util.Date;
 import java.util.UUID;
 
-public class AuthToken {
+public class NewToken {
 
 	//TODO TEST
 	//TODO JAVADOC
@@ -16,7 +16,7 @@ public class AuthToken {
 	private final String userName;
 	private final Date expirationDate;
 	
-	public AuthToken(
+	public NewToken(
 			final String token,
 			final String userName,
 			final Date expirationDate) {
@@ -31,7 +31,7 @@ public class AuthToken {
 		this.expirationDate = expirationDate;
 	}
 	
-	public AuthToken(
+	public NewToken(
 			final String tokenName,
 			final String token,
 			final String userName,

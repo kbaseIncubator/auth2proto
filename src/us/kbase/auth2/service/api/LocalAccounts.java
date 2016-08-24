@@ -23,7 +23,7 @@ import com.google.common.collect.ImmutableMap;
 import us.kbase.auth2.lib.Authentication;
 import us.kbase.auth2.lib.exceptions.AuthenticationException;
 import us.kbase.auth2.lib.storage.exceptions.AuthStorageException;
-import us.kbase.auth2.lib.token.AuthToken;
+import us.kbase.auth2.lib.token.NewToken;
 
 @Path("/localaccount")
 public class LocalAccounts {
@@ -55,7 +55,7 @@ public class LocalAccounts {
 			//checkbox, so "on" = checked, null = not checked
 			@FormParam("stayLoggedIn") final String stayLoggedIn)
 			throws AuthenticationException, AuthStorageException {
-		final AuthToken t = auth.localLogin(userName, pwd.toCharArray());
+		final NewToken t = auth.localLogin(userName, pwd.toCharArray());
 		//TODO NOW log
 		pwd = null; // try to get pwd GC'd as quickly as possible
 		//TODO NOW if reset required, do reset
@@ -66,13 +66,13 @@ public class LocalAccounts {
 				.build();
 	}
 	
-	private NewCookie getCookie(final AuthToken t, final boolean session) {
+	private NewCookie getCookie(final NewToken t, final boolean session) {
 		return new NewCookie(new Cookie("token", t.getToken(), "/", null),
 				"authtoken", getMaxAge(t, session), false);
 		//TODO CONFIG make secure cookie configurable
 	}
 	
-	private int getMaxAge(final AuthToken t, final boolean session) {
+	private int getMaxAge(final NewToken t, final boolean session) {
 		if (session) {
 			return NewCookie.DEFAULT_MAX_AGE;
 		}
