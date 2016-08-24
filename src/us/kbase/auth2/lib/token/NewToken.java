@@ -42,13 +42,14 @@ public class NewToken {
 			final UserName userName,
 			final Date expirationDate) {
 		checkString(token, "token", true);
+		checkString(tokenName, "tokenName", true);
 		if (userName == null) {
 			throw new NullPointerException("userName");
 		}
 		if (expirationDate == null) {
 			throw new NullPointerException("expirationDate");
 		}
-		this.tokenName = tokenName; // null ok
+		this.tokenName = tokenName;
 		this.token = token;
 		this.userName = userName;
 		this.expirationDate = expirationDate;
