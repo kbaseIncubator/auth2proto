@@ -85,12 +85,32 @@ public class Authentication {
 
 	public TokenSet getTokens(final IncomingToken token)
 			throws AuthenticationException, AuthStorageException {
-		final HashedToken ht;
+		final HashedToken ht = getToken(token);
+		return new TokenSet(ht, storage.getTokens(ht.getUserName()));
+	}
+
+	private HashedToken getToken(final IncomingToken token)
+			throws AuthStorageException, AuthenticationException {
 		try {
-			ht = storage.getToken(token.getHashedToken());
+			return storage.getToken(token.getHashedToken());
 		} catch (NoSuchTokenException e) {
 			throw new AuthenticationException(AuthError.INVALID_TOKEN, null);
 		}
-		return new TokenSet(ht, storage.getTokens(ht.getUserName()));
+	}
+
+	public NewToken createToken(
+			final IncomingToken token,
+			final String tokenName,
+			final boolean serverToken)
+			throws AuthException, AuthStorageException {
+		checkString(tokenName, "token name");
+		final HashedToken ht = getToken(token);
+		//TODO NOW check user has rights to create dev or server token
+		final NewToken t = new NewToken(tokenName, tokens.getToken(),
+				ht.getUserName(),
+				//TODO CONFIG make token lifetime configurable & based on type
+				new Date(new Date().getTime() + (14 * 24 * 60 * 60 * 1000)));
+		storage.storeToken(t.getHashedToken());
+		return t;
 	}
 }

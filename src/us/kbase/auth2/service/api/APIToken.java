@@ -1,5 +1,9 @@
 package us.kbase.auth2.service.api;
 
+import java.util.Date;
+import java.util.UUID;
+
+import us.kbase.auth2.lib.UserName;
 import us.kbase.auth2.lib.token.HashedToken;
 
 public class APIToken {
@@ -8,42 +12,49 @@ public class APIToken {
 	//TODO JAVADOC
 	
 	private final String id;
-	private final long expiration;
-	private final long creation;
-	private final String tokenName;
-	private final String userName;
+	private final long expires;
+	private final long created;
+	private final String name;
+	private final String user;
 
 	public APIToken(final HashedToken token) {
-		if (token == null) {
-			throw new NullPointerException("token");
-		}
-		this.id = token.getId().toString();
-		this.tokenName = token.getTokenName();
-		this.userName = token.getUserName().getName();
-		this.expiration = (long) Math.floor(
-				token.getExpirationDate().getTime() / 1000.0);
-		this.creation = (long) Math.floor(
-				token.getCreationDate().getTime() / 1000.0);
+		this(token.getTokenName(), token.getId(), token.getUserName(),
+				token.getCreationDate(), token.getExpirationDate());
+	}
+
+	APIToken(
+			final String tokenName,
+			final UUID id,
+			final UserName userName,
+			final Date creationDate,
+			final Date expirationDate) {
+		this.id = id.toString();
+		this.name = tokenName;
+		this.user = userName.getName();
+		this.expires = (long) Math.floor(
+				expirationDate.getTime() / 1000.0);
+		this.created = (long) Math.floor(
+				creationDate.getTime() / 1000.0);
 	}
 
 	public String getId() {
 		return id;
 	}
 
-	public long getCreation() {
-		return creation;
+	public long getCreated() {
+		return created;
 	}
 
-	public long getExpiration() {
-		return expiration;
+	public long getExpires() {
+		return expires;
 	}
 
-	public String getTokenName() {
-		return tokenName;
+	public String getName() {
+		return name;
 	}
 
-	public String getUserName() {
-		return userName;
+	public String getUser() {
+		return user;
 	}
 
 }
