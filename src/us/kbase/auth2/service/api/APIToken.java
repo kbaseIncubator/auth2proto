@@ -18,7 +18,7 @@ public class APIToken {
 		}
 		this.id = token.getId().toString();
 		this.tokenName = token.getTokenName();
-		this.userName = token.getUserName();
+		this.userName = token.getUserName().getName();
 		this.expiration = (long) Math.floor(
 				token.getExpirationDate().getTime() / 1000.0);
 	}

@@ -3,6 +3,7 @@ package us.kbase.auth2.lib.storage;
 import java.util.List;
 
 import us.kbase.auth2.lib.LocalUser;
+import us.kbase.auth2.lib.UserName;
 import us.kbase.auth2.lib.exceptions.AuthException;
 import us.kbase.auth2.lib.exceptions.AuthenticationException;
 import us.kbase.auth2.lib.storage.exceptions.AuthStorageException;
@@ -23,11 +24,12 @@ public interface AuthStorage {
 	 */
 	void storeToken(HashedToken t) throws AuthStorageException;
 
-	LocalUser getLocalUser(String userName)
+	LocalUser getLocalUser(UserName userName)
 			throws AuthStorageException, AuthenticationException;
 
-	HashedToken getToken(IncomingHashedToken incomingToken) throws AuthStorageException;
+	HashedToken getToken(IncomingHashedToken incomingToken)
+			throws AuthStorageException;
 
-	List<HashedToken> getTokens(String userName) throws AuthStorageException;
+	List<HashedToken> getTokens(UserName userName) throws AuthStorageException;
 
 }

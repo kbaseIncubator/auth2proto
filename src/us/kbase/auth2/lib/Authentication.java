@@ -1,7 +1,6 @@
 package us.kbase.auth2.lib;
 
 import static us.kbase.auth2.lib.Utils.checkString;
-import static us.kbase.auth2.lib.Utils.clear;
 
 import java.security.NoSuchAlgorithmException;
 import java.util.Date;
@@ -47,32 +46,35 @@ public class Authentication {
 	}
 
 
-	public char[] createLocalUser(
-			final String userName,
+	public Password createLocalUser(
+			final UserName userName,
 			final String fullName,
 			final String email)
 			throws AuthException, AuthStorageException {
-		//TODO NOW check minimum user name length, check email
-		checkString(userName, "user name");
+		if (userName == null) {
+			throw new NullPointerException("userName");
+		}
 		checkString(fullName, "full name");
 		checkString(email, "email");
-		final char[] pwd = tokens.getTemporaryPassword(10);
+		final Password pwd = new Password(tokens.getTemporaryPassword(10));
 		final byte[] salt = pwdcrypt.generateSalt();
-		final byte[] passwordHash = pwdcrypt.getEncryptedPassword(pwd, salt);
+		final byte[] passwordHash = pwdcrypt.getEncryptedPassword(
+				pwd.getPassword(), salt);
 		final LocalUser lu = new LocalUser(userName, email, fullName,
 				passwordHash, salt, true);
 		storage.createLocalAccount(lu);
 		return pwd;
 	}
 	
-	public NewToken localLogin(final String userName, final char[] pwd)
+	public NewToken localLogin(final UserName userName, final Password pwd)
 			throws AuthenticationException, AuthStorageException {
 		final LocalUser u = storage.getLocalUser(userName);
-		if (!pwdcrypt.authenticate(pwd, u.getPasswordHash(), u.getSalt())) {
+		if (!pwdcrypt.authenticate(pwd.getPassword(), u.getPasswordHash(),
+				u.getSalt())) {
 			throw new AuthenticationException(AuthError.AUTHENICATION_FAILED,
 					"Username / password mismatch");
 		}
-		clear(pwd);
+		pwd.clear();
 		//TODO NOW if reset required, make reset token
 		final NewToken t = new NewToken(tokens.getToken(), userName,
 				//TODO CONFIG make token lifetime configurable

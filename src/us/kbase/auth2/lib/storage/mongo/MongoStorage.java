@@ -21,9 +21,11 @@ import com.mongodb.client.model.Filters;
 import com.mongodb.client.model.IndexOptions;
 
 import us.kbase.auth2.lib.LocalUser;
+import us.kbase.auth2.lib.UserName;
 import us.kbase.auth2.lib.exceptions.AuthError;
 import us.kbase.auth2.lib.exceptions.AuthException;
 import us.kbase.auth2.lib.exceptions.AuthenticationException;
+import us.kbase.auth2.lib.exceptions.MissingParameterException;
 import us.kbase.auth2.lib.storage.AuthStorage;
 import us.kbase.auth2.lib.storage.exceptions.AuthStorageException;
 import us.kbase.auth2.lib.storage.exceptions.NoSuchTokenException;
@@ -194,7 +196,8 @@ public class MongoStorage implements AuthStorage {
 				local.getPasswordHash());
 		final String salt = Base64.getEncoder().encodeToString(
 				local.getSalt());
-		final Document u = new Document(Fields.USER_NAME, local.getUserName())
+		final Document u = new Document(
+				Fields.USER_NAME, local.getUserName().getName())
 				.append(Fields.USER_LOCAL, true)
 				.append(Fields.USER_EMAIL, local.getEmail())
 				.append(Fields.USER_FULL_NAME, local.getFullName())
@@ -207,7 +210,7 @@ public class MongoStorage implements AuthStorage {
 			if (isDuplicateKeyException(mwe)) {
 				System.out.println(mwe);
 				throw new AuthException(AuthError.USER_ALREADY_EXISTS,
-						local.getUserName());
+						local.getUserName().getName());
 			} else {
 				throw new AuthStorageException("Database write failed", mwe);
 			}
@@ -218,21 +221,31 @@ public class MongoStorage implements AuthStorage {
 	}
 	
 	@Override
-	public LocalUser getLocalUser(final String userName)
+	public LocalUser getLocalUser(final UserName userName)
 			throws AuthStorageException, AuthenticationException {
 		final Document user = findOne(COL_USERS,
-				new Document(Fields.USER_NAME, userName));
+				new Document(Fields.USER_NAME, userName.getName()));
 		if (user == null || !user.getBoolean(Fields.USER_LOCAL)) {
 			throw new AuthenticationException(AuthError.NO_SUCH_USER,
-					userName);
+					userName.getName());
 		}
-		return new LocalUser(user.getString(Fields.USER_NAME),
+		return new LocalUser(getUserName(user, Fields.USER_NAME),
 				user.getString(Fields.USER_EMAIL),
 				user.getString(Fields.USER_FULL_NAME),
 				Base64.getDecoder().decode(
 						user.getString(Fields.USER_PWD_HSH)),
 				Base64.getDecoder().decode(user.getString(Fields.USER_SALT)),
 				user.getBoolean(Fields.USER_RESET_PWD));
+	}
+
+	private UserName getUserName(final Document user, final String field)
+			throws AuthStorageException {
+		try {
+			return new UserName(user.getString(field));
+		} catch (MissingParameterException e) {
+			throw new AuthStorageException(
+					"Database error - record missing username");
+		}
 	}
 
 	private boolean isDuplicateKeyException(final MongoWriteException mwe) {
@@ -243,7 +256,7 @@ public class MongoStorage implements AuthStorage {
 	@Override
 	public void storeToken(final HashedToken t) throws AuthStorageException {
 		final Document td = new Document(
-				Fields.TOKEN_USER_NAME, t.getUserName())
+				Fields.TOKEN_USER_NAME, t.getUserName().getName())
 				.append(Fields.TOKEN_ID, t.getId().toString())
 				.append(Fields.TOKEN_NAME, t.getTokenName())
 				.append(Fields.TOKEN_TOKEN, t.getTokenHash())
@@ -284,16 +297,17 @@ public class MongoStorage implements AuthStorage {
 		return getToken(t);
 	}
 	
-	private HashedToken getToken(final Document t) {
+	private HashedToken getToken(final Document t)
+			throws AuthStorageException {
 		return new HashedToken(t.getString(Fields.TOKEN_NAME),
 				UUID.fromString(t.getString(Fields.TOKEN_ID)),
 				t.getString(Fields.TOKEN_TOKEN),
-				t.getString(Fields.TOKEN_USER_NAME),
+				getUserName(t, Fields.TOKEN_USER_NAME),
 				t.getDate(Fields.TOKEN_EXPIRY));
 	}
 
 	@Override
-	public List<HashedToken> getTokens(final String userName)
+	public List<HashedToken> getTokens(final UserName userName)
 			throws AuthStorageException {
 		if (userName == null) {
 			throw new NullPointerException("userName");
@@ -301,7 +315,7 @@ public class MongoStorage implements AuthStorage {
 		final List<HashedToken> ret = new LinkedList<>();
 		try {
 			final FindIterable<Document> ts = db.getCollection(COL_TOKEN).find(
-					new Document(Fields.TOKEN_USER_NAME, userName));
+					new Document(Fields.TOKEN_USER_NAME, userName.getName()));
 			for (final Document d: ts) {
 				ret.add(getToken(d));
 			}

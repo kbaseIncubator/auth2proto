@@ -9,6 +9,8 @@ import java.util.Base64;
 import java.util.Date;
 import java.util.UUID;
 
+import us.kbase.auth2.lib.UserName;
+
 public class HashedToken {
 	//TODO TEST
 	//TODO JAVADOC
@@ -16,17 +18,19 @@ public class HashedToken {
 	private final UUID id;
 	private final String tokenName;
 	private final String tokenHash;
-	private final String userName;
+	private final UserName userName;
 	private final Date expirationDate;
 	
 	public HashedToken(
 			final String tokenName,
 			final UUID id,
 			final String tokenHash,
-			final String userName,
+			final UserName userName,
 			final Date expirationDate) {
 		checkString(tokenHash, "tokenHash", true);
-		checkString(userName, "userName", true);
+		if (userName == null) {
+			throw new NullPointerException("userName");
+		}
 		if (expirationDate == null) {
 			throw new IllegalArgumentException("expirationDate");
 		}
@@ -52,7 +56,7 @@ public class HashedToken {
 		return tokenHash;
 	}
 
-	public String getUserName() {
+	public UserName getUserName() {
 		return userName;
 	}
 

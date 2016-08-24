@@ -5,23 +5,26 @@ import static us.kbase.auth2.lib.Utils.checkString;
 import java.util.Date;
 import java.util.UUID;
 
+import us.kbase.auth2.lib.UserName;
+
 public class NewToken {
 
 	//TODO TEST
 	//TODO JAVADOC
-	//TODO NOW change to NewToken
 	
 	private final String tokenName;
 	private final String token;
-	private final String userName;
+	private final UserName userName;
 	private final Date expirationDate;
 	
 	public NewToken(
 			final String token,
-			final String userName,
+			final UserName userName,
 			final Date expirationDate) {
 		checkString(token, "token", true);
-		checkString(userName, "userName", true);
+		if (userName == null) {
+			throw new NullPointerException("userName");
+		}
 		if (expirationDate == null) {
 			throw new NullPointerException("expirationDate");
 		}
@@ -34,10 +37,12 @@ public class NewToken {
 	public NewToken(
 			final String tokenName,
 			final String token,
-			final String userName,
+			final UserName userName,
 			final Date expirationDate) {
 		checkString(token, "token", true);
-		checkString(userName, "userName", true);
+		if (userName == null) {
+			throw new NullPointerException("userName");
+		}
 		if (expirationDate == null) {
 			throw new NullPointerException("expirationDate");
 		}
@@ -55,7 +60,7 @@ public class NewToken {
 		return token;
 	}
 
-	public String getUserName() {
+	public UserName getUserName() {
 		return userName;
 	}
 

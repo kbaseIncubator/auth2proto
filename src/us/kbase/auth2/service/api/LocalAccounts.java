@@ -21,7 +21,10 @@ import org.glassfish.jersey.server.mvc.Viewable;
 import com.google.common.collect.ImmutableMap;
 
 import us.kbase.auth2.lib.Authentication;
+import us.kbase.auth2.lib.Password;
+import us.kbase.auth2.lib.UserName;
 import us.kbase.auth2.lib.exceptions.AuthenticationException;
+import us.kbase.auth2.lib.exceptions.MissingParameterException;
 import us.kbase.auth2.lib.storage.exceptions.AuthStorageException;
 import us.kbase.auth2.lib.token.NewToken;
 
@@ -54,8 +57,13 @@ public class LocalAccounts {
 			@FormParam("pwd") String pwd, //char makes Jersey puke
 			//checkbox, so "on" = checked, null = not checked
 			@FormParam("stayLoggedIn") final String stayLoggedIn)
-			throws AuthenticationException, AuthStorageException {
-		final NewToken t = auth.localLogin(userName, pwd.toCharArray());
+			throws AuthenticationException, AuthStorageException,
+			MissingParameterException {
+		if (userName == null) {
+			throw new MissingParameterException("user");
+		}
+		final NewToken t = auth.localLogin(new UserName(userName),
+				new Password(pwd.toCharArray()));
 		//TODO NOW log
 		pwd = null; // try to get pwd GC'd as quickly as possible
 		//TODO NOW if reset required, do reset
