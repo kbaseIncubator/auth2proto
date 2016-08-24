@@ -89,18 +89,14 @@ public class Authentication {
 		return new TokenSet(ht, storage.getTokens(ht.getUserName()));
 	}
 
-
 	private HashedToken getToken(final IncomingToken token)
 			throws AuthStorageException, AuthenticationException {
-		final HashedToken ht;
 		try {
-			ht = storage.getToken(token.getHashedToken());
+			return storage.getToken(token.getHashedToken());
 		} catch (NoSuchTokenException e) {
 			throw new AuthenticationException(AuthError.INVALID_TOKEN, null);
 		}
-		return ht;
 	}
-
 
 	public NewToken createToken(
 			final IncomingToken token,

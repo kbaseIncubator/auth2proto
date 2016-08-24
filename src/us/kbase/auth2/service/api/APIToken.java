@@ -1,5 +1,9 @@
 package us.kbase.auth2.service.api;
 
+import java.util.Date;
+import java.util.UUID;
+
+import us.kbase.auth2.lib.UserName;
 import us.kbase.auth2.lib.token.HashedToken;
 
 public class APIToken {
@@ -14,16 +18,23 @@ public class APIToken {
 	private final String user;
 
 	public APIToken(final HashedToken token) {
-		if (token == null) {
-			throw new NullPointerException("token");
-		}
-		this.id = token.getId().toString();
-		this.name = token.getTokenName();
-		this.user = token.getUserName().getName();
+		this(token.getTokenName(), token.getId(), token.getUserName(),
+				token.getCreationDate(), token.getExpirationDate());
+	}
+
+	APIToken(
+			final String tokenName,
+			final UUID id,
+			final UserName userName,
+			final Date creationDate,
+			final Date expirationDate) {
+		this.id = id.toString();
+		this.name = tokenName;
+		this.user = userName.getName();
 		this.expires = (long) Math.floor(
-				token.getExpirationDate().getTime() / 1000.0);
+				expirationDate.getTime() / 1000.0);
 		this.created = (long) Math.floor(
-				token.getCreationDate().getTime() / 1000.0);
+				creationDate.getTime() / 1000.0);
 	}
 
 	public String getId() {
