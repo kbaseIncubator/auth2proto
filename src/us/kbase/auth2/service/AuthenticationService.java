@@ -18,7 +18,7 @@ import us.kbase.auth2.lib.storage.AuthStorage;
 import us.kbase.auth2.lib.storage.exceptions.StorageInitException;
 import us.kbase.auth2.lib.storage.mongo.MongoStorage;
 import us.kbase.auth2.service.LoggingFilter;
-import us.kbase.auth2.service.exceptions.handler.ExceptionHandler;
+import us.kbase.auth2.service.exceptions.ExceptionHandler;
 import us.kbase.auth2.service.template.TemplateProcessor;
 import us.kbase.auth2.service.template.mustache.MustacheProcessor;
 import us.kbase.common.service.JsonServerSyslog;
@@ -26,6 +26,9 @@ import us.kbase.common.service.JsonServerSyslog;
 //TODO WAIT accept json in text/plain and application/x-www-form-urlencoded or manually handle it
 
 public class AuthenticationService extends ResourceConfig {
+	
+	//TODO TEST
+	//TODO JAVADOC
 	
 	private static MongoClient mc;
 	@SuppressWarnings("unused")

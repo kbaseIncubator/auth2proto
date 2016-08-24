@@ -1,4 +1,4 @@
-package us.kbase.auth2.service.exceptions.handler;
+package us.kbase.auth2.service.exceptions;
 
 import java.util.HashMap;
 import java.util.List;

@@ -20,13 +20,20 @@ import org.glassfish.jersey.server.mvc.Viewable;
 
 import com.google.common.collect.ImmutableMap;
 
-import us.kbase.auth2.lib.AuthToken;
 import us.kbase.auth2.lib.Authentication;
+import us.kbase.auth2.lib.exceptions.AuthenticationException;
 import us.kbase.auth2.lib.storage.exceptions.AuthStorageException;
-import us.kbase.auth2.service.exceptions.AuthenticationException;
+import us.kbase.auth2.lib.token.AuthToken;
 
 @Path("/localaccount")
 public class LocalAccounts {
+	
+	//TODO TEST
+	//TODO JAVADOC
+
+	
+	//TODO NOW logout
+	//TODO NOW reset pwd
 
 	@Inject
 	private Authentication auth;
@@ -60,18 +67,23 @@ public class LocalAccounts {
 	}
 	
 	private NewCookie getCookie(final AuthToken t, final boolean session) {
-		return new NewCookie(new Cookie("token", t.getToken()), "authtoken",
-				getMaxAge(t, session), false); //TODO CONFIG make secure cookie configurable
+		return new NewCookie(new Cookie("token", t.getToken(), "/", null),
+				"authtoken", getMaxAge(t, session), false);
+		//TODO CONFIG make secure cookie configurable
 	}
 	
 	private int getMaxAge(final AuthToken t, final boolean session) {
 		if (session) {
 			return NewCookie.DEFAULT_MAX_AGE;
 		}
-		final long exp = t.getExpirationDate().getTime() -
-				new Date().getTime();
+		final long exp = (long) Math.floor((
+				t.getExpirationDate().getTime() - new Date().getTime()) /
+				1000.0);
 		if (exp > Integer.MAX_VALUE) {
 			return Integer.MAX_VALUE;
+		}
+		if (exp < 0) {
+			return 0;
 		}
 		return (int) exp;
 	}

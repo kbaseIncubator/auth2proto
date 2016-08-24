@@ -1,4 +1,4 @@
-package us.kbase.auth2.service.exceptions;
+package us.kbase.auth2.lib.exceptions;
 
 public enum AuthError {
 	
@@ -6,6 +6,8 @@ public enum AuthError {
 	//TODO JAVADOC
 	
 	AUTHENICATION_FAILED	(10000, "Authentication failed"),
+	NO_TOKEN				(10001, "No authentication token"),
+	INVALID_TOKEN			(10002, "Invalid token"),
 	UNAUTHORIZED			(20000, "Unauthorized"),
 	MISSING_PARAMETER		(30000, "Missing input parameter"),
 	USER_ALREADY_EXISTS		(30001, "User already exists"),

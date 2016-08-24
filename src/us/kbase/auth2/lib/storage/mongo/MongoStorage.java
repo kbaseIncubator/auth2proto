@@ -4,8 +4,10 @@ package us.kbase.auth2.lib.storage.mongo;
 import java.util.Arrays;
 import java.util.Base64;
 import java.util.HashMap;
+import java.util.LinkedList;
 import java.util.List;
 import java.util.Map;
+import java.util.UUID;
 
 import org.bson.Document;
 
@@ -18,14 +20,16 @@ import com.mongodb.client.MongoDatabase;
 import com.mongodb.client.model.Filters;
 import com.mongodb.client.model.IndexOptions;
 
-import us.kbase.auth2.lib.AuthToken;
 import us.kbase.auth2.lib.LocalUser;
+import us.kbase.auth2.lib.exceptions.AuthError;
+import us.kbase.auth2.lib.exceptions.AuthException;
+import us.kbase.auth2.lib.exceptions.AuthenticationException;
 import us.kbase.auth2.lib.storage.AuthStorage;
 import us.kbase.auth2.lib.storage.exceptions.AuthStorageException;
+import us.kbase.auth2.lib.storage.exceptions.NoSuchTokenException;
 import us.kbase.auth2.lib.storage.exceptions.StorageInitException;
-import us.kbase.auth2.service.exceptions.AuthError;
-import us.kbase.auth2.service.exceptions.AuthException;
-import us.kbase.auth2.service.exceptions.AuthenticationException;
+import us.kbase.auth2.lib.token.HashedToken;
+import us.kbase.auth2.lib.token.IncomingHashedToken;
 
 public class MongoStorage implements AuthStorage {
 
@@ -90,6 +94,7 @@ public class MongoStorage implements AuthStorage {
 		final Map<List<String>, IndexOptions> token = new HashMap<>();
 		token.put(Arrays.asList(Fields.TOKEN_USER_NAME), null);
 		token.put(Arrays.asList(Fields.TOKEN_TOKEN), IDX_UNIQ);
+		token.put(Arrays.asList(Fields.TOKEN_ID), IDX_UNIQ);
 		INDEXES.put(COL_TOKEN, token);
 		
 		//config indexes
@@ -185,7 +190,6 @@ public class MongoStorage implements AuthStorage {
 	@Override
 	public void createLocalAccount(final LocalUser local)
 			throws AuthException, AuthStorageException {
-		// TODO Auto-generated method stub
 		final String pwdhsh = Base64.getEncoder().encodeToString(
 				local.getPasswordHash());
 		final String salt = Base64.getEncoder().encodeToString(
@@ -216,16 +220,8 @@ public class MongoStorage implements AuthStorage {
 	@Override
 	public LocalUser getLocalUser(final String userName)
 			throws AuthStorageException, AuthenticationException {
-		final Document user;
-		try {
-			// assume here that the indexes work and there can't be two users
-			// with the same name
-			user = db.getCollection(COL_USERS).find(
-					new Document(Fields.USER_NAME, userName)).first();
-		} catch (MongoException me) {
-			throw new AuthStorageException(
-					"Connection to database failed", me);
-		}
+		final Document user = findOne(COL_USERS,
+				new Document(Fields.USER_NAME, userName));
 		if (user == null || !user.getBoolean(Fields.USER_LOCAL)) {
 			throw new AuthenticationException(AuthError.NO_SUCH_USER,
 					userName);
@@ -245,9 +241,11 @@ public class MongoStorage implements AuthStorage {
 	}
 
 	@Override
-	public void storeToken(final AuthToken t) throws AuthStorageException {
+	public void storeToken(final HashedToken t) throws AuthStorageException {
 		final Document td = new Document(
 				Fields.TOKEN_USER_NAME, t.getUserName())
+				.append(Fields.TOKEN_ID, t.getId().toString())
+				.append(Fields.TOKEN_NAME, t.getTokenName())
 				.append(Fields.TOKEN_TOKEN, t.getToken())
 				.append(Fields.TOKEN_EXPIRY, t.getExpirationDate());
 		try {
@@ -261,4 +259,57 @@ public class MongoStorage implements AuthStorage {
 					"Connection to database failed", me);
 		}
 	}
+
+	/* Use this for finding documents where indexes should force only a single
+	 * document. Assumes the indexes are doing their job.
+	 */
+	private Document findOne(final String collection, final Document query)
+			throws AuthStorageException {
+		try {
+			return db.getCollection(collection).find(query).first();
+		} catch (MongoException me) {
+			throw new AuthStorageException(
+					"Connection to database failed", me);
+		}
+	}
+
+	@Override
+	public HashedToken getToken(final IncomingHashedToken token)
+			throws AuthStorageException {
+		final Document t = findOne(COL_TOKEN, new Document(
+				Fields.TOKEN_TOKEN, token.getToken()));
+		if (t == null) {
+			throw new NoSuchTokenException("Token not found");
+		}
+		return getToken(t);
+	}
+	
+	private HashedToken getToken(final Document t) {
+		return new HashedToken(t.getString(Fields.TOKEN_NAME),
+				UUID.fromString(t.getString(Fields.TOKEN_ID)),
+				t.getString(Fields.TOKEN_TOKEN),
+				t.getString(Fields.TOKEN_USER_NAME),
+				t.getDate(Fields.TOKEN_EXPIRY));
+	}
+
+	@Override
+	public List<HashedToken> getTokens(final String userName)
+			throws AuthStorageException {
+		if (userName == null) {
+			throw new NullPointerException("userName");
+		}
+		final List<HashedToken> ret = new LinkedList<>();
+		try {
+			final FindIterable<Document> ts = db.getCollection(COL_TOKEN).find(
+					new Document(Fields.TOKEN_USER_NAME, userName));
+			for (final Document d: ts) {
+				ret.add(getToken(d));
+			}
+		} catch (MongoException e) {
+			throw new AuthStorageException(
+					"Connection to database failed", e);
+		}
+		return ret;
+	}
+
 }

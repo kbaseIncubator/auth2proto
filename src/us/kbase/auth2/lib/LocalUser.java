@@ -1,13 +1,10 @@
 package us.kbase.auth2.lib;
 
-public class LocalUser {
+public class LocalUser extends AuthUser {
 	
 	//TODO TEST unit test
 	//TODO JAVADOC
 	
-	private final String fullName;
-	private final String email;
-	private final String userName;
 	private final byte[] passwordHash;
 	private final byte[] salt;
 	private final boolean forceReset;
@@ -19,26 +16,11 @@ public class LocalUser {
 			final byte[] passwordHash,
 			final byte[] salt,
 			final boolean forceReset) {
-		super();
+		super(userName, email, fullName);
 		//TODO NOW check for nulls & empty strings - should email & fullName be allowed as empty strings?
-		this.fullName = fullName;
-		this.email = email;
-		this.userName = userName;
 		this.passwordHash = passwordHash;
 		this.salt = salt;
 		this.forceReset = forceReset;
-	}
-
-	public String getFullName() {
-		return fullName;
-	}
-
-	public String getEmail() {
-		return email;
-	}
-
-	public String getUserName() {
-		return userName;
 	}
 
 	public byte[] getPasswordHash() {

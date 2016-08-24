@@ -19,12 +19,19 @@ import org.glassfish.jersey.server.mvc.Template;
 import com.google.common.collect.ImmutableMap;
 
 import us.kbase.auth2.lib.Authentication;
+import us.kbase.auth2.lib.exceptions.AuthException;
 import us.kbase.auth2.lib.storage.exceptions.AuthStorageException;
-import us.kbase.auth2.service.exceptions.AuthException;
 
 @Path("/admin")
 public class Admin {
 
+	//TODO TEST
+	//TODO JAVADOC
+
+	//TODO NOW reset user pwd
+	//TODO NOW revoke user token
+	//TODO NOW find user
+	
 	@Inject
 	private Authentication auth;
 	
@@ -47,6 +54,7 @@ public class Admin {
 	@POST
 	@Path("/localaccount/create")
 	@Consumes(MediaType.APPLICATION_FORM_URLENCODED)
+	@Produces(MediaType.TEXT_HTML)
 	@Template(name = "/adminlocalaccountcreated")
 	public Map<String, String> createLocalAccountComplete(
 			@FormParam("user") final String userName,
