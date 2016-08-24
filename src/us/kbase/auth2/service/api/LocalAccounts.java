@@ -69,7 +69,7 @@ public class LocalAccounts {
 		//TODO NOW if reset required, do reset
 		return Response.ok(
 				new Viewable("/localloginresult",
-						ImmutableMap.of("user", t.getUserName())))
+						ImmutableMap.of("user", userName)))
 				.cookie(getCookie(t, stayLoggedIn == null))
 				.build();
 	}

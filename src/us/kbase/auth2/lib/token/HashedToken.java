@@ -20,12 +20,14 @@ public class HashedToken {
 	private final String tokenHash;
 	private final UserName userName;
 	private final Date expirationDate;
+	private final Date creationDate;
 	
 	public HashedToken(
 			final String tokenName,
 			final UUID id,
 			final String tokenHash,
 			final UserName userName,
+			final Date creationDate,
 			final Date expirationDate) {
 		checkString(tokenHash, "tokenHash", true);
 		if (userName == null) {
@@ -34,6 +36,9 @@ public class HashedToken {
 		if (expirationDate == null) {
 			throw new IllegalArgumentException("expirationDate");
 		}
+		if (creationDate == null) {
+			throw new IllegalArgumentException("creationDate");
+		}
 		if (id == null) {
 			throw new NullPointerException("id");
 		}
@@ -41,6 +46,7 @@ public class HashedToken {
 		this.tokenHash = tokenHash;
 		this.userName = userName;
 		this.expirationDate = expirationDate;
+		this.creationDate = creationDate;
 		this.id = id;
 	}
 
@@ -58,6 +64,10 @@ public class HashedToken {
 
 	public UserName getUserName() {
 		return userName;
+	}
+
+	public Date getCreationDate() {
+		return creationDate;
 	}
 
 	public Date getExpirationDate() {

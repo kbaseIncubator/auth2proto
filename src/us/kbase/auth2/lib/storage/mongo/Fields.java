@@ -32,10 +32,12 @@ public class Fields {
 	public static final String TOKEN_EXPIRY = "expires";
 	public static final String TOKEN_ID = "id";
 	public static final String TOKEN_NAME = "name";
+	public static final String TOKEN_CREATION = "create";
 	
 	// configuration fields
 	public static final String CONFIG_KEY = "config";
 	public static final String CONFIG_VALUE = "config";
 	public static final String CONFIG_UPDATE = "inupdate";
 	public static final String CONFIG_SCHEMA_VERSION = "schemaver";
+
 }

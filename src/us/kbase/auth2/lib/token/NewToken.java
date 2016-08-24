@@ -16,6 +16,8 @@ public class NewToken {
 	private final String token;
 	private final UserName userName;
 	private final Date expirationDate;
+	private final Date creationDate = new Date();
+	private final UUID id = UUID.randomUUID();
 	
 	public NewToken(
 			final String token,
@@ -56,6 +58,10 @@ public class NewToken {
 		return tokenName;
 	}
 
+	public UUID getId() {
+		return id;
+	}
+
 	public String getToken() {
 		return token;
 	}
@@ -64,13 +70,17 @@ public class NewToken {
 		return userName;
 	}
 
+	public Date getCreationDate() {
+		return creationDate;
+	}
+
 	public Date getExpirationDate() {
 		return expirationDate;
 	}
 
 	public HashedToken getHashedToken() {
-		return new HashedToken(tokenName, UUID.randomUUID(),
-				HashedToken.hash(token), userName, expirationDate);
+		return new HashedToken(tokenName, id, HashedToken.hash(token),
+				userName, creationDate, expirationDate);
 	}
 
 }

@@ -1,12 +1,15 @@
 <html>
 <body>
-<p>User: {{user}}</p>
+<p>User: {{user}}<br/>
+Expiration and creation dates are in seconds from the epoch.
+</p>
 {{#tokens}}
 {{#name}}
 Name: {{name}}<br/>
 {{/name}}
 ID: {{id}}<br/>
-Expiration (epoch time in seconds): {{expiration}}<br/>
+Expiration: {{expiration}}<br/>
+Creation: {{creation}}<br/>
 <br/>
 {{/tokens}}
 </body>

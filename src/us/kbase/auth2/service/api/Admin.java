@@ -32,6 +32,7 @@ public class Admin {
 	//TODO NOW reset user pwd
 	//TODO NOW revoke user token
 	//TODO NOW find user
+	//TODO NOW roles. Admin, create dev / server toke for now
 	
 	@Inject
 	private Authentication auth;

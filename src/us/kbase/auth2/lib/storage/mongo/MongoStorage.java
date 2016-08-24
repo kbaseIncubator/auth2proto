@@ -229,7 +229,8 @@ public class MongoStorage implements AuthStorage {
 			throw new AuthenticationException(AuthError.NO_SUCH_USER,
 					userName.getName());
 		}
-		return new LocalUser(getUserName(user, Fields.USER_NAME),
+		return new LocalUser(
+				getUserName(user, Fields.USER_NAME),
 				user.getString(Fields.USER_EMAIL),
 				user.getString(Fields.USER_FULL_NAME),
 				Base64.getDecoder().decode(
@@ -260,7 +261,8 @@ public class MongoStorage implements AuthStorage {
 				.append(Fields.TOKEN_ID, t.getId().toString())
 				.append(Fields.TOKEN_NAME, t.getTokenName())
 				.append(Fields.TOKEN_TOKEN, t.getTokenHash())
-				.append(Fields.TOKEN_EXPIRY, t.getExpirationDate());
+				.append(Fields.TOKEN_EXPIRY, t.getExpirationDate())
+				.append(Fields.TOKEN_CREATION, t.getCreationDate());
 		try {
 			db.getCollection(COL_TOKEN).insertOne(td);
 			/* could catch a duplicate key exception here but that indicates
@@ -303,6 +305,7 @@ public class MongoStorage implements AuthStorage {
 				UUID.fromString(t.getString(Fields.TOKEN_ID)),
 				t.getString(Fields.TOKEN_TOKEN),
 				getUserName(t, Fields.TOKEN_USER_NAME),
+				t.getDate(Fields.TOKEN_CREATION),
 				t.getDate(Fields.TOKEN_EXPIRY));
 	}
 
