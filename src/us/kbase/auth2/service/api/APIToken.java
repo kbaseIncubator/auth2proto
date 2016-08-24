@@ -8,21 +8,21 @@ public class APIToken {
 	//TODO JAVADOC
 	
 	private final String id;
-	private final long expiration;
-	private final long creation;
-	private final String tokenName;
-	private final String userName;
+	private final long expires;
+	private final long created;
+	private final String name;
+	private final String user;
 
 	public APIToken(final HashedToken token) {
 		if (token == null) {
 			throw new NullPointerException("token");
 		}
 		this.id = token.getId().toString();
-		this.tokenName = token.getTokenName();
-		this.userName = token.getUserName().getName();
-		this.expiration = (long) Math.floor(
+		this.name = token.getTokenName();
+		this.user = token.getUserName().getName();
+		this.expires = (long) Math.floor(
 				token.getExpirationDate().getTime() / 1000.0);
-		this.creation = (long) Math.floor(
+		this.created = (long) Math.floor(
 				token.getCreationDate().getTime() / 1000.0);
 	}
 
@@ -30,20 +30,20 @@ public class APIToken {
 		return id;
 	}
 
-	public long getCreation() {
-		return creation;
+	public long getCreated() {
+		return created;
 	}
 
-	public long getExpiration() {
-		return expiration;
+	public long getExpires() {
+		return expires;
 	}
 
-	public String getTokenName() {
-		return tokenName;
+	public String getName() {
+		return name;
 	}
 
-	public String getUserName() {
-		return userName;
+	public String getUser() {
+		return user;
 	}
 
 }
