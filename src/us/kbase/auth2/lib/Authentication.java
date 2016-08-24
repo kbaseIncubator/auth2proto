@@ -4,7 +4,6 @@ import static us.kbase.auth2.lib.Utils.checkString;
 
 import java.security.NoSuchAlgorithmException;
 import java.util.Date;
-import java.util.List;
 
 import us.kbase.auth2.cryptutils.PasswordCrypt;
 import us.kbase.auth2.cryptutils.TokenGenerator;
@@ -15,6 +14,7 @@ import us.kbase.auth2.lib.storage.AuthStorage;
 import us.kbase.auth2.lib.storage.exceptions.AuthStorageException;
 import us.kbase.auth2.lib.storage.exceptions.NoSuchTokenException;
 import us.kbase.auth2.lib.token.NewToken;
+import us.kbase.auth2.lib.token.TokenSet;
 import us.kbase.auth2.lib.token.HashedToken;
 import us.kbase.auth2.lib.token.IncomingToken;
 
@@ -83,7 +83,7 @@ public class Authentication {
 		return t;
 	}
 
-	public List<HashedToken> getTokens(final IncomingToken token)
+	public TokenSet getTokens(final IncomingToken token)
 			throws AuthenticationException, AuthStorageException {
 		final HashedToken ht;
 		try {
@@ -91,6 +91,6 @@ public class Authentication {
 		} catch (NoSuchTokenException e) {
 			throw new AuthenticationException(AuthError.INVALID_TOKEN, null);
 		}
-		return storage.getTokens(ht.getUserName());
+		return new TokenSet(ht, storage.getTokens(ht.getUserName()));
 	}
 }

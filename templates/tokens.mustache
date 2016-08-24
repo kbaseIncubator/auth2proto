@@ -3,6 +3,17 @@
 <p>User: {{user}}<br/>
 Expiration and creation dates are in seconds from the epoch.
 </p>
+Current token:<br/>
+{{#current}}
+{{#name}}
+Name: {{name}}<br/>
+{{/name}}
+ID: {{id}}<br/>
+Expiration: {{expiration}}<br/>
+Creation: {{creation}}<br/>
+<br/>
+{{/current}}
+<p>Tokens:</p>
 {{#tokens}}
 {{#name}}
 Name: {{name}}<br/>
