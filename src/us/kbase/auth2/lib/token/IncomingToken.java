@@ -1,7 +1,6 @@
 package us.kbase.auth2.lib.token;
 
 import static us.kbase.auth2.lib.Utils.checkString;
-import static us.kbase.auth2.lib.token.AuthToken.hash;
 
 public class IncomingToken {
 	
@@ -20,6 +19,6 @@ public class IncomingToken {
 	}
 	
 	public IncomingHashedToken getHashedToken() {
-		return new IncomingHashedToken(hash(token));
+		return new IncomingHashedToken(HashedToken.hash(token));
 	}
 }

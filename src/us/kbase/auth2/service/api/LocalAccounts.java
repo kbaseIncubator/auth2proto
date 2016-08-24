@@ -21,9 +21,12 @@ import org.glassfish.jersey.server.mvc.Viewable;
 import com.google.common.collect.ImmutableMap;
 
 import us.kbase.auth2.lib.Authentication;
+import us.kbase.auth2.lib.Password;
+import us.kbase.auth2.lib.UserName;
 import us.kbase.auth2.lib.exceptions.AuthenticationException;
+import us.kbase.auth2.lib.exceptions.MissingParameterException;
 import us.kbase.auth2.lib.storage.exceptions.AuthStorageException;
-import us.kbase.auth2.lib.token.AuthToken;
+import us.kbase.auth2.lib.token.NewToken;
 
 @Path("/localaccount")
 public class LocalAccounts {
@@ -54,25 +57,30 @@ public class LocalAccounts {
 			@FormParam("pwd") String pwd, //char makes Jersey puke
 			//checkbox, so "on" = checked, null = not checked
 			@FormParam("stayLoggedIn") final String stayLoggedIn)
-			throws AuthenticationException, AuthStorageException {
-		final AuthToken t = auth.localLogin(userName, pwd.toCharArray());
+			throws AuthenticationException, AuthStorageException,
+			MissingParameterException {
+		if (userName == null) {
+			throw new MissingParameterException("user");
+		}
+		final NewToken t = auth.localLogin(new UserName(userName),
+				new Password(pwd.toCharArray()));
 		//TODO NOW log
 		pwd = null; // try to get pwd GC'd as quickly as possible
 		//TODO NOW if reset required, do reset
 		return Response.ok(
 				new Viewable("/localloginresult",
-						ImmutableMap.of("user", t.getUserName())))
+						ImmutableMap.of("user", userName)))
 				.cookie(getCookie(t, stayLoggedIn == null))
 				.build();
 	}
 	
-	private NewCookie getCookie(final AuthToken t, final boolean session) {
+	private NewCookie getCookie(final NewToken t, final boolean session) {
 		return new NewCookie(new Cookie("token", t.getToken(), "/", null),
 				"authtoken", getMaxAge(t, session), false);
 		//TODO CONFIG make secure cookie configurable
 	}
 	
-	private int getMaxAge(final AuthToken t, final boolean session) {
+	private int getMaxAge(final NewToken t, final boolean session) {
 		if (session) {
 			return NewCookie.DEFAULT_MAX_AGE;
 		}

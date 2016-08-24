@@ -94,28 +94,4 @@ public class PasswordCrypt {
 		return salt;
 	}
 	
-	//TODO ONMOVE remove
-	public static void main(String[] args) throws Exception {
-		test("foobar", "foobar");
-		test("foobar", "foobor");
-	}
-
-	private static void test(String pwd, String attpwd) throws Exception {
-		PasswordCrypt pc = new PasswordCrypt();
-		byte[] salt = pc.generateSalt();
-		byte[] encr = pc.getEncryptedPassword(pwd.toCharArray(), salt);
-		boolean auth = pc.authenticate(attpwd.toCharArray(), encr, salt);
-		System.out.println(encr.length);
-		System.out.println(toHex(salt));
-		System.out.println(toHex(encr) + " " + toHex(encr).length());
-		System.out.println(auth);
-	}
-	
-	public static String toHex(final byte[] bytes) {
-		StringBuilder sb = new StringBuilder();
-		for (byte b : bytes) {
-			sb.append(String.format("%02X", b));
-		}
-		return sb.toString();
-	}
 }

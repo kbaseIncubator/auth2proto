@@ -7,10 +7,10 @@ public class AuthUser {
 	
 	private final String fullName;
 	private final String email;
-	private final String userName;
+	private final UserName userName;
 	
 	public AuthUser(
-			final String userName,
+			final UserName userName,
 			final String email,
 			final String fullName) {
 		super();
@@ -28,7 +28,7 @@ public class AuthUser {
 		return email;
 	}
 
-	public String getUserName() {
+	public UserName getUserName() {
 		return userName;
 	}	
 }

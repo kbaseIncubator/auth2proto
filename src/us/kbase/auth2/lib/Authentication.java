@@ -1,11 +1,9 @@
 package us.kbase.auth2.lib;
 
 import static us.kbase.auth2.lib.Utils.checkString;
-import static us.kbase.auth2.lib.Utils.clear;
 
 import java.security.NoSuchAlgorithmException;
 import java.util.Date;
-import java.util.List;
 
 import us.kbase.auth2.cryptutils.PasswordCrypt;
 import us.kbase.auth2.cryptutils.TokenGenerator;
@@ -15,7 +13,8 @@ import us.kbase.auth2.lib.exceptions.AuthenticationException;
 import us.kbase.auth2.lib.storage.AuthStorage;
 import us.kbase.auth2.lib.storage.exceptions.AuthStorageException;
 import us.kbase.auth2.lib.storage.exceptions.NoSuchTokenException;
-import us.kbase.auth2.lib.token.AuthToken;
+import us.kbase.auth2.lib.token.NewToken;
+import us.kbase.auth2.lib.token.TokenSet;
 import us.kbase.auth2.lib.token.HashedToken;
 import us.kbase.auth2.lib.token.IncomingToken;
 
@@ -47,41 +46,44 @@ public class Authentication {
 	}
 
 
-	public char[] createLocalUser(
-			final String userName,
+	public Password createLocalUser(
+			final UserName userName,
 			final String fullName,
 			final String email)
 			throws AuthException, AuthStorageException {
-		//TODO NOW check minimum user name length, check email
-		checkString(userName, "user name");
+		if (userName == null) {
+			throw new NullPointerException("userName");
+		}
 		checkString(fullName, "full name");
 		checkString(email, "email");
-		final char[] pwd = tokens.getTemporaryPassword(10);
+		final Password pwd = new Password(tokens.getTemporaryPassword(10));
 		final byte[] salt = pwdcrypt.generateSalt();
-		final byte[] passwordHash = pwdcrypt.getEncryptedPassword(pwd, salt);
+		final byte[] passwordHash = pwdcrypt.getEncryptedPassword(
+				pwd.getPassword(), salt);
 		final LocalUser lu = new LocalUser(userName, email, fullName,
 				passwordHash, salt, true);
 		storage.createLocalAccount(lu);
 		return pwd;
 	}
 	
-	public AuthToken localLogin(final String userName, final char[] pwd)
+	public NewToken localLogin(final UserName userName, final Password pwd)
 			throws AuthenticationException, AuthStorageException {
 		final LocalUser u = storage.getLocalUser(userName);
-		if (!pwdcrypt.authenticate(pwd, u.getPasswordHash(), u.getSalt())) {
+		if (!pwdcrypt.authenticate(pwd.getPassword(), u.getPasswordHash(),
+				u.getSalt())) {
 			throw new AuthenticationException(AuthError.AUTHENICATION_FAILED,
 					"Username / password mismatch");
 		}
-		clear(pwd);
+		pwd.clear();
 		//TODO NOW if reset required, make reset token
-		final AuthToken t = new AuthToken(null, tokens.getToken(), userName,
+		final NewToken t = new NewToken(tokens.getToken(), userName,
 				//TODO CONFIG make token lifetime configurable
 				new Date(new Date().getTime() + (14 * 24 * 60 * 60 * 1000)));
 		storage.storeToken(t.getHashedToken());
 		return t;
 	}
 
-	public List<HashedToken> getTokens(final IncomingToken token)
+	public TokenSet getTokens(final IncomingToken token)
 			throws AuthenticationException, AuthStorageException {
 		final HashedToken ht;
 		try {
@@ -89,6 +91,6 @@ public class Authentication {
 		} catch (NoSuchTokenException e) {
 			throw new AuthenticationException(AuthError.INVALID_TOKEN, null);
 		}
-		return storage.getTokens(ht.getUserName());
+		return new TokenSet(ht, storage.getTokens(ht.getUserName()));
 	}
 }

@@ -44,15 +44,4 @@ public class TokenGenerator {
 		}
 		return pwd;
 	}
-	
-	//TODO ONMOVE remove
-	public static void main(String[] args) throws Exception {
-		TokenGenerator tg = new TokenGenerator();
-		String t = tg.getToken();
-				
-		System.out.println(t + " " + t.length());
-		for (int i = 0; i < 20; i++) {
-			System.out.println(new String(tg.getTemporaryPassword(10)));
-		}
-	}
 }

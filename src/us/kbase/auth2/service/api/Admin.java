@@ -1,7 +1,5 @@
 package us.kbase.auth2.service.api;
 
-import static us.kbase.auth2.lib.Utils.clear;
-
 import java.util.Map;
 
 import javax.inject.Inject;
@@ -19,7 +17,10 @@ import org.glassfish.jersey.server.mvc.Template;
 import com.google.common.collect.ImmutableMap;
 
 import us.kbase.auth2.lib.Authentication;
+import us.kbase.auth2.lib.Password;
+import us.kbase.auth2.lib.UserName;
 import us.kbase.auth2.lib.exceptions.AuthException;
+import us.kbase.auth2.lib.exceptions.MissingParameterException;
 import us.kbase.auth2.lib.storage.exceptions.AuthStorageException;
 
 @Path("/admin")
@@ -31,6 +32,7 @@ public class Admin {
 	//TODO NOW reset user pwd
 	//TODO NOW revoke user token
 	//TODO NOW find user
+	//TODO NOW roles. Admin, create dev / server toke for now
 	
 	@Inject
 	private Authentication auth;
@@ -63,14 +65,17 @@ public class Admin {
 			throws AuthException, AuthStorageException {
 		//TODO NOW check user is admin
 		//TODO NOW log
-		
-		final char[] pwd = auth.createLocalUser(userName, fullName, email);
+		//TODO NOW email class with proper checking (probably not validation)
+		if (userName == null) {
+			throw new MissingParameterException("userName");
+		}
+		final Password pwd = auth.createLocalUser(new UserName(userName), fullName, email);
 		final Map<String, String> ret = ImmutableMap.of(
 				"user", userName,
 				"full", fullName,
 				"email", email,
-				"password", new String(pwd)); // char[] won't work
-		clear(pwd); // not that this helps much...
+				"password", new String(pwd.getPassword())); // char[] won't work
+		pwd.clear(); // not that this helps much...
 		return ret;
 	}
 

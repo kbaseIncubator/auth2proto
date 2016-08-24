@@ -10,7 +10,7 @@ public class LocalUser extends AuthUser {
 	private final boolean forceReset;
 	
 	public LocalUser(
-			final String userName,
+			final UserName userName,
 			final String email,
 			final String fullName,
 			final byte[] passwordHash,

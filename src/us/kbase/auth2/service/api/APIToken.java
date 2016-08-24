@@ -9,6 +9,7 @@ public class APIToken {
 	
 	private final String id;
 	private final long expiration;
+	private final long creation;
 	private final String tokenName;
 	private final String userName;
 
@@ -18,13 +19,19 @@ public class APIToken {
 		}
 		this.id = token.getId().toString();
 		this.tokenName = token.getTokenName();
-		this.userName = token.getUserName();
+		this.userName = token.getUserName().getName();
 		this.expiration = (long) Math.floor(
 				token.getExpirationDate().getTime() / 1000.0);
+		this.creation = (long) Math.floor(
+				token.getCreationDate().getTime() / 1000.0);
 	}
 
 	public String getId() {
 		return id;
+	}
+
+	public long getCreation() {
+		return creation;
 	}
 
 	public long getExpiration() {
