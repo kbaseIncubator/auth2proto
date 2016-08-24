@@ -20,10 +20,10 @@ import org.glassfish.jersey.server.mvc.Viewable;
 
 import com.google.common.collect.ImmutableMap;
 
-import us.kbase.auth2.lib.AuthToken;
 import us.kbase.auth2.lib.Authentication;
+import us.kbase.auth2.lib.exceptions.AuthenticationException;
 import us.kbase.auth2.lib.storage.exceptions.AuthStorageException;
-import us.kbase.auth2.service.exceptions.AuthenticationException;
+import us.kbase.auth2.lib.token.AuthToken;
 
 @Path("/localaccount")
 public class LocalAccounts {

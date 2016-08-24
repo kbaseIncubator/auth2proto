@@ -1,6 +1,6 @@
 package us.kbase.auth2.service.api;
 
-import us.kbase.auth2.lib.HashedToken;
+import us.kbase.auth2.lib.token.HashedToken;
 
 public class APIToken {
 	

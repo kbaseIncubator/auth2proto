@@ -19,8 +19,8 @@ import org.glassfish.jersey.server.mvc.Template;
 import com.google.common.collect.ImmutableMap;
 
 import us.kbase.auth2.lib.Authentication;
+import us.kbase.auth2.lib.exceptions.AuthException;
 import us.kbase.auth2.lib.storage.exceptions.AuthStorageException;
-import us.kbase.auth2.service.exceptions.AuthException;
 
 @Path("/admin")
 public class Admin {

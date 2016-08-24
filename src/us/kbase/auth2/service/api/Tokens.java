@@ -17,11 +17,11 @@ import org.glassfish.jersey.server.mvc.Template;
 import com.google.common.collect.ImmutableMap;
 
 import us.kbase.auth2.lib.Authentication;
-import us.kbase.auth2.lib.HashedToken;
+import us.kbase.auth2.lib.exceptions.AuthError;
+import us.kbase.auth2.lib.exceptions.AuthenticationException;
 import us.kbase.auth2.lib.storage.exceptions.AuthStorageException;
+import us.kbase.auth2.lib.token.HashedToken;
 import us.kbase.auth2.lib.token.IncomingToken;
-import us.kbase.auth2.service.exceptions.AuthError;
-import us.kbase.auth2.service.exceptions.AuthenticationException;
 
 @Path("/tokens")
 public class Tokens {

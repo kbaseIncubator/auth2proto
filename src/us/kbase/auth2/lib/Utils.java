@@ -1,6 +1,6 @@
 package us.kbase.auth2.lib;
 
-import us.kbase.auth2.service.exceptions.MissingParameterException;
+import us.kbase.auth2.lib.exceptions.MissingParameterException;
 
 public class Utils {
 

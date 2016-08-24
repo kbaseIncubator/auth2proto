@@ -20,16 +20,16 @@ import com.mongodb.client.MongoDatabase;
 import com.mongodb.client.model.Filters;
 import com.mongodb.client.model.IndexOptions;
 
-import us.kbase.auth2.lib.HashedToken;
 import us.kbase.auth2.lib.LocalUser;
+import us.kbase.auth2.lib.exceptions.AuthError;
+import us.kbase.auth2.lib.exceptions.AuthException;
+import us.kbase.auth2.lib.exceptions.AuthenticationException;
 import us.kbase.auth2.lib.storage.AuthStorage;
 import us.kbase.auth2.lib.storage.exceptions.AuthStorageException;
 import us.kbase.auth2.lib.storage.exceptions.NoSuchTokenException;
 import us.kbase.auth2.lib.storage.exceptions.StorageInitException;
+import us.kbase.auth2.lib.token.HashedToken;
 import us.kbase.auth2.lib.token.IncomingHashedToken;
-import us.kbase.auth2.service.exceptions.AuthError;
-import us.kbase.auth2.service.exceptions.AuthException;
-import us.kbase.auth2.service.exceptions.AuthenticationException;
 
 public class MongoStorage implements AuthStorage {
 

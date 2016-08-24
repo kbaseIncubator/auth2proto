@@ -1,4 +1,4 @@
-package us.kbase.auth2.service.exceptions.handler;
+package us.kbase.auth2.service.exceptions;
 
 import java.io.PrintWriter;
 import java.io.StringWriter;
@@ -14,9 +14,9 @@ import com.fasterxml.jackson.annotation.JsonIgnore;
 import com.fasterxml.jackson.annotation.JsonInclude;
 import com.fasterxml.jackson.annotation.JsonInclude.Include;
 
-import us.kbase.auth2.service.exceptions.AuthException;
-import us.kbase.auth2.service.exceptions.AuthenticationException;
-import us.kbase.auth2.service.exceptions.UnauthorizedException;
+import us.kbase.auth2.lib.exceptions.AuthException;
+import us.kbase.auth2.lib.exceptions.AuthenticationException;
+import us.kbase.auth2.lib.exceptions.UnauthorizedException;
 
 @JsonInclude(Include.NON_NULL)
 public class ErrorMessage {

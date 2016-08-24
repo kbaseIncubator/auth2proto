@@ -1,4 +1,4 @@
-package us.kbase.auth2.service.exceptions;
+package us.kbase.auth2.lib.exceptions;
 
 public enum AuthError {
 	

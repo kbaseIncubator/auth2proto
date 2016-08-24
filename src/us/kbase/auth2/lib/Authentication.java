@@ -9,13 +9,15 @@ import java.util.List;
 
 import us.kbase.auth2.cryptutils.PasswordCrypt;
 import us.kbase.auth2.cryptutils.TokenGenerator;
+import us.kbase.auth2.lib.exceptions.AuthError;
+import us.kbase.auth2.lib.exceptions.AuthException;
+import us.kbase.auth2.lib.exceptions.AuthenticationException;
 import us.kbase.auth2.lib.storage.AuthStorage;
 import us.kbase.auth2.lib.storage.exceptions.AuthStorageException;
 import us.kbase.auth2.lib.storage.exceptions.NoSuchTokenException;
+import us.kbase.auth2.lib.token.AuthToken;
+import us.kbase.auth2.lib.token.HashedToken;
 import us.kbase.auth2.lib.token.IncomingToken;
-import us.kbase.auth2.service.exceptions.AuthError;
-import us.kbase.auth2.service.exceptions.AuthException;
-import us.kbase.auth2.service.exceptions.AuthenticationException;
 
 public class Authentication {
 
