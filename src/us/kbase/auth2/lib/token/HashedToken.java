@@ -8,7 +8,6 @@ public class HashedToken extends AuthToken {
 	
 	//TODO TEST
 	//TODO JAVADOC
-	//TODO NOW move to tokens package
 
 	private UUID id;
 	

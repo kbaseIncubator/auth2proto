@@ -13,7 +13,6 @@ public class AuthToken {
 
 	//TODO TEST
 	//TODO JAVADOC
-	//TODO NOW move to tokens package
 	
 	private final String tokenName;
 	private final String token;
