@@ -27,6 +27,13 @@ import us.kbase.auth2.service.exceptions.AuthenticationException;
 
 @Path("/localaccount")
 public class LocalAccounts {
+	
+	//TODO TEST
+	//TODO JAVADOC
+
+	
+	//TODO NOW logout
+	//TODO NOW reset pwd
 
 	@Inject
 	private Authentication auth;
@@ -60,8 +67,9 @@ public class LocalAccounts {
 	}
 	
 	private NewCookie getCookie(final AuthToken t, final boolean session) {
-		return new NewCookie(new Cookie("token", t.getToken()), "authtoken",
-				getMaxAge(t, session), false); //TODO CONFIG make secure cookie configurable
+		return new NewCookie(new Cookie("token", t.getToken(), "/", null),
+				"authtoken", getMaxAge(t, session), false);
+		//TODO CONFIG make secure cookie configurable
 	}
 	
 	private int getMaxAge(final AuthToken t, final boolean session) {

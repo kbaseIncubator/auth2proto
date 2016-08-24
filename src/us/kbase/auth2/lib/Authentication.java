@@ -1,18 +1,21 @@
 package us.kbase.auth2.lib;
 
+import static us.kbase.auth2.lib.Utils.checkString;
 import static us.kbase.auth2.lib.Utils.clear;
 
 import java.security.NoSuchAlgorithmException;
 import java.util.Date;
+import java.util.List;
 
 import us.kbase.auth2.cryptutils.PasswordCrypt;
 import us.kbase.auth2.cryptutils.TokenGenerator;
 import us.kbase.auth2.lib.storage.AuthStorage;
 import us.kbase.auth2.lib.storage.exceptions.AuthStorageException;
+import us.kbase.auth2.lib.storage.exceptions.NoSuchTokenException;
+import us.kbase.auth2.lib.token.IncomingToken;
 import us.kbase.auth2.service.exceptions.AuthError;
 import us.kbase.auth2.service.exceptions.AuthException;
 import us.kbase.auth2.service.exceptions.AuthenticationException;
-import us.kbase.auth2.service.exceptions.MissingParameterException;
 
 public class Authentication {
 
@@ -60,13 +63,6 @@ public class Authentication {
 		return pwd;
 	}
 	
-	private void checkString(final String s, final String name)
-			throws MissingParameterException {
-		if (s == null || s.isEmpty()) {
-			throw new MissingParameterException("Missing parameter: " + name);
-		}
-	}
-
 	public AuthToken localLogin(final String userName, final char[] pwd)
 			throws AuthenticationException, AuthStorageException {
 		final LocalUser u = storage.getLocalUser(userName);
@@ -76,10 +72,21 @@ public class Authentication {
 		}
 		clear(pwd);
 		//TODO NOW if reset required, make reset token
-		final AuthToken t = new AuthToken(tokens.getToken(), userName,
+		final AuthToken t = new AuthToken(null, tokens.getToken(), userName,
 				//TODO CONFIG make token lifetime configurable
 				new Date(new Date().getTime() + (14 * 24 * 60 * 60 * 1000)));
 		storage.storeToken(t.getHashedToken());
 		return t;
+	}
+
+	public List<HashedToken> getTokens(final IncomingToken token)
+			throws AuthenticationException, AuthStorageException {
+		final HashedToken ht;
+		try {
+			ht = storage.getToken(token.getHashedToken());
+		} catch (NoSuchTokenException e) {
+			throw new AuthenticationException(AuthError.INVALID_TOKEN, null);
+		}
+		return storage.getTokens(ht.getUserName());
 	}
 }

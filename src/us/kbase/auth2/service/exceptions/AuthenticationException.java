@@ -6,6 +6,7 @@ package us.kbase.auth2.service.exceptions;
 @SuppressWarnings("serial")
 public class AuthenticationException extends AuthException {
 	
+	//TODO NOW move all exceptions to lib 
 	
 	public AuthenticationException(final AuthError err, final String message) {
 		super(err, message);

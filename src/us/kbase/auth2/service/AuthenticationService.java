@@ -27,6 +27,9 @@ import us.kbase.common.service.JsonServerSyslog;
 
 public class AuthenticationService extends ResourceConfig {
 	
+	//TODO TEST
+	//TODO JAVADOC
+	
 	private static MongoClient mc;
 	@SuppressWarnings("unused")
 	private final JsonServerSyslog logger; //keep a reference to prevent GC
