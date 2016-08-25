@@ -26,13 +26,13 @@ create a local account. The admin param is a temporary placeholder.
 /localaccount/login  
 login to a local account. Stores a cookie with a token.
 
-/tokens
+/tokens  
 list and create tokens
 
-/api/legacy/KBase/Sessions/Login
+/api/legacy/KBase/Sessions/Login  
 the legacy KBase API
 
-/api/legacy/globus
+/api/legacy/globus  
 the legacy globus API. Endpoints are /goauth/token and /users.
 
 
