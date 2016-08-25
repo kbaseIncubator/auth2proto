@@ -20,6 +20,7 @@ import com.mongodb.client.MongoDatabase;
 import com.mongodb.client.model.Filters;
 import com.mongodb.client.model.IndexOptions;
 
+import us.kbase.auth2.lib.AuthUser;
 import us.kbase.auth2.lib.LocalUser;
 import us.kbase.auth2.lib.UserName;
 import us.kbase.auth2.lib.exceptions.AuthError;
@@ -223,12 +224,7 @@ public class MongoStorage implements AuthStorage {
 	@Override
 	public LocalUser getLocalUser(final UserName userName)
 			throws AuthStorageException, AuthenticationException {
-		final Document user = findOne(COL_USERS,
-				new Document(Fields.USER_NAME, userName.getName()));
-		if (user == null || !user.getBoolean(Fields.USER_LOCAL)) {
-			throw new AuthenticationException(AuthError.NO_SUCH_USER,
-					userName.getName());
-		}
+		final Document user = getUserDoc(userName, true);
 		return new LocalUser(
 				getUserName(user, Fields.USER_NAME),
 				user.getString(Fields.USER_EMAIL),
@@ -237,6 +233,17 @@ public class MongoStorage implements AuthStorage {
 						user.getString(Fields.USER_PWD_HSH)),
 				Base64.getDecoder().decode(user.getString(Fields.USER_SALT)),
 				user.getBoolean(Fields.USER_RESET_PWD));
+	}
+
+	private Document getUserDoc(final UserName userName, final boolean local)
+			throws AuthStorageException, AuthenticationException {
+		final Document user = findOne(COL_USERS,
+				new Document(Fields.USER_NAME, userName.getName()));
+		if (user == null || (local && !user.getBoolean(Fields.USER_LOCAL))) {
+			throw new AuthenticationException(AuthError.NO_SUCH_USER,
+					userName.getName());
+		}
+		return user;
 	}
 
 	private UserName getUserName(final Document user, final String field)
@@ -328,6 +335,15 @@ public class MongoStorage implements AuthStorage {
 					"Connection to database failed", e);
 		}
 		return ret;
+	}
+	
+	@Override
+	public AuthUser getUser(final UserName userName)
+			throws AuthenticationException, AuthStorageException {
+		final Document user = getUserDoc(userName, false);
+		return new AuthUser(getUserName(user, Fields.USER_NAME),
+				user.getString(Fields.USER_EMAIL),
+				user.getString(Fields.USER_FULL_NAME));
 	}
 
 }

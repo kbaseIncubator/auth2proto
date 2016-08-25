@@ -89,8 +89,11 @@ public class Authentication {
 		return new TokenSet(ht, storage.getTokens(ht.getUserName()));
 	}
 
-	private HashedToken getToken(final IncomingToken token)
+	public HashedToken getToken(final IncomingToken token)
 			throws AuthStorageException, AuthenticationException {
+		if (token == null) {
+			throw new NullPointerException("token");
+		}
 		try {
 			return storage.getToken(token.getHashedToken());
 		} catch (NoSuchTokenException e) {
@@ -112,5 +115,11 @@ public class Authentication {
 				new Date(new Date().getTime() + (14 * 24 * 60 * 60 * 1000)));
 		storage.storeToken(t.getHashedToken());
 		return t;
+	}
+	
+	public AuthUser getUser(final IncomingToken token)
+			throws AuthenticationException, AuthStorageException {
+		final HashedToken ht = getToken(token);
+		return storage.getUser(ht.getUserName());
 	}
 }
