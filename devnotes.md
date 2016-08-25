@@ -16,3 +16,25 @@ UnauthorizedException and subclasses - 403
 NoDataException and subclasses - 404  
 
 Anything else is mapped to 500.
+
+Current endpoints
+-----------------
+
+/admin/localaccount?admin=<some name>  
+create a local account. The admin param is a temporary placeholder.
+
+/localaccount/login  
+login to a local account. Stores a cookie with a token.
+
+/tokens
+list and create tokens
+
+/api/legacy/KBase/Sessions/Login
+the legacy KBase API
+
+/api/legacy/globus
+the legacy globus API. Endpoints are /goauth/token and /users.
+
+
+
+
