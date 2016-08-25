@@ -26,7 +26,6 @@ import us.kbase.auth2.lib.UserName;
 import us.kbase.auth2.lib.exceptions.AuthError;
 import us.kbase.auth2.lib.exceptions.AuthException;
 import us.kbase.auth2.lib.exceptions.AuthenticationException;
-import us.kbase.auth2.lib.exceptions.MissingParameterException;
 import us.kbase.auth2.lib.storage.AuthStorage;
 import us.kbase.auth2.lib.storage.exceptions.AuthStorageException;
 import us.kbase.auth2.lib.storage.exceptions.NoSuchTokenException;
@@ -226,7 +225,7 @@ public class MongoStorage implements AuthStorage {
 			throws AuthStorageException, AuthenticationException {
 		final Document user = getUserDoc(userName, true);
 		return new LocalUser(
-				getUserName(user, Fields.USER_NAME),
+				new UserName(user.getString(Fields.USER_NAME)),
 				user.getString(Fields.USER_EMAIL),
 				user.getString(Fields.USER_FULL_NAME),
 				Base64.getDecoder().decode(
@@ -244,16 +243,6 @@ public class MongoStorage implements AuthStorage {
 					userName.getName());
 		}
 		return user;
-	}
-
-	private UserName getUserName(final Document user, final String field)
-			throws AuthStorageException {
-		try {
-			return new UserName(user.getString(field));
-		} catch (MissingParameterException e) {
-			throw new AuthStorageException(
-					"Database error - record missing username");
-		}
 	}
 
 	private boolean isDuplicateKeyException(final MongoWriteException mwe) {
@@ -312,7 +301,7 @@ public class MongoStorage implements AuthStorage {
 		return new HashedToken(t.getString(Fields.TOKEN_NAME),
 				UUID.fromString(t.getString(Fields.TOKEN_ID)),
 				t.getString(Fields.TOKEN_TOKEN),
-				getUserName(t, Fields.TOKEN_USER_NAME),
+				new UserName(t.getString(Fields.TOKEN_USER_NAME)),
 				t.getDate(Fields.TOKEN_CREATION),
 				t.getDate(Fields.TOKEN_EXPIRY));
 	}
@@ -341,7 +330,7 @@ public class MongoStorage implements AuthStorage {
 	public AuthUser getUser(final UserName userName)
 			throws AuthenticationException, AuthStorageException {
 		final Document user = getUserDoc(userName, false);
-		return new AuthUser(getUserName(user, Fields.USER_NAME),
+		return new AuthUser(new UserName(user.getString(Fields.USER_NAME)),
 				user.getString(Fields.USER_EMAIL),
 				user.getString(Fields.USER_FULL_NAME));
 	}

@@ -1,5 +1,7 @@
 package us.kbase.auth2.service.api;
 
+import static us.kbase.auth2.lib.Utils.dateToSec;
+
 import java.util.Date;
 import java.util.HashMap;
 import java.util.LinkedList;
@@ -9,14 +11,18 @@ import javax.inject.Inject;
 import javax.ws.rs.GET;
 import javax.ws.rs.HeaderParam;
 import javax.ws.rs.Path;
+import javax.ws.rs.PathParam;
 import javax.ws.rs.Produces;
 import javax.ws.rs.QueryParam;
 import javax.ws.rs.core.MediaType;
 
+import us.kbase.auth2.lib.AuthUser;
 import us.kbase.auth2.lib.Authentication;
+import us.kbase.auth2.lib.UserName;
 import us.kbase.auth2.lib.exceptions.AuthError;
 import us.kbase.auth2.lib.exceptions.AuthException;
 import us.kbase.auth2.lib.exceptions.AuthenticationException;
+import us.kbase.auth2.lib.exceptions.NoDataException;
 import us.kbase.auth2.lib.exceptions.UnauthorizedException;
 import us.kbase.auth2.lib.storage.exceptions.AuthStorageException;
 import us.kbase.auth2.lib.token.HashedToken;
@@ -35,7 +41,7 @@ public class LegacyGlobus {
 	// also note that unlike the globus api, this does not refresh the token
 	// also note that the error structure is completely different. 
 	@GET
-	@Path("/token")
+	@Path("/goauth/token")
 	@Produces(MediaType.APPLICATION_JSON)
 	public Map<String, Object> introspectToken(
 			@HeaderParam("x-globus-goauthtoken") final String xtoken,
@@ -48,13 +54,7 @@ public class LegacyGlobus {
 					"Only client_credentials grant_type supported. Got " +
 					grantType);
 		}
-		if (token == null || token.isEmpty()) {
-			token = xtoken;
-			if (token == null || token.isEmpty()) {
-				// globus throws a 403 instead of a 401
-				throw new UnauthorizedException(AuthError.NO_TOKEN, "");
-			}
-		}
+		token = getGlobusToken(xtoken, token);
 		final HashedToken ht;
 		try {
 			ht = auth.getToken(new IncomingToken(token));
@@ -63,14 +63,12 @@ public class LegacyGlobus {
 			throw new UnauthorizedException(
 					e.getErr(), "Authentication failed.");
 		}
-		final long created = (long) Math.floor(
-				ht.getCreationDate().getTime() / 1000.0);
-		final long expires = (long) Math.floor(
-				ht.getExpirationDate().getTime() / 1000.0);
+		final long created = dateToSec(ht.getCreationDate());
+		final long expires = dateToSec(ht.getExpirationDate());
 		final Map<String, Object> ret = new HashMap<>();
 		ret.put("access_token", token);
 		ret.put("client_id", ht.getUserName().getName());
-		ret.put("expires_in", expires - new Date().getTime());
+		ret.put("expires_in", expires - dateToSec(new Date()));
 		ret.put("expiry", expires);
 		ret.put("issued_on", created);
 		ret.put("lifetime", expires - created);
@@ -79,6 +77,61 @@ public class LegacyGlobus {
 		ret.put("token_id", ht.getId().toString());
 		ret.put("token_type", "Bearer");
 		ret.put("user_name", ht.getUserName().getName());
+		return ret;
+	}
+
+	private String getGlobusToken(final String xtoken, String token)
+			throws UnauthorizedException {
+		if (token == null || token.isEmpty()) {
+			token = xtoken;
+			if (token == null || token.isEmpty()) {
+				// globus throws a 403 instead of a 401
+				throw new UnauthorizedException(AuthError.NO_TOKEN, "");
+			}
+		}
+		return token;
+	}
+	
+	// note does not return identity_id
+	// note error structure is completely different
+	@GET
+	@Path("/users/{user}/")
+	@Produces(MediaType.APPLICATION_JSON)
+	public Map<String, Object> getUser(
+			@HeaderParam("x-globus-goauthtoken") final String xtoken,
+			@HeaderParam("globus-goauthtoken") String token,
+			@PathParam("user") final String user)
+			throws UnauthorizedException, AuthStorageException,
+			AuthenticationException, NoDataException {
+		
+		token = getGlobusToken(xtoken, token);
+		if (user == null || user.isEmpty()) {
+			throw new UnauthorizedException(AuthError.MISSING_PARAMETER,
+					"user missing from url");
+		}
+		final AuthUser u;
+		try {
+			u = auth.getUser(new IncomingToken(token), new UserName(user));
+		} catch (AuthenticationException e) {
+			if (e.getErr().equals(AuthError.NO_SUCH_USER)) {
+				// throw a 404
+				throw new NoDataException(e.getErr(), null);
+			}
+			// globus throws a 403 instead of a 401
+			throw new UnauthorizedException(
+					e.getErr(), "Authentication failed.");
+		}
+		final Map<String, Object> ret = new HashMap<>();
+		ret.put("username", u.getUserName().getName());
+		ret.put("email_validated", false);
+		ret.put("ssh_pubkeys", new LinkedList<String>());
+		ret.put("resource_type", "users");
+		ret.put("full_name", u.getFullName());
+		ret.put("organization", null);
+		ret.put("fullname", u.getFullName());
+		ret.put("user_name", u.getUserName().getName());
+		ret.put("email", u.getEmail());
+		ret.put("custom_fields", new HashMap<String,String>());
 		return ret;
 	}
 }

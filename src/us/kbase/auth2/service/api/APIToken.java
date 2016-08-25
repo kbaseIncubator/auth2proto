@@ -1,5 +1,7 @@
 package us.kbase.auth2.service.api;
 
+import static us.kbase.auth2.lib.Utils.dateToSec;
+
 import java.util.Date;
 import java.util.UUID;
 
@@ -31,10 +33,8 @@ public class APIToken {
 		this.id = id.toString();
 		this.name = tokenName;
 		this.user = userName.getName();
-		this.expires = (long) Math.floor(
-				expirationDate.getTime() / 1000.0);
-		this.created = (long) Math.floor(
-				creationDate.getTime() / 1000.0);
+		this.expires = dateToSec(expirationDate);
+		this.created = dateToSec(creationDate);
 	}
 
 	public String getId() {

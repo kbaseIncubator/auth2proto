@@ -13,5 +13,6 @@ in us.kbase.auth2.exceptions
 AuthException and subclasses other than the below - 400  
 AuthenticationException and subclasses - 401  
 UnauthorizedException and subclasses - 403  
+NoDataException and subclasses - 404  
 
 Anything else is mapped to 500.
