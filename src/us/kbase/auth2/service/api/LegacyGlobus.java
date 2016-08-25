@@ -1,5 +1,7 @@
 package us.kbase.auth2.service.api;
 
+import static us.kbase.auth2.lib.Utils.dateToSec;
+
 import java.util.Date;
 import java.util.HashMap;
 import java.util.LinkedList;
@@ -61,14 +63,12 @@ public class LegacyGlobus {
 			throw new UnauthorizedException(
 					e.getErr(), "Authentication failed.");
 		}
-		final long created = (long) Math.floor(
-				ht.getCreationDate().getTime() / 1000.0);
-		final long expires = (long) Math.floor(
-				ht.getExpirationDate().getTime() / 1000.0);
+		final long created = dateToSec(ht.getCreationDate());
+		final long expires = dateToSec(ht.getExpirationDate());
 		final Map<String, Object> ret = new HashMap<>();
 		ret.put("access_token", token);
 		ret.put("client_id", ht.getUserName().getName());
-		ret.put("expires_in", expires - new Date().getTime());
+		ret.put("expires_in", expires - dateToSec(new Date()));
 		ret.put("expiry", expires);
 		ret.put("issued_on", created);
 		ret.put("lifetime", expires - created);
