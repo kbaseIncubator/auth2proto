@@ -1,0 +1,68 @@
+package us.kbase.auth2.service.api;
+
+import java.util.Date;
+import java.util.HashMap;
+import java.util.LinkedList;
+import java.util.Map;
+
+import javax.inject.Inject;
+import javax.ws.rs.GET;
+import javax.ws.rs.HeaderParam;
+import javax.ws.rs.Path;
+import javax.ws.rs.Produces;
+import javax.ws.rs.QueryParam;
+import javax.ws.rs.core.MediaType;
+
+import us.kbase.auth2.lib.Authentication;
+import us.kbase.auth2.lib.exceptions.AuthError;
+import us.kbase.auth2.lib.exceptions.AuthException;
+import us.kbase.auth2.lib.exceptions.AuthenticationException;
+import us.kbase.auth2.lib.storage.exceptions.AuthStorageException;
+import us.kbase.auth2.lib.token.HashedToken;
+import us.kbase.auth2.lib.token.IncomingToken;
+
+@Path("/api/legacy/globus")
+public class LegacyGlobus {
+
+	//TODO TEST
+	//TODO JAVADOC
+	
+	@Inject
+	private Authentication auth;
+	
+	// note that access_token_hash is not returned in the structure
+	// also note that unlike the globus api, this does not refresh the token
+	@GET
+	@Path("/token")
+	@Produces(MediaType.APPLICATION_JSON)
+	public Map<String, Object> introspectToken(
+			@HeaderParam("x-globus-goauthtoken") final String token,
+			@QueryParam("grant_type") final String grantType)
+			throws AuthException, AuthStorageException {
+
+		if (!"client_credentials".equals(grantType)) {
+			throw new AuthException(AuthError.UNSUPPORTED_OP,
+					"Only client_credentials grant_type supported. Got " +
+					grantType);
+		}
+		if (token == null || token.isEmpty()) {
+			throw new AuthenticationException(AuthError.NO_TOKEN, "");
+		}
+		final HashedToken ht = auth.getToken(new IncomingToken(token));
+		final Map<String, Object> ret = new HashMap<>();
+		ret.put("access_token", token);
+		ret.put("client_id", ht.getUserName().getName());
+		ret.put("expires_in", ht.getExpirationDate().getTime() -
+				new Date().getTime());
+		ret.put("expiry", ht.getExpirationDate().getTime());
+		ret.put("issued_on", ht.getCreationDate().getTime());
+		ret.put("lifetime", ht.getExpirationDate().getTime() -
+				ht.getCreationDate().getTime());
+		ret.put("refresh_token", "");
+		ret.put("scopes", new LinkedList<String>());
+		ret.put("token_id", ht.getId().toString());
+		ret.put("token_type", "Bearer");
+		ret.put("user_name", ht.getUserName().getName());
+		return ret;
+	}
+}
