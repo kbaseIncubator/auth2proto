@@ -20,7 +20,7 @@ Anything else is mapped to 500.
 Current endpoints
 -----------------
 
-/admin/localaccount?admin=<some name>  
+/admin/localaccount?admin=&lt;some name&gt;  
 create a local account. The admin param is a temporary placeholder.
 
 /localaccount/login  
