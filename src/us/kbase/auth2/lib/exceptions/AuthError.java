@@ -11,7 +11,8 @@ public enum AuthError {
 	UNAUTHORIZED			(20000, "Unauthorized"),
 	MISSING_PARAMETER		(30000, "Missing input parameter"),
 	USER_ALREADY_EXISTS		(30001, "User already exists"),
-	NO_SUCH_USER			(30002, "No such user");
+	NO_SUCH_USER			(30002, "No such user"),
+	UNSUPPORTED_OP			(40001, "Unsupported opertation");
 	
 	private final int errcode;
 	private final String error;
