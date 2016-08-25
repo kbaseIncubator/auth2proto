@@ -117,9 +117,25 @@ public class Authentication {
 		return t;
 	}
 	
+	// gets user for token
 	public AuthUser getUser(final IncomingToken token)
 			throws AuthenticationException, AuthStorageException {
 		final HashedToken ht = getToken(token);
 		return storage.getUser(ht.getUserName());
+	}
+
+	// get a (possibly) different user 
+	public AuthUser getUser(
+			final IncomingToken token,
+			final UserName user)
+			throws AuthenticationException, AuthStorageException {
+		final HashedToken ht = getToken(token);
+		final AuthUser u = storage.getUser(user);
+		if (ht.getUserName().equals(u.getUserName())) {
+			return u;
+		} else {
+			//TODO NOW only return fullname & email if info is public
+			return u;
+		}
 	}
 }

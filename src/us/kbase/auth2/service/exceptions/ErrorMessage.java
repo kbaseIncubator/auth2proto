@@ -16,6 +16,7 @@ import com.fasterxml.jackson.annotation.JsonInclude.Include;
 
 import us.kbase.auth2.lib.exceptions.AuthException;
 import us.kbase.auth2.lib.exceptions.AuthenticationException;
+import us.kbase.auth2.lib.exceptions.NoDataException;
 import us.kbase.auth2.lib.exceptions.UnauthorizedException;
 
 @JsonInclude(Include.NON_NULL)
@@ -61,6 +62,8 @@ public class ErrorMessage {
 				status = Response.Status.UNAUTHORIZED;
 			} else if (ae instanceof UnauthorizedException) {
 				status = Response.Status.FORBIDDEN;
+			} else if (ae instanceof NoDataException) {
+				status = Response.Status.NOT_FOUND;
 			} else {
 				status = Response.Status.BAD_REQUEST;
 			}
