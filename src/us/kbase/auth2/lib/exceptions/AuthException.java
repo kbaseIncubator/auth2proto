@@ -25,8 +25,7 @@ public class AuthException extends Exception {
 			final AuthError err,
 			final String message,
 			final Throwable cause) {
-		super(getMsg(err, message),
-				cause);
+		super(getMsg(err, message), cause);
 		this.err = err;
 	}
 
