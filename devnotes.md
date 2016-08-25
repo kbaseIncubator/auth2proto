@@ -9,9 +9,9 @@ Templates are mustache templates.
 Exception mapping
 -----------------
 
-in us.kbase.auth2.exceptions
-AuthException and subclasses other than the below - 400
-AuthenticationException and subclasses - 401
-UnauthorizedException and subclasses - 403
+in us.kbase.auth2.exceptions  
+AuthException and subclasses other than the below - 400  
+AuthenticationException and subclasses - 401  
+UnauthorizedException and subclasses - 403  
 
 Anything else is mapped to 500.
