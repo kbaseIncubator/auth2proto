@@ -5,6 +5,7 @@ Unit tests & documentation for code in this repo is not required.
 
 To start server
 ---------------
+clone kbase/jars into the parent folder of this repo  
 ant compile  
 ant buildwar  
 install jetty (see jetty-config.md for version)  
