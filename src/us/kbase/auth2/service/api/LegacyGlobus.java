@@ -17,6 +17,7 @@ import us.kbase.auth2.lib.Authentication;
 import us.kbase.auth2.lib.exceptions.AuthError;
 import us.kbase.auth2.lib.exceptions.AuthException;
 import us.kbase.auth2.lib.exceptions.AuthenticationException;
+import us.kbase.auth2.lib.exceptions.UnauthorizedException;
 import us.kbase.auth2.lib.storage.exceptions.AuthStorageException;
 import us.kbase.auth2.lib.token.HashedToken;
 import us.kbase.auth2.lib.token.IncomingToken;
@@ -32,11 +33,13 @@ public class LegacyGlobus {
 	
 	// note that access_token_hash is not returned in the structure
 	// also note that unlike the globus api, this does not refresh the token
+	// also note that the error structure is completely different. 
 	@GET
 	@Path("/token")
 	@Produces(MediaType.APPLICATION_JSON)
 	public Map<String, Object> introspectToken(
-			@HeaderParam("x-globus-goauthtoken") final String token,
+			@HeaderParam("x-globus-goauthtoken") final String xtoken,
+			@HeaderParam("globus-goauthtoken") String token,
 			@QueryParam("grant_type") final String grantType)
 			throws AuthException, AuthStorageException {
 
@@ -46,9 +49,20 @@ public class LegacyGlobus {
 					grantType);
 		}
 		if (token == null || token.isEmpty()) {
-			throw new AuthenticationException(AuthError.NO_TOKEN, "");
+			token = xtoken;
+			if (token == null || token.isEmpty()) {
+				// globus throws a 403 instead of a 401
+				throw new UnauthorizedException(AuthError.NO_TOKEN, "");
+			}
 		}
-		final HashedToken ht = auth.getToken(new IncomingToken(token));
+		final HashedToken ht;
+		try {
+			ht = auth.getToken(new IncomingToken(token));
+		} catch (AuthenticationException e) {
+			// globus throws a 403 instead of a 401
+			throw new UnauthorizedException(
+					e.getErr(), "Authentication failed.");
+		}
 		final long created = (long) Math.floor(
 				ht.getCreationDate().getTime() / 1000.0);
 		final long expires = (long) Math.floor(
