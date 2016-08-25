@@ -69,7 +69,8 @@ public class Admin {
 		if (userName == null) {
 			throw new MissingParameterException("userName");
 		}
-		final Password pwd = auth.createLocalUser(new UserName(userName), fullName, email);
+		final Password pwd = auth.createLocalUser(
+				new UserName(userName), fullName, email);
 		final Map<String, String> ret = ImmutableMap.of(
 				"user", userName,
 				"full", fullName,
