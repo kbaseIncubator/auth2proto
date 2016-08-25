@@ -49,15 +49,17 @@ public class LegacyGlobus {
 			throw new AuthenticationException(AuthError.NO_TOKEN, "");
 		}
 		final HashedToken ht = auth.getToken(new IncomingToken(token));
+		final long created = (long) Math.floor(
+				ht.getCreationDate().getTime() / 1000.0);
+		final long expires = (long) Math.floor(
+				ht.getExpirationDate().getTime() / 1000.0);
 		final Map<String, Object> ret = new HashMap<>();
 		ret.put("access_token", token);
 		ret.put("client_id", ht.getUserName().getName());
-		ret.put("expires_in", ht.getExpirationDate().getTime() -
-				new Date().getTime());
-		ret.put("expiry", ht.getExpirationDate().getTime());
-		ret.put("issued_on", ht.getCreationDate().getTime());
-		ret.put("lifetime", ht.getExpirationDate().getTime() -
-				ht.getCreationDate().getTime());
+		ret.put("expires_in", expires - new Date().getTime());
+		ret.put("expiry", expires);
+		ret.put("issued_on", created);
+		ret.put("lifetime", expires - created);
 		ret.put("refresh_token", "");
 		ret.put("scopes", new LinkedList<String>());
 		ret.put("token_id", ht.getId().toString());
