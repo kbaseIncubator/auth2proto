@@ -6,6 +6,7 @@ import java.util.Map;
 import javax.inject.Inject;
 import javax.ws.rs.Consumes;
 import javax.ws.rs.FormParam;
+import javax.ws.rs.GET;
 import javax.ws.rs.POST;
 import javax.ws.rs.Path;
 import javax.ws.rs.Produces;
@@ -13,6 +14,7 @@ import javax.ws.rs.core.MediaType;
 
 import us.kbase.auth2.lib.AuthUser;
 import us.kbase.auth2.lib.Authentication;
+import us.kbase.auth2.lib.exceptions.AuthError;
 import us.kbase.auth2.lib.exceptions.AuthenticationException;
 import us.kbase.auth2.lib.exceptions.MissingParameterException;
 import us.kbase.auth2.lib.storage.exceptions.AuthStorageException;
@@ -24,6 +26,13 @@ public class LegacyKBase {
 	
 	@Inject
 	private Authentication auth;
+	
+	@GET
+	public void dummyGetMethod() throws AuthenticationException {
+		throw new AuthenticationException(AuthError.UNSUPPORTED_OP, 
+				"This is just here for compatibility with the old client: " +
+				"\"user_id\": null");
+	}
 	
 	// this just exists to capture requests when the content-type header isn't
 	// set. It seems to be chosen first repeatably. The method below will throw
