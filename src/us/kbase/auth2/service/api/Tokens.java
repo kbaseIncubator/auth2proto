@@ -48,7 +48,6 @@ public class Tokens {
 		return t;
 	}
 	
-	//TODO NOW test when token creation works
 	@GET
 	@Produces(MediaType.APPLICATION_JSON)
 	public Map<String, Object> getTokensJSON(
@@ -70,7 +69,6 @@ public class Tokens {
 		return createtoken(tokenName, tokenType, userToken);
 	}
 	
-	//TODO NOW test when token creation works
 	@POST
 	@Path("/create")
 	@Consumes(MediaType.APPLICATION_JSON)

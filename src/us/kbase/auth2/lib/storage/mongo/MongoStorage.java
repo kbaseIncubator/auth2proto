@@ -115,7 +115,6 @@ public class MongoStorage implements AuthStorage {
 		}
 		this.db = db;
 		
-		//TODO NOW indexes
 		//TODO NOW check workspace startup for stuff to port over
 		//TODO NOW check / set config with root user
 		//TODO NOW check root password or something and warn if not set

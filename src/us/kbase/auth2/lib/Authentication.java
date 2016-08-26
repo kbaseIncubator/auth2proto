@@ -26,6 +26,7 @@ public class Authentication {
 	//TODO AUTH handle root user somehow (spec chars unallowed in usernames?)
 	//TODO AUTH server root should return server version (and urls for endpoints?)
 	//TODO AUTH check workspace for other useful things like the schema manager
+	//TODO NOW logging everywhere - on login, on logout, on create / delete / expire token
 	
 	private final AuthStorage storage;
 	private final TokenGenerator tokens;

@@ -15,8 +15,6 @@ public class TokenGenerator {
 	//TODO TEST unit tests
 	//TODO JAVADOC
 	
-	//TODO ONDB don't store the token, store a hash. For user requested tokens, associate a name. Store the date of creation & lifetime.
-	
 	// Inspiration from http://stackoverflow.com/a/41156/643675
 	
 	// note SecureRandom is thread safe
