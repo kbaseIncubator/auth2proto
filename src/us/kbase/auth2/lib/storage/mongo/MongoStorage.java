@@ -354,4 +354,15 @@ public class MongoStorage implements AuthStorage {
 		}
 	}
 
+	@Override
+	public void deleteTokens(final UserName userName)
+			throws AuthStorageException {
+		try {
+			db.getCollection(COL_TOKEN).deleteMany(new Document(
+					Fields.TOKEN_USER_NAME, userName.getName()));
+		} catch (MongoException e) {
+			throw new AuthStorageException("Connection to database failed", e);
+		}
+	}
+
 }
