@@ -4,15 +4,16 @@ import static us.kbase.auth2.lib.Utils.checkString;
 
 import java.security.NoSuchAlgorithmException;
 import java.util.Date;
+import java.util.UUID;
 
 import us.kbase.auth2.cryptutils.PasswordCrypt;
 import us.kbase.auth2.cryptutils.TokenGenerator;
 import us.kbase.auth2.lib.exceptions.AuthError;
 import us.kbase.auth2.lib.exceptions.AuthException;
 import us.kbase.auth2.lib.exceptions.AuthenticationException;
+import us.kbase.auth2.lib.exceptions.NoSuchTokenException;
 import us.kbase.auth2.lib.storage.AuthStorage;
 import us.kbase.auth2.lib.storage.exceptions.AuthStorageException;
-import us.kbase.auth2.lib.storage.exceptions.NoSuchTokenException;
 import us.kbase.auth2.lib.token.NewToken;
 import us.kbase.auth2.lib.token.TokenSet;
 import us.kbase.auth2.lib.token.HashedToken;
@@ -27,6 +28,16 @@ public class Authentication {
 	//TODO AUTH server root should return server version (and urls for endpoints?)
 	//TODO AUTH check workspace for other useful things like the schema manager
 	//TODO NOW logging everywhere - on login, on logout, on create / delete / expire token
+	//TODO NOW roles - Admin, CreateDevToken, CreateServerToken
+	//TODO NOW custom roles set up via ui
+	//TODO SCOPES configure scopes via ui
+	//TODO SCOPES configure scope on login via ui
+	//TODO SCOPES restricted scopes - allow for specific roles or users (or for specific clients via oauth2)
+	//TODO NOW revoke token for user and admin for any user
+	//TODO NOW revoke all tokens - for user and admin per user and all
+	//TODO NOW deactiveate account - admin
+	//TODO NOW pwd reset - admin
+	//TODO NOW tokens - redirect to standard login if not logged in (other pages as well)
 	
 	private final AuthStorage storage;
 	private final TokenGenerator tokens;
@@ -63,6 +74,7 @@ public class Authentication {
 				pwd.getPassword(), salt);
 		final LocalUser lu = new LocalUser(userName, email, fullName,
 				passwordHash, salt, true);
+		//TODO NOW store creation date
 		storage.createLocalAccount(lu);
 		return pwd;
 	}
@@ -90,6 +102,7 @@ public class Authentication {
 		return new TokenSet(ht, storage.getTokens(ht.getUserName()));
 	}
 
+	// converts a no such token exception into an invalid token exception.
 	public HashedToken getToken(final IncomingToken token)
 			throws AuthStorageException, AuthenticationException {
 		if (token == null) {
@@ -110,10 +123,22 @@ public class Authentication {
 		checkString(tokenName, "token name");
 		final HashedToken ht = getToken(token);
 		//TODO NOW check user has rights to create dev or server token
+		final long life;
+		//TODO CONFIG make token lifetime configurable
+		if (serverToken) {
+			life = Long.MAX_VALUE;
+		} else {
+			life = 90L * 24L * 60L * 60L * 1000L;
+		}
+		final long now = new Date().getTime();
+		final long exp;
+		if (Long.MAX_VALUE - life < now) {
+			exp = Long.MAX_VALUE;
+		} else {
+			exp = now + life;
+		}
 		final NewToken t = new NewToken(tokenName, tokens.getToken(),
-				ht.getUserName(),
-				//TODO CONFIG make token lifetime configurable & based on type
-				new Date(new Date().getTime() + (14 * 24 * 60 * 60 * 1000)));
+				ht.getUserName(), new Date(exp));
 		storage.storeToken(t.getHashedToken());
 		return t;
 	}
@@ -135,8 +160,17 @@ public class Authentication {
 		if (ht.getUserName().equals(u.getUserName())) {
 			return u;
 		} else {
-			//TODO NOW only return fullname & email if info is public
+			//TODO NOW only return fullname & email if info is public - actually, never return email
 			return u;
 		}
+	}
+
+	public void revokeToken(
+			final IncomingToken token,
+			final UUID tokenId)
+			throws AuthenticationException, AuthStorageException,
+			NoSuchTokenException {
+		final HashedToken ht = getToken(token);
+		storage.deleteToken(ht.getUserName(), tokenId);
 	}
 }

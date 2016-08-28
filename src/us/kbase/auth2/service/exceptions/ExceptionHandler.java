@@ -34,7 +34,7 @@ public class ExceptionHandler implements ExceptionMapper<Throwable> {
 	public Response toResponse(Throwable ex) {
 
 		final MediaType mt = getMediaType();
-		LoggerFactory.getLogger(getClass()).error("Uncaught exception", ex);
+		LoggerFactory.getLogger(getClass()).error("Logging exception:", ex);
 
 		//TODO AUTH make including trace configurable
 		final ErrorMessage em = new ErrorMessage(ex, true);
