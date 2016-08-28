@@ -1,12 +1,14 @@
 package us.kbase.auth2.lib.storage;
 
 import java.util.List;
+import java.util.UUID;
 
 import us.kbase.auth2.lib.AuthUser;
 import us.kbase.auth2.lib.LocalUser;
 import us.kbase.auth2.lib.UserName;
 import us.kbase.auth2.lib.exceptions.AuthException;
 import us.kbase.auth2.lib.exceptions.AuthenticationException;
+import us.kbase.auth2.lib.exceptions.NoSuchTokenException;
 import us.kbase.auth2.lib.storage.exceptions.AuthStorageException;
 import us.kbase.auth2.lib.token.HashedToken;
 import us.kbase.auth2.lib.token.IncomingHashedToken;
@@ -32,8 +34,11 @@ public interface AuthStorage {
 			throws AuthStorageException, AuthenticationException;
 
 	HashedToken getToken(IncomingHashedToken token)
-			throws AuthStorageException;
+			throws AuthStorageException, NoSuchTokenException;
 
 	List<HashedToken> getTokens(UserName userName) throws AuthStorageException;
+
+	void deleteToken(UserName userName, UUID tokenId)
+			throws AuthStorageException, NoSuchTokenException;
 
 }

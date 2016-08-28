@@ -4,15 +4,18 @@ import java.util.HashMap;
 import java.util.LinkedList;
 import java.util.List;
 import java.util.Map;
+import java.util.UUID;
 
 import javax.inject.Inject;
 import javax.ws.rs.Consumes;
 import javax.ws.rs.CookieParam;
+import javax.ws.rs.DELETE;
 import javax.ws.rs.FormParam;
 import javax.ws.rs.GET;
 import javax.ws.rs.HeaderParam;
 import javax.ws.rs.POST;
 import javax.ws.rs.Path;
+import javax.ws.rs.PathParam;
 import javax.ws.rs.Produces;
 import javax.ws.rs.core.MediaType;
 
@@ -22,6 +25,7 @@ import us.kbase.auth2.lib.Authentication;
 import us.kbase.auth2.lib.exceptions.AuthError;
 import us.kbase.auth2.lib.exceptions.AuthException;
 import us.kbase.auth2.lib.exceptions.AuthenticationException;
+import us.kbase.auth2.lib.exceptions.NoSuchTokenException;
 import us.kbase.auth2.lib.storage.exceptions.AuthStorageException;
 import us.kbase.auth2.lib.token.HashedToken;
 import us.kbase.auth2.lib.token.IncomingToken;
@@ -45,6 +49,7 @@ public class Tokens {
 		final Map<String, Object> t = getTokens(token);
 		t.put("user", ((APIToken) t.get("current")).getUser());
 		t.put("targeturl", "/tokens/create");
+		t.put("tokenurl", "/tokens");
 		return t;
 	}
 	
@@ -82,6 +87,31 @@ public class Tokens {
 				cookieToken == null || cookieToken.isEmpty() ?
 						headerToken : cookieToken);
 	}
+	
+	@POST
+	@Path("/{tokenid}")
+	public void revokeTokenPOST(
+			@PathParam("tokenid") final UUID tokenId,
+			@CookieParam("token") final String userToken)
+			throws AuthenticationException, AuthStorageException,
+			NoSuchTokenException {
+		checkToken(userToken);
+		auth.revokeToken(new IncomingToken(userToken), tokenId);
+	}
+	
+	@DELETE
+	@Path("/{tokenid}")
+	public void revokeTokenDELETE(
+			@PathParam("tokenid") final UUID tokenId,
+			@CookieParam("token") final String cookieToken,
+			@HeaderParam("authentication") final String headerToken)
+			throws AuthenticationException, AuthStorageException,
+			NoSuchTokenException {
+		final String token = cookieToken == null || cookieToken.isEmpty() ?
+				headerToken : cookieToken;
+		checkToken(token);
+		auth.revokeToken(new IncomingToken(token), tokenId);
+	}
 
 	private APINewToken createtoken(
 			final String tokenName,
@@ -91,12 +121,12 @@ public class Tokens {
 			AuthStorageException {
 		checkToken(userToken);
 		return new APINewToken(auth.createToken(new IncomingToken(userToken),
-				tokenName, tokenType == "server"));
+				tokenName, "server".equals(tokenType)));
 	}
 
 	private void checkToken(final String token)
 			throws AuthenticationException {
-		if (token == null) {
+		if (token == null || token.isEmpty()) {
 			throw new AuthenticationException(AuthError.NO_TOKEN, 
 					"An authentication token must be supplied in the request.");
 		}

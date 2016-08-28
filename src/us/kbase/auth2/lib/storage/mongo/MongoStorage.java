@@ -19,6 +19,7 @@ import com.mongodb.client.MongoCollection;
 import com.mongodb.client.MongoDatabase;
 import com.mongodb.client.model.Filters;
 import com.mongodb.client.model.IndexOptions;
+import com.mongodb.client.result.DeleteResult;
 
 import us.kbase.auth2.lib.AuthUser;
 import us.kbase.auth2.lib.LocalUser;
@@ -26,9 +27,9 @@ import us.kbase.auth2.lib.UserName;
 import us.kbase.auth2.lib.exceptions.AuthError;
 import us.kbase.auth2.lib.exceptions.AuthException;
 import us.kbase.auth2.lib.exceptions.AuthenticationException;
+import us.kbase.auth2.lib.exceptions.NoSuchTokenException;
 import us.kbase.auth2.lib.storage.AuthStorage;
 import us.kbase.auth2.lib.storage.exceptions.AuthStorageException;
-import us.kbase.auth2.lib.storage.exceptions.NoSuchTokenException;
 import us.kbase.auth2.lib.storage.exceptions.StorageInitException;
 import us.kbase.auth2.lib.token.HashedToken;
 import us.kbase.auth2.lib.token.IncomingHashedToken;
@@ -285,7 +286,7 @@ public class MongoStorage implements AuthStorage {
 
 	@Override
 	public HashedToken getToken(final IncomingHashedToken token)
-			throws AuthStorageException {
+			throws AuthStorageException, NoSuchTokenException {
 		final Document t = findOne(COL_TOKEN, new Document(
 				Fields.TOKEN_TOKEN, token.getTokenHash()));
 		if (t == null) {
@@ -319,8 +320,7 @@ public class MongoStorage implements AuthStorage {
 				ret.add(getToken(d));
 			}
 		} catch (MongoException e) {
-			throw new AuthStorageException(
-					"Connection to database failed", e);
+			throw new AuthStorageException("Connection to database failed", e);
 		}
 		return ret;
 	}
@@ -332,6 +332,26 @@ public class MongoStorage implements AuthStorage {
 		return new AuthUser(new UserName(user.getString(Fields.USER_NAME)),
 				user.getString(Fields.USER_EMAIL),
 				user.getString(Fields.USER_FULL_NAME));
+	}
+
+	@Override
+	public void deleteToken(
+			final UserName userName,
+			final UUID tokenId)
+			throws AuthStorageException, NoSuchTokenException {
+		try {
+			final DeleteResult dr = db.getCollection(COL_TOKEN)
+					.deleteOne(new Document(
+							Fields.TOKEN_USER_NAME, userName.getName())
+							.append(Fields.TOKEN_ID, tokenId.toString()));
+			if (dr.getDeletedCount() != 1L) {
+				throw new NoSuchTokenException(String.format(
+						"No token %s for user %s exists",
+						tokenId, userName.getName()));
+			}
+		} catch (MongoException e) {
+			throw new AuthStorageException("Connection to database failed", e);
+		}
 	}
 
 }
