@@ -38,8 +38,6 @@ public class LocalAccounts {
 	//TODO TEST
 	//TODO JAVADOC
 
-	
-	//TODO NOW logout
 	//TODO NOW reset pwd
 
 	@Inject
