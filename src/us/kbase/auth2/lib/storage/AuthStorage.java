@@ -41,4 +41,6 @@ public interface AuthStorage {
 	void deleteToken(UserName userName, UUID tokenId)
 			throws AuthStorageException, NoSuchTokenException;
 
+	void deleteTokens(UserName userName) throws AuthStorageException;
+
 }

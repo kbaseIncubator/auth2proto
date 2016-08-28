@@ -173,4 +173,10 @@ public class Authentication {
 		final HashedToken ht = getToken(token);
 		storage.deleteToken(ht.getUserName(), tokenId);
 	}
+
+	public void revokeTokens(final IncomingToken token)
+			throws AuthenticationException, AuthStorageException {
+		final HashedToken ht = getToken(token);
+		storage.deleteTokens(ht.getUserName());
+	}
 }

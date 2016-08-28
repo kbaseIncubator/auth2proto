@@ -17,7 +17,10 @@ import javax.ws.rs.POST;
 import javax.ws.rs.Path;
 import javax.ws.rs.PathParam;
 import javax.ws.rs.Produces;
+import javax.ws.rs.core.Cookie;
 import javax.ws.rs.core.MediaType;
+import javax.ws.rs.core.NewCookie;
+import javax.ws.rs.core.Response;
 
 import org.glassfish.jersey.server.mvc.Template;
 
@@ -50,6 +53,7 @@ public class Tokens {
 		t.put("user", ((APIToken) t.get("current")).getUser());
 		t.put("targeturl", "/tokens/create");
 		t.put("tokenurl", "/tokens");
+		t.put("revokeallurl", "/tokens/revokeall");
 		return t;
 	}
 	
@@ -112,6 +116,33 @@ public class Tokens {
 		checkToken(token);
 		auth.revokeToken(new IncomingToken(token), tokenId);
 	}
+	
+	@POST
+	@Path("/revokeall")
+	public Response revokeAllAndLogout(
+			@CookieParam("token") final String cookieToken)
+			throws AuthenticationException, AuthStorageException {
+		checkToken(cookieToken);
+		auth.revokeTokens(new IncomingToken(cookieToken));
+		return Response.ok().cookie(new NewCookie(
+				new Cookie("token", "logout", "/", null),
+				"authtoken", 0, false)).build();
+		//TODO CONFIG make secure cookie configurable
+		//TODO NOW Have a standard cookie builder?
+	}
+	
+	@DELETE
+	@Path("/revokeall")
+	public void revokeAll(
+			@CookieParam("token") final String cookieToken,
+			@HeaderParam("authentication") final String headerToken)
+			throws AuthenticationException, AuthStorageException {
+		final String token = cookieToken == null || cookieToken.isEmpty() ?
+				headerToken : cookieToken;
+		checkToken(token);
+		auth.revokeTokens(new IncomingToken(token));
+	}
+			
 
 	private APINewToken createtoken(
 			final String tokenName,
