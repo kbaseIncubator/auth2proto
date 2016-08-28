@@ -33,10 +33,9 @@ public class Authentication {
 	//TODO SCOPES configure scopes via ui
 	//TODO SCOPES configure scope on login via ui
 	//TODO SCOPES restricted scopes - allow for specific roles or users (or for specific clients via oauth2)
-	//TODO NOW revoke token for user and admin for any user
-	//TODO NOW revoke all tokens - for user and admin per user and all
-	//TODO NOW deactiveate account - admin
-	//TODO NOW pwd reset - admin
+	//TODO ADMIN revoke user token, revoke all tokens for a user, revoke all tokens
+	//TODO ADMIN deactivate account
+	//TODO ADMIN force user pwd reset
 	//TODO NOW tokens - redirect to standard login if not logged in (other pages as well)
 	
 	private final AuthStorage storage;
@@ -173,10 +172,27 @@ public class Authentication {
 		final HashedToken ht = getToken(token);
 		storage.deleteToken(ht.getUserName(), tokenId);
 	}
+	
+	//note returns null if the token could not be found 
+	public HashedToken revokeToken(final IncomingToken token)
+			throws AuthStorageException {
+		if (token == null) {
+			throw new NullPointerException("token");
+		}
+		HashedToken ht = null;
+		try {
+			ht = storage.getToken(token.getHashedToken());
+			storage.deleteToken(ht.getUserName(), ht.getId());
+		} catch (NoSuchTokenException e) {
+			// no problem, continue
+		}
+		return ht;
+	}
 
 	public void revokeTokens(final IncomingToken token)
 			throws AuthenticationException, AuthStorageException {
 		final HashedToken ht = getToken(token);
 		storage.deleteTokens(ht.getUserName());
 	}
+
 }

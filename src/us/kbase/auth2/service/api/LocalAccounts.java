@@ -5,6 +5,7 @@ import java.util.Map;
 
 import javax.inject.Inject;
 import javax.ws.rs.Consumes;
+import javax.ws.rs.CookieParam;
 import javax.ws.rs.FormParam;
 import javax.ws.rs.GET;
 import javax.ws.rs.POST;
@@ -23,9 +24,12 @@ import com.google.common.collect.ImmutableMap;
 import us.kbase.auth2.lib.Authentication;
 import us.kbase.auth2.lib.Password;
 import us.kbase.auth2.lib.UserName;
+import us.kbase.auth2.lib.exceptions.AuthError;
 import us.kbase.auth2.lib.exceptions.AuthenticationException;
 import us.kbase.auth2.lib.exceptions.MissingParameterException;
 import us.kbase.auth2.lib.storage.exceptions.AuthStorageException;
+import us.kbase.auth2.lib.token.HashedToken;
+import us.kbase.auth2.lib.token.IncomingToken;
 import us.kbase.auth2.lib.token.NewToken;
 
 @Path("/localaccount")
@@ -72,6 +76,44 @@ public class LocalAccounts {
 						ImmutableMap.of("user", userName)))
 				.cookie(getCookie(t, stayLoggedIn == null))
 				.build();
+	}
+	
+	@GET
+	@Path("/logout")
+	@Template(name = "/locallogout")
+	public Map<String, String> logout(
+			@CookieParam("token") final String token)
+			throws AuthenticationException, AuthStorageException {
+		checkToken(token);
+		final HashedToken ht = auth.getToken(new IncomingToken(token));
+		return ImmutableMap.of("user", ht.getUserName().getName(),
+				"logouturl", "/localaccount/logoutresult");
+	}
+	
+	@POST
+	@Path("/logoutresult")
+	public Response logoutResult(
+			@CookieParam("token") final String token)
+			throws AuthenticationException, AuthStorageException {
+		checkToken(token);
+		final HashedToken ht = auth.revokeToken(new IncomingToken(token));
+		return Response.ok(
+				new Viewable("/locallogoutresult",
+						ImmutableMap.of("user", ht == null ? null :
+							ht.getUserName().getName())))
+				.cookie(new NewCookie(
+						new Cookie("token", "logout", "/", null),
+						"authtoken", 0, false))
+				.build();
+	}
+	
+	//TODO NOW make this a convenience method - API helper class
+	private void checkToken(final String token)
+			throws AuthenticationException {
+		if (token == null || token.isEmpty()) {
+			throw new AuthenticationException(AuthError.NO_TOKEN, 
+					"An authentication token must be supplied in the request.");
+		}
 	}
 	
 	private NewCookie getCookie(final NewToken t, final boolean session) {
