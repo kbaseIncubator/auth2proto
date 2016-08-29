@@ -5,7 +5,7 @@ public enum AuthError {
 	//TODO TEST unit tests
 	//TODO JAVADOC
 	
-	AUTHENICATION_FAILED	(10000, "Authentication failed"),
+	AUTHENTICATION_FAILED	(10000, "Authentication failed"),
 	NO_TOKEN				(10001, "No authentication token"),
 	INVALID_TOKEN			(10002, "Invalid token"),
 	UNAUTHORIZED			(20000, "Unauthorized"),

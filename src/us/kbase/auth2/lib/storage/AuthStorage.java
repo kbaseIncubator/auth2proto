@@ -6,9 +6,9 @@ import java.util.UUID;
 import us.kbase.auth2.lib.AuthUser;
 import us.kbase.auth2.lib.LocalUser;
 import us.kbase.auth2.lib.UserName;
-import us.kbase.auth2.lib.exceptions.AuthException;
-import us.kbase.auth2.lib.exceptions.AuthenticationException;
 import us.kbase.auth2.lib.exceptions.NoSuchTokenException;
+import us.kbase.auth2.lib.exceptions.NoSuchUserException;
+import us.kbase.auth2.lib.exceptions.UserExistsException;
 import us.kbase.auth2.lib.storage.exceptions.AuthStorageException;
 import us.kbase.auth2.lib.token.HashedToken;
 import us.kbase.auth2.lib.token.IncomingHashedToken;
@@ -17,8 +17,15 @@ public interface AuthStorage {
 	
 	//TODO JAVADOC
 	
+	/** Create a new local account. Note that new accounts are always created
+	 * with no roles.
+	 * @param local the user to create.
+	 * @throws AuthStorageException if a problem connecting with the storage
+	 * system occurs.
+	 * @throws UserExistsException if the user already exists.
+	 */
 	void createLocalAccount(LocalUser local)
-			throws AuthException, AuthStorageException;
+			throws AuthStorageException, UserExistsException;
 
 	/** Store a token in the database. No checking is done on the validity
 	 * of the token - passing in tokens with bad data is a programming error.
@@ -28,10 +35,10 @@ public interface AuthStorage {
 	void storeToken(HashedToken t) throws AuthStorageException;
 
 	AuthUser getUser(UserName userName)
-			throws AuthenticationException, AuthStorageException;
+			throws AuthStorageException, NoSuchUserException;
 
 	LocalUser getLocalUser(UserName userName)
-			throws AuthStorageException, AuthenticationException;
+			throws AuthStorageException, NoSuchUserException;
 
 	HashedToken getToken(IncomingHashedToken token)
 			throws AuthStorageException, NoSuchTokenException;

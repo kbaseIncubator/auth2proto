@@ -26,8 +26,8 @@ import org.glassfish.jersey.server.mvc.Template;
 
 import us.kbase.auth2.lib.Authentication;
 import us.kbase.auth2.lib.exceptions.AuthError;
-import us.kbase.auth2.lib.exceptions.AuthException;
 import us.kbase.auth2.lib.exceptions.AuthenticationException;
+import us.kbase.auth2.lib.exceptions.MissingParameterException;
 import us.kbase.auth2.lib.exceptions.NoSuchTokenException;
 import us.kbase.auth2.lib.storage.exceptions.AuthStorageException;
 import us.kbase.auth2.lib.token.HashedToken;
@@ -74,7 +74,8 @@ public class Tokens {
 			@CookieParam("token") final String userToken,
 			@FormParam("tokenname") final String tokenName,
 			@FormParam("tokentype") final String tokenType)
-			throws AuthException, AuthStorageException {
+			throws AuthStorageException, AuthenticationException,
+			MissingParameterException {
 		return createtoken(tokenName, tokenType, userToken);
 	}
 	
@@ -86,7 +87,8 @@ public class Tokens {
 			@CookieParam("token") final String cookieToken,
 			@HeaderParam("authentication") final String headerToken,
 			final CreateTokenParams input)
-			throws AuthException, AuthStorageException {
+			throws AuthStorageException, AuthenticationException,
+			MissingParameterException {
 		return createtoken(input.getName(), input.getType(),
 				cookieToken == null || cookieToken.isEmpty() ?
 						headerToken : cookieToken);
@@ -148,8 +150,8 @@ public class Tokens {
 			final String tokenName,
 			final String tokenType,
 			final String userToken)
-			throws AuthenticationException, AuthException,
-			AuthStorageException {
+			throws AuthenticationException, AuthStorageException,
+			MissingParameterException {
 		checkToken(userToken);
 		return new APINewToken(auth.createToken(new IncomingToken(userToken),
 				tokenName, "server".equals(tokenType)));

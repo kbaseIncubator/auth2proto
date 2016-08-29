@@ -44,21 +44,24 @@ public class LocalAccounts {
 	@Template(name = "/locallogin")
 	@Produces(MediaType.TEXT_HTML)
 	public Map<String, String> login() {
-		return ImmutableMap.of("targeturl", "/localaccount/loginresult");
+		return ImmutableMap.of("targeturl", "/localaccount/login/result");
 	}
 	
 	@POST
-	@Path("/loginresult")
+	@Path("/login/result")
 	@Consumes(MediaType.APPLICATION_FORM_URLENCODED)
 	public Response loginResult(
 			@FormParam("user") final String userName,
 			@FormParam("pwd") String pwd, //char makes Jersey puke
 			//checkbox, so "on" = checked, null = not checked
 			@FormParam("stayLoggedIn") final String stayLoggedIn)
-			throws AuthenticationException, AuthStorageException,
-			MissingParameterException {
-		if (userName == null) {
+			throws AuthStorageException, MissingParameterException,
+			AuthenticationException {
+		if (userName == null || userName.isEmpty()) {
 			throw new MissingParameterException("user");
+		}
+		if (pwd == null || pwd.isEmpty()) {
+			throw new MissingParameterException("pwd");
 		}
 		final NewToken t = auth.localLogin(new UserName(userName),
 				new Password(pwd.toCharArray()));

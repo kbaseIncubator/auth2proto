@@ -8,6 +8,7 @@ import javax.ws.rs.FormParam;
 import javax.ws.rs.GET;
 import javax.ws.rs.POST;
 import javax.ws.rs.Path;
+import javax.ws.rs.PathParam;
 import javax.ws.rs.Produces;
 import javax.ws.rs.QueryParam;
 import javax.ws.rs.core.MediaType;
@@ -16,12 +17,15 @@ import org.glassfish.jersey.server.mvc.Template;
 
 import com.google.common.collect.ImmutableMap;
 
+import us.kbase.auth2.lib.AuthUser;
 import us.kbase.auth2.lib.Authentication;
 import us.kbase.auth2.lib.Password;
 import us.kbase.auth2.lib.UserName;
-import us.kbase.auth2.lib.exceptions.AuthException;
 import us.kbase.auth2.lib.exceptions.MissingParameterException;
+import us.kbase.auth2.lib.exceptions.NoSuchUserException;
+import us.kbase.auth2.lib.exceptions.UserExistsException;
 import us.kbase.auth2.lib.storage.exceptions.AuthStorageException;
+import us.kbase.auth2.lib.token.IncomingToken;
 
 @Path("/admin")
 public class Admin {
@@ -46,7 +50,7 @@ public class Admin {
 	@Produces(MediaType.TEXT_HTML)
 	public Map<String, String> createLocalAccountStart(
 			@QueryParam("admin") final String adminName) {
-		//TODO NOW get adminName from token
+		//TODO ADMIN get adminName from token
 		return ImmutableMap.of("name", adminName,
 				"targeturl", "/admin/localaccount/create");
 	}
@@ -60,8 +64,9 @@ public class Admin {
 			@FormParam("user") final String userName,
 			@FormParam("full") final String fullName,
 			@FormParam("email") final String email)
-			throws AuthException, AuthStorageException {
-		//TODO NOW check user is admin
+			throws AuthStorageException, UserExistsException,
+			MissingParameterException {
+		//TODO ADMIN check user is admin
 		//TODO NOW log
 		//TODO NOW email class with proper checking (probably not validation)
 		if (userName == null) {
@@ -76,6 +81,18 @@ public class Admin {
 				"password", new String(pwd.getPassword())); // char[] won't work
 		pwd.clear(); // not that this helps much...
 		return ret;
+	}
+	
+	@GET
+	@Path("/roles/{user}")
+	@Template(name = "/adminrolesuser")
+	public Map<String, String> userRoles(
+			@PathParam("user") final String user)
+		throws AuthStorageException, NoSuchUserException {
+		//TODO ADMIN get adminname from token & check
+		final AuthUser au = auth.getUserAsAdmin(
+				new IncomingToken("fake"), new UserName(user));
+		return null;
 	}
 
 

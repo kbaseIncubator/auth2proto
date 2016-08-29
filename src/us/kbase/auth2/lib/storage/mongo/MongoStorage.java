@@ -24,10 +24,9 @@ import com.mongodb.client.result.DeleteResult;
 import us.kbase.auth2.lib.AuthUser;
 import us.kbase.auth2.lib.LocalUser;
 import us.kbase.auth2.lib.UserName;
-import us.kbase.auth2.lib.exceptions.AuthError;
-import us.kbase.auth2.lib.exceptions.AuthException;
-import us.kbase.auth2.lib.exceptions.AuthenticationException;
 import us.kbase.auth2.lib.exceptions.NoSuchTokenException;
+import us.kbase.auth2.lib.exceptions.NoSuchUserException;
+import us.kbase.auth2.lib.exceptions.UserExistsException;
 import us.kbase.auth2.lib.storage.AuthStorage;
 import us.kbase.auth2.lib.storage.exceptions.AuthStorageException;
 import us.kbase.auth2.lib.storage.exceptions.StorageInitException;
@@ -197,7 +196,7 @@ public class MongoStorage implements AuthStorage {
 	
 	@Override
 	public void createLocalAccount(final LocalUser local)
-			throws AuthException, AuthStorageException {
+			throws UserExistsException, AuthStorageException {
 		final String pwdhsh = Base64.getEncoder().encodeToString(
 				local.getPasswordHash());
 		final String salt = Base64.getEncoder().encodeToString(
@@ -209,14 +208,15 @@ public class MongoStorage implements AuthStorage {
 				.append(Fields.USER_FULL_NAME, local.getFullName())
 				.append(Fields.USER_RESET_PWD, local.forceReset())
 				.append(Fields.USER_PWD_HSH, pwdhsh)
-				.append(Fields.USER_SALT, salt);
+				.append(Fields.USER_SALT, salt)
+				.append(Fields.USER_ROLES, new LinkedList<String>())
+				.append(Fields.USER_CUSTOM_ROLES, new LinkedList<String>());
 		try {
 			db.getCollection(COL_USERS).insertOne(u);
 		} catch (MongoWriteException mwe) {
 			if (isDuplicateKeyException(mwe)) {
 				System.out.println(mwe);
-				throw new AuthException(AuthError.USER_ALREADY_EXISTS,
-						local.getUserName().getName());
+				throw new UserExistsException(local.getUserName().getName());
 			} else {
 				throw new AuthStorageException("Database write failed", mwe);
 			}
@@ -229,12 +229,19 @@ public class MongoStorage implements AuthStorage {
 	//note this always returns pwd info. Add boolean to avoid if needed.
 	@Override
 	public LocalUser getLocalUser(final UserName userName)
-			throws AuthStorageException, AuthenticationException {
+			throws AuthStorageException, NoSuchUserException {
 		final Document user = getUserDoc(userName, true);
+		@SuppressWarnings("unchecked")
+		final List<String> roles = (List<String>) user.get(Fields.USER_ROLES);
+		@SuppressWarnings("unchecked")
+		final List<String> croles = (List<String>) user.get(
+				Fields.USER_CUSTOM_ROLES);
 		return new LocalUser(
 				new UserName(user.getString(Fields.USER_NAME)),
 				user.getString(Fields.USER_EMAIL),
 				user.getString(Fields.USER_FULL_NAME),
+				roles,
+				croles,
 				Base64.getDecoder().decode(
 						user.getString(Fields.USER_PWD_HSH)),
 				Base64.getDecoder().decode(user.getString(Fields.USER_SALT)),
@@ -242,15 +249,14 @@ public class MongoStorage implements AuthStorage {
 	}
 
 	private Document getUserDoc(final UserName userName, final boolean local)
-			throws AuthStorageException, AuthenticationException {
+			throws AuthStorageException, NoSuchUserException {
 		final Document projection = local ? null : new Document(
 				Fields.USER_PWD_HSH, 0).append(Fields.USER_SALT, 0);
 		final Document user = findOne(COL_USERS,
 				new Document(Fields.USER_NAME, userName.getName()),
 				projection);
 		if (user == null || (local && !user.getBoolean(Fields.USER_LOCAL))) {
-			throw new AuthenticationException(AuthError.NO_SUCH_USER,
-					userName.getName());
+			throw new NoSuchUserException(userName.getName());
 		}
 		return user;
 	}
@@ -351,12 +357,20 @@ public class MongoStorage implements AuthStorage {
 	
 	@Override
 	public AuthUser getUser(final UserName userName)
-			throws AuthenticationException, AuthStorageException {
+			throws AuthStorageException, NoSuchUserException {
 		final Document user = getUserDoc(userName, false);
-		return new AuthUser(new UserName(user.getString(Fields.USER_NAME)),
+		@SuppressWarnings("unchecked")
+		final List<String> roles = (List<String>) user.get(Fields.USER_ROLES);
+		@SuppressWarnings("unchecked")
+		final List<String> croles = (List<String>) user.get(
+				Fields.USER_CUSTOM_ROLES);
+		return new AuthUser(
+				new UserName(user.getString(Fields.USER_NAME)),
 				user.getString(Fields.USER_EMAIL),
 				user.getString(Fields.USER_FULL_NAME),
-				user.getBoolean(Fields.USER_LOCAL));
+				user.getBoolean(Fields.USER_LOCAL),
+				roles,
+				croles);
 	}
 
 	@Override

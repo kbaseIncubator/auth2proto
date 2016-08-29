@@ -9,9 +9,12 @@ import java.util.UUID;
 import us.kbase.auth2.cryptutils.PasswordCrypt;
 import us.kbase.auth2.cryptutils.TokenGenerator;
 import us.kbase.auth2.lib.exceptions.AuthError;
-import us.kbase.auth2.lib.exceptions.AuthException;
 import us.kbase.auth2.lib.exceptions.AuthenticationException;
+import us.kbase.auth2.lib.exceptions.InvalidTokenException;
+import us.kbase.auth2.lib.exceptions.MissingParameterException;
 import us.kbase.auth2.lib.exceptions.NoSuchTokenException;
+import us.kbase.auth2.lib.exceptions.NoSuchUserException;
+import us.kbase.auth2.lib.exceptions.UserExistsException;
 import us.kbase.auth2.lib.storage.AuthStorage;
 import us.kbase.auth2.lib.storage.exceptions.AuthStorageException;
 import us.kbase.auth2.lib.token.NewToken;
@@ -61,7 +64,8 @@ public class Authentication {
 			final UserName userName,
 			final String fullName,
 			final String email)
-			throws AuthException, AuthStorageException {
+			throws AuthStorageException, UserExistsException,
+			MissingParameterException {
 		if (userName == null) {
 			throw new NullPointerException("userName");
 		}
@@ -80,10 +84,16 @@ public class Authentication {
 	
 	public NewToken localLogin(final UserName userName, final Password pwd)
 			throws AuthenticationException, AuthStorageException {
-		final LocalUser u = storage.getLocalUser(userName);
+		final LocalUser u;
+		try {
+			u = storage.getLocalUser(userName);
+		} catch (NoSuchUserException e) {
+			throw new AuthenticationException(AuthError.AUTHENTICATION_FAILED,
+					"Username / password mismatch");
+		}
 		if (!pwdcrypt.authenticate(pwd.getPassword(), u.getPasswordHash(),
 				u.getSalt())) {
-			throw new AuthenticationException(AuthError.AUTHENICATION_FAILED,
+			throw new AuthenticationException(AuthError.AUTHENTICATION_FAILED,
 					"Username / password mismatch");
 		}
 		pwd.clear();
@@ -96,21 +106,21 @@ public class Authentication {
 	}
 
 	public TokenSet getTokens(final IncomingToken token)
-			throws AuthenticationException, AuthStorageException {
+			throws AuthStorageException, InvalidTokenException {
 		final HashedToken ht = getToken(token);
 		return new TokenSet(ht, storage.getTokens(ht.getUserName()));
 	}
 
 	// converts a no such token exception into an invalid token exception.
 	public HashedToken getToken(final IncomingToken token)
-			throws AuthStorageException, AuthenticationException {
+			throws AuthStorageException, InvalidTokenException {
 		if (token == null) {
 			throw new NullPointerException("token");
 		}
 		try {
 			return storage.getToken(token.getHashedToken());
 		} catch (NoSuchTokenException e) {
-			throw new AuthenticationException(AuthError.INVALID_TOKEN, null);
+			throw new InvalidTokenException();
 		}
 	}
 
@@ -118,7 +128,8 @@ public class Authentication {
 			final IncomingToken token,
 			final String tokenName,
 			final boolean serverToken)
-			throws AuthException, AuthStorageException {
+			throws AuthStorageException, MissingParameterException,
+			InvalidTokenException {
 		checkString(tokenName, "token name");
 		final HashedToken ht = getToken(token);
 		//TODO NOW check user has rights to create dev or server token
@@ -144,21 +155,28 @@ public class Authentication {
 	
 	// gets user for token
 	public AuthUser getUser(final IncomingToken token)
-			throws AuthenticationException, AuthStorageException {
+			throws AuthStorageException, InvalidTokenException {
 		final HashedToken ht = getToken(token);
-		return storage.getUser(ht.getUserName());
+		try {
+			return storage.getUser(ht.getUserName());
+		} catch (NoSuchUserException e) {
+			throw new RuntimeException("There seems to be an error in the " +
+					"storage system. Token was valid, but no user", e);
+		}
 	}
 
 	// get a (possibly) different user 
 	public AuthUser getUser(
 			final IncomingToken token,
 			final UserName user)
-			throws AuthenticationException, AuthStorageException {
+			throws AuthStorageException, InvalidTokenException,
+			NoSuchUserException {
 		final HashedToken ht = getToken(token);
 		final AuthUser u = storage.getUser(user);
 		if (ht.getUserName().equals(u.getUserName())) {
 			return u;
 		} else {
+			//TODO NOW this shouldn't return roles
 			//TODO NOW only return fullname & email if info is public - actually, never return email
 			return u;
 		}
@@ -167,8 +185,8 @@ public class Authentication {
 	public void revokeToken(
 			final IncomingToken token,
 			final UUID tokenId)
-			throws AuthenticationException, AuthStorageException,
-			NoSuchTokenException {
+			throws AuthStorageException,
+			NoSuchTokenException, InvalidTokenException {
 		final HashedToken ht = getToken(token);
 		storage.deleteToken(ht.getUserName(), tokenId);
 	}
@@ -190,9 +208,19 @@ public class Authentication {
 	}
 
 	public void revokeTokens(final IncomingToken token)
-			throws AuthenticationException, AuthStorageException {
+			throws AuthStorageException, InvalidTokenException {
 		final HashedToken ht = getToken(token);
 		storage.deleteTokens(ht.getUserName());
+	}
+
+
+	public AuthUser getUserAsAdmin(
+			final IncomingToken adminToken,
+			final UserName userName)
+			throws AuthStorageException, NoSuchUserException {
+		//TODO ADMIN check user is admin
+		return storage.getUser(userName);
+		// TODO Auto-generated method stub
 	}
 
 }

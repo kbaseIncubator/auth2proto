@@ -64,7 +64,7 @@ public class Hello {
 				throw new AuthException(AuthError.MISSING_PARAMETER, "badreq",
 						new IllegalArgumentException("badreq"));
 			case "auth":
-				throw new AuthenticationException(AuthError.AUTHENICATION_FAILED,
+				throw new AuthenticationException(AuthError.AUTHENTICATION_FAILED,
 						"auth", new IllegalArgumentException("auth"));
 			case "unauth":
 				throw new UnauthorizedException(AuthError.UNAUTHORIZED, "unauth",

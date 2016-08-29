@@ -60,6 +60,7 @@ public class Logout {
 	//TODO NOW make this a convenience method - API helper class
 	private void checkToken(final String token)
 			throws AuthenticationException {
+		//TODO NOW no token provided exception
 		if (token == null || token.isEmpty()) {
 			throw new AuthenticationException(AuthError.NO_TOKEN, 
 					"An authentication token must be supplied in the request.");
