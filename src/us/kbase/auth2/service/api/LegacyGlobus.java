@@ -92,7 +92,7 @@ public class LegacyGlobus {
 		return token;
 	}
 	
-	// note does not return identity_id
+	// note does not return identity_id and email is always null
 	// note error structure is completely different
 	@GET
 	@Path("/users/{user}/")
@@ -130,7 +130,7 @@ public class LegacyGlobus {
 		ret.put("organization", null);
 		ret.put("fullname", u.getFullName());
 		ret.put("user_name", u.getUserName().getName());
-		ret.put("email", u.getEmail());
+		ret.put("email", null);
 		ret.put("custom_fields", new HashMap<String,String>());
 		return ret;
 	}

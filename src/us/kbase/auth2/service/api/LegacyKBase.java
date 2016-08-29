@@ -44,6 +44,7 @@ public class LegacyKBase {
 		throw new MissingParameterException("token");
 	}
 
+	//note email is never returned
 	@POST
 	@Consumes(MediaType.APPLICATION_FORM_URLENCODED)
 	@Produces(MediaType.APPLICATION_JSON)
@@ -62,27 +63,19 @@ public class LegacyKBase {
 		final String[] f = fields.split(",");
 		final Map<String, Object> ret = new HashMap<>();
 		boolean name = false;
-		boolean email = false;
 		for (int i = 0; i < f.length; i++) {
 			final String field = f[i].trim();
 			if ("name".equals(field)) {
 				name = true;
-			} else if ("email".equals(field)) {
-				email = true;
 			} else if ("token".equals(field)) {
 				ret.put("token", token);
 			}
 		}
 
 		final IncomingToken in = new IncomingToken(token);
-		if (name || email) {
+		if (name) {
 			final AuthUser u = auth.getUser(in);
-			if (name) {
-				ret.put("name", u.getFullName());
-			}
-			if (email) {
-				ret.put("email", u.getEmail());
-			}
+			ret.put("name", u.getFullName());
 			ret.put("user_id", u.getUserName().getName());
 		} else {
 			final HashedToken ht = auth.getToken(in);
