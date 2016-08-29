@@ -62,6 +62,12 @@ public class MongoStorage implements AuthStorage {
 	 * 
 	 */
 	
+	/* Don't use mongo built in object mapping to create the returned objects
+	 * since that tightly couples the classes to the storage implementation.
+	 * Instead, if needed, create classes specific to the implementation for
+	 * mapping purposes that produce the returned classes.
+	 */
+	
 	//TODO TEST unit tests
 	//TODO JAVADOC
 	
@@ -220,6 +226,7 @@ public class MongoStorage implements AuthStorage {
 		}
 	}
 	
+	//note this always returns pwd info. Add boolean to avoid if needed.
 	@Override
 	public LocalUser getLocalUser(final UserName userName)
 			throws AuthStorageException, AuthenticationException {
@@ -236,8 +243,11 @@ public class MongoStorage implements AuthStorage {
 
 	private Document getUserDoc(final UserName userName, final boolean local)
 			throws AuthStorageException, AuthenticationException {
+		final Document projection = local ? null : new Document(
+				Fields.USER_PWD_HSH, 0).append(Fields.USER_SALT, 0);
 		final Document user = findOne(COL_USERS,
-				new Document(Fields.USER_NAME, userName.getName()));
+				new Document(Fields.USER_NAME, userName.getName()),
+				projection);
 		if (user == null || (local && !user.getBoolean(Fields.USER_LOCAL))) {
 			throw new AuthenticationException(AuthError.NO_SUCH_USER,
 					userName.getName());
@@ -274,10 +284,24 @@ public class MongoStorage implements AuthStorage {
 	/* Use this for finding documents where indexes should force only a single
 	 * document. Assumes the indexes are doing their job.
 	 */
-	private Document findOne(final String collection, final Document query)
+	private Document findOne(
+			final String collection,
+			final Document query)
+			throws AuthStorageException {
+		return findOne(collection, query, null);
+	}
+	
+	/* Use this for finding documents where indexes should force only a single
+	 * document. Assumes the indexes are doing their job.
+	 */
+	private Document findOne(
+			final String collection,
+			final Document query,
+			final Document projection)
 			throws AuthStorageException {
 		try {
-			return db.getCollection(collection).find(query).first();
+			return db.getCollection(collection).find(query)
+					.projection(projection).first();
 		} catch (MongoException me) {
 			throw new AuthStorageException(
 					"Connection to database failed", me);
@@ -331,7 +355,8 @@ public class MongoStorage implements AuthStorage {
 		final Document user = getUserDoc(userName, false);
 		return new AuthUser(new UserName(user.getString(Fields.USER_NAME)),
 				user.getString(Fields.USER_EMAIL),
-				user.getString(Fields.USER_FULL_NAME));
+				user.getString(Fields.USER_FULL_NAME),
+				user.getBoolean(Fields.USER_LOCAL));
 	}
 
 	@Override

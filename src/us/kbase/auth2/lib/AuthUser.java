@@ -8,16 +8,19 @@ public class AuthUser {
 	private final String fullName;
 	private final String email;
 	private final UserName userName;
+	private final boolean isLocal;
 	
 	public AuthUser(
 			final UserName userName,
 			final String email,
-			final String fullName) {
+			final String fullName,
+			final boolean isLocal) {
 		super();
 		//TODO NOW check for nulls & empty strings - should email & fullName be allowed as empty strings?
 		this.fullName = fullName;
 		this.email = email;
 		this.userName = userName;
+		this.isLocal = isLocal;
 	}
 
 	public String getFullName() {
@@ -30,5 +33,9 @@ public class AuthUser {
 
 	public UserName getUserName() {
 		return userName;
+	}
+
+	public boolean isLocal() {
+		return isLocal;
 	}	
 }

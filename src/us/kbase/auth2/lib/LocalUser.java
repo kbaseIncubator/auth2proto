@@ -16,7 +16,7 @@ public class LocalUser extends AuthUser {
 			final byte[] passwordHash,
 			final byte[] salt,
 			final boolean forceReset) {
-		super(userName, email, fullName);
+		super(userName, email, fullName, true);
 		//TODO NOW check for nulls & empty strings - should email & fullName be allowed as empty strings?
 		this.passwordHash = passwordHash;
 		this.salt = salt;
