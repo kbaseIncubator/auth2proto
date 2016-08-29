@@ -25,10 +25,10 @@ import javax.ws.rs.core.Response;
 import org.glassfish.jersey.server.mvc.Template;
 
 import us.kbase.auth2.lib.Authentication;
-import us.kbase.auth2.lib.exceptions.AuthError;
-import us.kbase.auth2.lib.exceptions.AuthenticationException;
+import us.kbase.auth2.lib.exceptions.InvalidTokenException;
 import us.kbase.auth2.lib.exceptions.MissingParameterException;
 import us.kbase.auth2.lib.exceptions.NoSuchTokenException;
+import us.kbase.auth2.lib.exceptions.NoTokenProvidedException;
 import us.kbase.auth2.lib.storage.exceptions.AuthStorageException;
 import us.kbase.auth2.lib.token.HashedToken;
 import us.kbase.auth2.lib.token.IncomingToken;
@@ -48,7 +48,8 @@ public class Tokens {
 	@Template(name = "/tokens")
 	public Map<String, Object> getTokensHTML(
 			@CookieParam("token") final String token)
-			throws AuthenticationException, AuthStorageException {
+			throws AuthStorageException, InvalidTokenException,
+			NoTokenProvidedException {
 		final Map<String, Object> t = getTokens(token);
 		t.put("user", ((APIToken) t.get("current")).getUser());
 		t.put("targeturl", "/tokens/create");
@@ -62,7 +63,8 @@ public class Tokens {
 	public Map<String, Object> getTokensJSON(
 			@CookieParam("token") final String cookieToken,
 			@HeaderParam("authentication") final String headerToken)
-			throws AuthenticationException, AuthStorageException {
+			throws AuthStorageException, InvalidTokenException,
+			NoTokenProvidedException {
 		return getTokens(cookieToken == null ? headerToken : cookieToken);
 	}
 	
@@ -74,8 +76,8 @@ public class Tokens {
 			@CookieParam("token") final String userToken,
 			@FormParam("tokenname") final String tokenName,
 			@FormParam("tokentype") final String tokenType)
-			throws AuthStorageException, AuthenticationException,
-			MissingParameterException {
+			throws AuthStorageException, MissingParameterException,
+			NoTokenProvidedException, InvalidTokenException {
 		return createtoken(tokenName, tokenType, userToken);
 	}
 	
@@ -87,8 +89,8 @@ public class Tokens {
 			@CookieParam("token") final String cookieToken,
 			@HeaderParam("authentication") final String headerToken,
 			final CreateTokenParams input)
-			throws AuthStorageException, AuthenticationException,
-			MissingParameterException {
+			throws AuthStorageException, MissingParameterException,
+			InvalidTokenException, NoTokenProvidedException {
 		return createtoken(input.getName(), input.getType(),
 				cookieToken == null || cookieToken.isEmpty() ?
 						headerToken : cookieToken);
@@ -99,8 +101,9 @@ public class Tokens {
 	public void revokeTokenPOST(
 			@PathParam("tokenid") final UUID tokenId,
 			@CookieParam("token") final String userToken)
-			throws AuthenticationException, AuthStorageException,
-			NoSuchTokenException {
+			throws AuthStorageException,
+			NoSuchTokenException, NoTokenProvidedException,
+			InvalidTokenException {
 		checkToken(userToken);
 		auth.revokeToken(new IncomingToken(userToken), tokenId);
 	}
@@ -111,8 +114,9 @@ public class Tokens {
 			@PathParam("tokenid") final UUID tokenId,
 			@CookieParam("token") final String cookieToken,
 			@HeaderParam("authentication") final String headerToken)
-			throws AuthenticationException, AuthStorageException,
-			NoSuchTokenException {
+			throws AuthStorageException,
+			NoSuchTokenException, NoTokenProvidedException,
+			InvalidTokenException {
 		final String token = cookieToken == null || cookieToken.isEmpty() ?
 				headerToken : cookieToken;
 		checkToken(token);
@@ -123,7 +127,8 @@ public class Tokens {
 	@Path("/revokeall")
 	public Response revokeAllAndLogout(
 			@CookieParam("token") final String cookieToken)
-			throws AuthenticationException, AuthStorageException {
+			throws AuthStorageException, NoTokenProvidedException,
+			InvalidTokenException {
 		checkToken(cookieToken);
 		auth.revokeTokens(new IncomingToken(cookieToken));
 		return Response.ok().cookie(new NewCookie(
@@ -138,7 +143,8 @@ public class Tokens {
 	public void revokeAll(
 			@CookieParam("token") final String cookieToken,
 			@HeaderParam("authentication") final String headerToken)
-			throws AuthenticationException, AuthStorageException {
+			throws AuthStorageException, NoTokenProvidedException,
+			InvalidTokenException {
 		final String token = cookieToken == null || cookieToken.isEmpty() ?
 				headerToken : cookieToken;
 		checkToken(token);
@@ -150,23 +156,24 @@ public class Tokens {
 			final String tokenName,
 			final String tokenType,
 			final String userToken)
-			throws AuthenticationException, AuthStorageException,
-			MissingParameterException {
+			throws AuthStorageException, MissingParameterException,
+			NoTokenProvidedException, InvalidTokenException {
 		checkToken(userToken);
 		return new APINewToken(auth.createToken(new IncomingToken(userToken),
 				tokenName, "server".equals(tokenType)));
 	}
 
 	private void checkToken(final String token)
-			throws AuthenticationException {
+			throws NoTokenProvidedException {
 		if (token == null || token.isEmpty()) {
-			throw new AuthenticationException(AuthError.NO_TOKEN, 
+			throw new NoTokenProvidedException(
 					"An authentication token must be supplied in the request.");
 		}
 	}
 	
 	private Map<String, Object> getTokens(final String token)
-			throws AuthenticationException, AuthStorageException {
+			throws AuthStorageException, NoTokenProvidedException,
+			InvalidTokenException {
 		checkToken(token);
 		final TokenSet ts = auth.getTokens(new IncomingToken(token));
 		final Map<String, Object> ret = new HashMap<>();

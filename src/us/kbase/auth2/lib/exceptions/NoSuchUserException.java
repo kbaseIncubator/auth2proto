@@ -1,6 +1,6 @@
 package us.kbase.auth2.lib.exceptions;
 
-/** Base class of all exceptions caused by an authentication failure.
+/** Thrown when trying to access a non-existant user.
  * @author gaprice@lbl.gov 
  */
 @SuppressWarnings("serial")

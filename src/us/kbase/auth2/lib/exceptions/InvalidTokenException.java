@@ -1,6 +1,7 @@
 package us.kbase.auth2.lib.exceptions;
 
-/** Base class of all exceptions caused by an authentication failure.
+/** The provided token either does not exist in the database or is otherwise
+ * invalid.
  * @author gaprice@lbl.gov 
  */
 @SuppressWarnings("serial")

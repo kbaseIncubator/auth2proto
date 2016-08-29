@@ -17,8 +17,8 @@ import org.glassfish.jersey.server.mvc.Viewable;
 import com.google.common.collect.ImmutableMap;
 
 import us.kbase.auth2.lib.Authentication;
-import us.kbase.auth2.lib.exceptions.AuthError;
-import us.kbase.auth2.lib.exceptions.AuthenticationException;
+import us.kbase.auth2.lib.exceptions.InvalidTokenException;
+import us.kbase.auth2.lib.exceptions.NoTokenProvidedException;
 import us.kbase.auth2.lib.storage.exceptions.AuthStorageException;
 import us.kbase.auth2.lib.token.HashedToken;
 import us.kbase.auth2.lib.token.IncomingToken;
@@ -33,7 +33,8 @@ public class Logout {
 	@Template(name = "/logout")
 	public Map<String, String> logout(
 			@CookieParam("token") final String token)
-			throws AuthenticationException, AuthStorageException {
+			throws AuthStorageException, NoTokenProvidedException,
+			InvalidTokenException {
 		checkToken(token);
 		final HashedToken ht = auth.getToken(new IncomingToken(token));
 		return ImmutableMap.of("user", ht.getUserName().getName(),
@@ -44,7 +45,7 @@ public class Logout {
 	@Path("/result")
 	public Response logoutResult(
 			@CookieParam("token") final String token)
-			throws AuthenticationException, AuthStorageException {
+			throws AuthStorageException, NoTokenProvidedException {
 		checkToken(token);
 		final HashedToken ht = auth.revokeToken(new IncomingToken(token));
 		return Response.ok(
@@ -59,10 +60,9 @@ public class Logout {
 	
 	//TODO NOW make this a convenience method - API helper class
 	private void checkToken(final String token)
-			throws AuthenticationException {
-		//TODO NOW no token provided exception
+			throws NoTokenProvidedException {
 		if (token == null || token.isEmpty()) {
-			throw new AuthenticationException(AuthError.NO_TOKEN, 
+			throw new NoTokenProvidedException(
 					"An authentication token must be supplied in the request.");
 		}
 	}
