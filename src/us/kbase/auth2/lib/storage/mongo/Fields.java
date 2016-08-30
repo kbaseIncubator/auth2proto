@@ -14,6 +14,8 @@ public class Fields {
 	public static final String USER_EMAIL = "email";
 	public static final String USER_ID_PROVIDERS = "idprov";
 	public static final String USER_LOCAL = "lcl";
+	public static final String USER_ROLES = "roles";
+	public static final String USER_CUSTOM_ROLES = "custrls";
 	// these 3 are for local accounts only
 	public static final String USER_PWD_HSH = "pwdhsh";
 	public static final String USER_SALT = "salt";
@@ -33,6 +35,11 @@ public class Fields {
 	public static final String TOKEN_ID = "id";
 	public static final String TOKEN_NAME = "name";
 	public static final String TOKEN_CREATION = "create";
+	
+	//Custom roles fields
+	public static final String ROLES_ID = "id";
+	public static final String ROLES_NAME = "name";
+	public static final String ROLES_DESC = "desc";
 	
 	// configuration fields
 	public static final String CONFIG_KEY = "config";

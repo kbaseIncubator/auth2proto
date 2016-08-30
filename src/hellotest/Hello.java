@@ -11,7 +11,7 @@ import javax.ws.rs.WebApplicationException;
 import javax.ws.rs.core.MediaType;
 import javax.ws.rs.core.Response;
 
-import us.kbase.auth2.lib.exceptions.AuthError;
+import us.kbase.auth2.lib.exceptions.ErrorType;
 import us.kbase.auth2.lib.exceptions.AuthException;
 import us.kbase.auth2.lib.exceptions.AuthenticationException;
 import us.kbase.auth2.lib.exceptions.UnauthorizedException;
@@ -61,13 +61,13 @@ public class Hello {
 				throw new WebApplicationException(Response.status(502)
 						.build());
 			case "badreq":
-				throw new AuthException(AuthError.MISSING_PARAMETER, "badreq",
+				throw new AuthException(ErrorType.MISSING_PARAMETER, "badreq",
 						new IllegalArgumentException("badreq"));
 			case "auth":
-				throw new AuthenticationException(AuthError.AUTHENICATION_FAILED,
+				throw new AuthenticationException(ErrorType.AUTHENTICATION_FAILED,
 						"auth", new IllegalArgumentException("auth"));
 			case "unauth":
-				throw new UnauthorizedException(AuthError.UNAUTHORIZED, "unauth",
+				throw new UnauthorizedException(ErrorType.UNAUTHORIZED, "unauth",
 						new IllegalArgumentException("unauth"));
 		}
 		throw new IllegalArgumentException("foo");

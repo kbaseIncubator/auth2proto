@@ -19,10 +19,10 @@ import javax.ws.rs.core.MediaType;
 import us.kbase.auth2.lib.AuthUser;
 import us.kbase.auth2.lib.Authentication;
 import us.kbase.auth2.lib.UserName;
-import us.kbase.auth2.lib.exceptions.AuthError;
+import us.kbase.auth2.lib.exceptions.ErrorType;
 import us.kbase.auth2.lib.exceptions.AuthException;
-import us.kbase.auth2.lib.exceptions.AuthenticationException;
-import us.kbase.auth2.lib.exceptions.NoDataException;
+import us.kbase.auth2.lib.exceptions.InvalidTokenException;
+import us.kbase.auth2.lib.exceptions.NoSuchUserException;
 import us.kbase.auth2.lib.exceptions.UnauthorizedException;
 import us.kbase.auth2.lib.storage.exceptions.AuthStorageException;
 import us.kbase.auth2.lib.token.HashedToken;
@@ -47,10 +47,10 @@ public class LegacyGlobus {
 			@HeaderParam("x-globus-goauthtoken") final String xtoken,
 			@HeaderParam("globus-goauthtoken") String token,
 			@QueryParam("grant_type") final String grantType)
-			throws AuthException, AuthStorageException {
+			throws AuthStorageException, AuthException {
 
 		if (!"client_credentials".equals(grantType)) {
-			throw new AuthException(AuthError.UNSUPPORTED_OP,
+			throw new AuthException(ErrorType.UNSUPPORTED_OP,
 					"Only client_credentials grant_type supported. Got " +
 					grantType);
 		}
@@ -58,7 +58,7 @@ public class LegacyGlobus {
 		final HashedToken ht;
 		try {
 			ht = auth.getToken(new IncomingToken(token));
-		} catch (AuthenticationException e) {
+		} catch (InvalidTokenException e) {
 			// globus throws a 403 instead of a 401
 			throw new UnauthorizedException(
 					e.getErr(), "Authentication failed.");
@@ -86,13 +86,13 @@ public class LegacyGlobus {
 			token = xtoken;
 			if (token == null || token.isEmpty()) {
 				// globus throws a 403 instead of a 401
-				throw new UnauthorizedException(AuthError.NO_TOKEN, "");
+				throw new UnauthorizedException(ErrorType.NO_TOKEN, "");
 			}
 		}
 		return token;
 	}
 	
-	// note does not return identity_id
+	// note does not return identity_id and email is always null
 	// note error structure is completely different
 	@GET
 	@Path("/users/{user}/")
@@ -102,21 +102,13 @@ public class LegacyGlobus {
 			@HeaderParam("globus-goauthtoken") String token,
 			@PathParam("user") final String user)
 			throws UnauthorizedException, AuthStorageException,
-			AuthenticationException, NoDataException {
+			NoSuchUserException {
 		
 		token = getGlobusToken(xtoken, token);
-		if (user == null || user.isEmpty()) {
-			throw new UnauthorizedException(AuthError.MISSING_PARAMETER,
-					"user missing from url");
-		}
 		final AuthUser u;
 		try {
 			u = auth.getUser(new IncomingToken(token), new UserName(user));
-		} catch (AuthenticationException e) {
-			if (e.getErr().equals(AuthError.NO_SUCH_USER)) {
-				// throw a 404
-				throw new NoDataException(e.getErr(), null);
-			}
+		} catch (InvalidTokenException e) {
 			// globus throws a 403 instead of a 401
 			throw new UnauthorizedException(
 					e.getErr(), "Authentication failed.");
@@ -130,7 +122,7 @@ public class LegacyGlobus {
 		ret.put("organization", null);
 		ret.put("fullname", u.getFullName());
 		ret.put("user_name", u.getUserName().getName());
-		ret.put("email", u.getEmail());
+		ret.put("email", null);
 		ret.put("custom_fields", new HashMap<String,String>());
 		return ret;
 	}

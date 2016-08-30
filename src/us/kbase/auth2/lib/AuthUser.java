@@ -1,5 +1,9 @@
 package us.kbase.auth2.lib;
 
+import java.util.Collections;
+import java.util.LinkedList;
+import java.util.List;
+
 public class AuthUser {
 
 	//TODO TEST unit test
@@ -8,16 +12,47 @@ public class AuthUser {
 	private final String fullName;
 	private final String email;
 	private final UserName userName;
+	private final boolean isLocal;
+	private final List<Role> roles;
+	private final List<String> customRoles;
 	
 	public AuthUser(
 			final UserName userName,
 			final String email,
-			final String fullName) {
+			final String fullName,
+			final boolean isLocal) {
 		super();
 		//TODO NOW check for nulls & empty strings - should email & fullName be allowed as empty strings?
 		this.fullName = fullName;
 		this.email = email;
 		this.userName = userName;
+		this.isLocal = isLocal;
+		this.roles = Collections.unmodifiableList(new LinkedList<Role>());
+		this.customRoles = Collections.unmodifiableList(
+				new LinkedList<String>());
+	}
+	
+	public AuthUser(
+			final UserName userName,
+			final String email,
+			final String fullName,
+			final boolean isLocal,
+			List<Role> roles,
+			List<String> customRoles) {
+		super();
+		//TODO NOW check for nulls & empty strings - should email & fullName be allowed as empty strings?
+		this.fullName = fullName;
+		this.email = email;
+		this.userName = userName;
+		this.isLocal = isLocal;
+		if (roles == null) {
+			roles = new LinkedList<>();
+		}
+		this.roles = Collections.unmodifiableList(roles);
+		if (customRoles == null) {
+			customRoles = new LinkedList<>();
+		}
+		this.customRoles = Collections.unmodifiableList(customRoles);
 	}
 
 	public String getFullName() {
@@ -30,5 +65,17 @@ public class AuthUser {
 
 	public UserName getUserName() {
 		return userName;
+	}
+
+	public boolean isLocal() {
+		return isLocal;
+	}
+
+	public List<Role> getRoles() {
+		return roles;
+	}
+
+	public List<String> getCustomRoles() {
+		return customRoles;
 	}	
 }

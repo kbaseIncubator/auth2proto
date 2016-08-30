@@ -7,10 +7,10 @@ package us.kbase.auth2.lib.exceptions;
 public class NoSuchTokenException extends NoDataException {
 	
 	public NoSuchTokenException(final String message) {
-		super(AuthError.NO_SUCH_TOKEN, message);
+		super(ErrorType.NO_SUCH_TOKEN, message);
 	}
 	
 	public NoSuchTokenException(final String message, final Throwable cause) {
-		super(AuthError.NO_SUCH_TOKEN, message, cause);
+		super(ErrorType.NO_SUCH_TOKEN, message, cause);
 	}
 }

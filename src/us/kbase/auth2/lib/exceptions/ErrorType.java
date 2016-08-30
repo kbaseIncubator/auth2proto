@@ -1,11 +1,11 @@
 package us.kbase.auth2.lib.exceptions;
 
-public enum AuthError {
+public enum ErrorType {
 	
 	//TODO TEST unit tests
 	//TODO JAVADOC
 	
-	AUTHENICATION_FAILED	(10000, "Authentication failed"),
+	AUTHENTICATION_FAILED	(10000, "Authentication failed"),
 	NO_TOKEN				(10001, "No authentication token"),
 	INVALID_TOKEN			(10002, "Invalid token"),
 	UNAUTHORIZED			(20000, "Unauthorized"),
@@ -18,7 +18,7 @@ public enum AuthError {
 	private final int errcode;
 	private final String error;
 	
-	AuthError(final int errcode, final String error) {
+	ErrorType(final int errcode, final String error) {
 		this.errcode = errcode;
 		this.error = error;
 	}
