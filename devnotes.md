@@ -23,8 +23,17 @@ Current endpoints
 /admin/localaccount?admin=&lt;some name&gt;  
 create a local account. The admin param is a temporary placeholder.
 
+/admin/user/&lt;user name&gt;  
+View user and modify user roles.
+
+/admin/customroles  
+View and add custom roles.
+
 /localaccount/login  
 login to a local account. Stores a cookie with a token.
+
+/logout  
+Self explanatory.
 
 /tokens  
 list and create tokens
@@ -34,7 +43,4 @@ the legacy KBase API
 
 /api/legacy/globus  
 the legacy globus API. Endpoints are /goauth/token and /users.
-
-
-
 
