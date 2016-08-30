@@ -1,10 +1,10 @@
 package us.kbase.auth2.service.api;
 
 import java.util.HashMap;
-import java.util.LinkedList;
 import java.util.List;
 import java.util.Map;
 import java.util.UUID;
+import java.util.stream.Collectors;
 
 import javax.inject.Inject;
 import javax.ws.rs.Consumes;
@@ -24,14 +24,15 @@ import javax.ws.rs.core.Response;
 
 import org.glassfish.jersey.server.mvc.Template;
 
+import us.kbase.auth2.lib.AuthUser;
 import us.kbase.auth2.lib.Authentication;
+import us.kbase.auth2.lib.Role;
 import us.kbase.auth2.lib.exceptions.InvalidTokenException;
 import us.kbase.auth2.lib.exceptions.MissingParameterException;
 import us.kbase.auth2.lib.exceptions.NoSuchTokenException;
 import us.kbase.auth2.lib.exceptions.NoTokenProvidedException;
 import us.kbase.auth2.lib.exceptions.UnauthorizedException;
 import us.kbase.auth2.lib.storage.exceptions.AuthStorageException;
-import us.kbase.auth2.lib.token.HashedToken;
 import us.kbase.auth2.lib.token.IncomingToken;
 import us.kbase.auth2.lib.token.TokenSet;
 
@@ -40,7 +41,6 @@ public class Tokens {
 	
 	//TODO TEST
 	//TODO JAVADOC
-	//TODO NOW only show create dialog if allowed, same for server token checkbox
 
 	@Inject
 	private Authentication auth;
@@ -180,16 +180,17 @@ public class Tokens {
 			throws AuthStorageException, NoTokenProvidedException,
 			InvalidTokenException {
 		checkToken(token);
-		final TokenSet ts = auth.getTokens(new IncomingToken(token));
+		final IncomingToken iToken = new IncomingToken(token);
+		final AuthUser au = auth.getUser(iToken);
+		final TokenSet ts = auth.getTokens(iToken);
 		final Map<String, Object> ret = new HashMap<>();
 		ret.put("current", new APIToken(ts.getCurrentToken()));
 		
-		// should try out streams here
-		final List<APIToken> ats = new LinkedList<>();
-		for (final HashedToken t: ts.getTokens()) {
-			ats.add(new APIToken(t));
-		}
+		final List<APIToken> ats = ts.getTokens().stream()
+				.map(t -> new APIToken(t)).collect(Collectors.toList());
 		ret.put("tokens", ats);
+		ret.put("dev", Role.hasRole(au.getRoles(), Role.DEV_TOKEN));
+		ret.put("serv", Role.hasRole(au.getRoles(), Role.SERV_TOKEN));
 		return ret;
 	}
 	

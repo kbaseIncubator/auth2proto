@@ -33,7 +33,6 @@ public class Authentication {
 	//TODO AUTH server root should return server version (and urls for endpoints?)
 	//TODO AUTH check workspace for other useful things like the schema manager
 	//TODO NOW logging everywhere - on login, on logout, on create / delete / expire token
-	//TODO NOW roles - Admin, CreateDevToken, CreateServerToken
 	//TODO NOW custom roles set up via ui
 	//TODO SCOPES configure scopes via ui
 	//TODO SCOPES configure scope on login via ui
