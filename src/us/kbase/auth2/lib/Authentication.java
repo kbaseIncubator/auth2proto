@@ -6,6 +6,7 @@ import java.security.NoSuchAlgorithmException;
 import java.util.Date;
 import java.util.List;
 import java.util.UUID;
+import java.util.stream.Collectors;
 
 import us.kbase.auth2.cryptutils.PasswordCrypt;
 import us.kbase.auth2.cryptutils.TokenGenerator;
@@ -248,4 +249,31 @@ public class Authentication {
 		storage.setRoles(userName, roles);
 	}
 
+	public void setCustomRole(
+			final IncomingToken incomingToken,
+			final String name,
+			final String description)
+			throws MissingParameterException, AuthStorageException {
+		//TODO ADMIN check user is admin
+		storage.setCustomRole(new CustomRole(
+				UUID.randomUUID(), name, description));
+	}
+
+	public List<CustomRole> getCustomRoles(final IncomingToken incomingToken)
+			throws AuthStorageException {
+		//TODO ADMIN check user is admin
+		return storage.getCustomRoles();
+	}
+
+	public void updateCustomRoles(
+			final IncomingToken adminToken,
+			final UserName userName,
+			final List<UUID> roleIds)
+			throws AuthStorageException, NoSuchUserException {
+		//TODO ADMIN check user is admin
+		final List<CustomRole> roles = storage.getCustomRoles(roleIds);
+		final List<String> rstr = roles.stream().map(r -> r.getName())
+				.collect(Collectors.toList());
+		storage.setCustomRoles(userName, rstr);
+	}
 }

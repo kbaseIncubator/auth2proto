@@ -36,6 +36,11 @@ public class Fields {
 	public static final String TOKEN_NAME = "name";
 	public static final String TOKEN_CREATION = "create";
 	
+	//Custom roles fields
+	public static final String ROLES_ID = "id";
+	public static final String ROLES_NAME = "name";
+	public static final String ROLES_DESC = "desc";
+	
 	// configuration fields
 	public static final String CONFIG_KEY = "config";
 	public static final String CONFIG_VALUE = "config";

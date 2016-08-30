@@ -4,6 +4,7 @@ import java.util.List;
 import java.util.UUID;
 
 import us.kbase.auth2.lib.AuthUser;
+import us.kbase.auth2.lib.CustomRole;
 import us.kbase.auth2.lib.LocalUser;
 import us.kbase.auth2.lib.Role;
 import us.kbase.auth2.lib.UserName;
@@ -53,5 +54,15 @@ public interface AuthStorage {
 
 	void setRoles(UserName userName, List<Role> roles)
 			throws AuthStorageException, NoSuchUserException;
+
+	void setCustomRole(CustomRole role) throws AuthStorageException;
+
+	List<CustomRole> getCustomRoles() throws AuthStorageException;
+
+	List<CustomRole> getCustomRoles(List<UUID> roleIds)
+			throws AuthStorageException;
+
+	void setCustomRoles(UserName userName, List<String> r)
+			throws NoSuchUserException, AuthStorageException;
 
 }
