@@ -7,10 +7,10 @@ package us.kbase.auth2.lib.exceptions;
 public class UserExistsException extends AuthException {
 	
 	public UserExistsException(final String message) {
-		super(AuthError.USER_ALREADY_EXISTS, message);
+		super(ErrorType.USER_ALREADY_EXISTS, message);
 	}
 	
 	public UserExistsException(final String message, final Throwable cause) {
-		super(AuthError.USER_ALREADY_EXISTS, message, cause);
+		super(ErrorType.USER_ALREADY_EXISTS, message, cause);
 	}
 }

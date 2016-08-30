@@ -6,12 +6,12 @@ package us.kbase.auth2.lib.exceptions;
 @SuppressWarnings("serial")
 public class AuthenticationException extends AuthException {
 	
-	public AuthenticationException(final AuthError err, final String message) {
+	public AuthenticationException(final ErrorType err, final String message) {
 		super(err, message);
 	}
 	
 	public AuthenticationException(
-			final AuthError err,
+			final ErrorType err,
 			final String message,
 			final Throwable cause) {
 		super(err, message, cause);

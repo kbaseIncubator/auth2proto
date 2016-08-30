@@ -6,14 +6,14 @@ package us.kbase.auth2.lib.exceptions;
 @SuppressWarnings("serial")
 public class AuthException extends Exception {
 	
-	private final AuthError err;
+	private final ErrorType err;
 	
-	public AuthException(final AuthError err, final String message) {
+	public AuthException(final ErrorType err, final String message) {
 		super(getMsg(err, message));
 		this.err = err;
 	}
 
-	private static String getMsg(final AuthError err, final String message) {
+	private static String getMsg(final ErrorType err, final String message) {
 		if (err == null) {
 			throw new NullPointerException("err");
 		}
@@ -22,14 +22,14 @@ public class AuthException extends Exception {
 	}
 	
 	public AuthException(
-			final AuthError err,
+			final ErrorType err,
 			final String message,
 			final Throwable cause) {
 		super(getMsg(err, message), cause);
 		this.err = err;
 	}
 
-	public AuthError getErr() {
+	public ErrorType getErr() {
 		return err;
 	}
 }

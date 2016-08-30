@@ -7,12 +7,12 @@ package us.kbase.auth2.lib.exceptions;
 public class NoTokenProvidedException extends AuthException {
 	
 	public NoTokenProvidedException(final String message) {
-		super(AuthError.NO_TOKEN, message);
+		super(ErrorType.NO_TOKEN, message);
 	}
 	
 	public NoTokenProvidedException(
 			final String message,
 			final Throwable cause) {
-		super(AuthError.NO_TOKEN, message, cause);
+		super(ErrorType.NO_TOKEN, message, cause);
 	}
 }

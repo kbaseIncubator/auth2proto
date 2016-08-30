@@ -9,7 +9,7 @@ import java.util.UUID;
 
 import us.kbase.auth2.cryptutils.PasswordCrypt;
 import us.kbase.auth2.cryptutils.TokenGenerator;
-import us.kbase.auth2.lib.exceptions.AuthError;
+import us.kbase.auth2.lib.exceptions.ErrorType;
 import us.kbase.auth2.lib.exceptions.AuthenticationException;
 import us.kbase.auth2.lib.exceptions.InvalidTokenException;
 import us.kbase.auth2.lib.exceptions.MissingParameterException;
@@ -90,12 +90,12 @@ public class Authentication {
 		try {
 			u = storage.getLocalUser(userName);
 		} catch (NoSuchUserException e) {
-			throw new AuthenticationException(AuthError.AUTHENTICATION_FAILED,
+			throw new AuthenticationException(ErrorType.AUTHENTICATION_FAILED,
 					"Username / password mismatch");
 		}
 		if (!pwdcrypt.authenticate(pwd.getPassword(), u.getPasswordHash(),
 				u.getSalt())) {
-			throw new AuthenticationException(AuthError.AUTHENTICATION_FAILED,
+			throw new AuthenticationException(ErrorType.AUTHENTICATION_FAILED,
 					"Username / password mismatch");
 		}
 		pwd.clear();
@@ -136,7 +136,7 @@ public class Authentication {
 		final AuthUser au = getUser(token);
 		final Role reqRole = serverToken ? Role.SERV_TOKEN : Role.DEV_TOKEN;
 		if (!Role.hasRole(au.getRoles(), reqRole)) {
-			throw new UnauthorizedException(AuthError.UNAUTHORIZED,
+			throw new UnauthorizedException(ErrorType.UNAUTHORIZED,
 					"User %s is not authorized to create this token type.");
 		}
 		final long life;

@@ -8,14 +8,14 @@ package us.kbase.auth2.lib.exceptions;
 public class InvalidTokenException extends AuthenticationException {
 	
 	public InvalidTokenException() {
-		super(AuthError.INVALID_TOKEN, null);
+		super(ErrorType.INVALID_TOKEN, null);
 	}
 	
 	public InvalidTokenException(final String message) {
-		super(AuthError.INVALID_TOKEN, message);
+		super(ErrorType.INVALID_TOKEN, message);
 	}
 	
 	public InvalidTokenException(final String message, final Throwable cause) {
-		super(AuthError.INVALID_TOKEN, message, cause);
+		super(ErrorType.INVALID_TOKEN, message, cause);
 	}
 }

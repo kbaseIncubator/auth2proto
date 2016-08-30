@@ -14,7 +14,7 @@ import javax.ws.rs.core.MediaType;
 
 import us.kbase.auth2.lib.AuthUser;
 import us.kbase.auth2.lib.Authentication;
-import us.kbase.auth2.lib.exceptions.AuthError;
+import us.kbase.auth2.lib.exceptions.ErrorType;
 import us.kbase.auth2.lib.exceptions.AuthenticationException;
 import us.kbase.auth2.lib.exceptions.InvalidTokenException;
 import us.kbase.auth2.lib.exceptions.MissingParameterException;
@@ -30,7 +30,7 @@ public class LegacyKBase {
 	
 	@GET
 	public void dummyGetMethod() throws AuthenticationException {
-		throw new AuthenticationException(AuthError.UNSUPPORTED_OP, 
+		throw new AuthenticationException(ErrorType.UNSUPPORTED_OP, 
 				"This is just here for compatibility with the old client: " +
 				"\"user_id\": null");
 	}

@@ -19,7 +19,7 @@ import javax.ws.rs.core.MediaType;
 import us.kbase.auth2.lib.AuthUser;
 import us.kbase.auth2.lib.Authentication;
 import us.kbase.auth2.lib.UserName;
-import us.kbase.auth2.lib.exceptions.AuthError;
+import us.kbase.auth2.lib.exceptions.ErrorType;
 import us.kbase.auth2.lib.exceptions.AuthException;
 import us.kbase.auth2.lib.exceptions.InvalidTokenException;
 import us.kbase.auth2.lib.exceptions.NoSuchUserException;
@@ -50,7 +50,7 @@ public class LegacyGlobus {
 			throws AuthStorageException, AuthException {
 
 		if (!"client_credentials".equals(grantType)) {
-			throw new AuthException(AuthError.UNSUPPORTED_OP,
+			throw new AuthException(ErrorType.UNSUPPORTED_OP,
 					"Only client_credentials grant_type supported. Got " +
 					grantType);
 		}
@@ -86,7 +86,7 @@ public class LegacyGlobus {
 			token = xtoken;
 			if (token == null || token.isEmpty()) {
 				// globus throws a 403 instead of a 401
-				throw new UnauthorizedException(AuthError.NO_TOKEN, "");
+				throw new UnauthorizedException(ErrorType.NO_TOKEN, "");
 			}
 		}
 		return token;
