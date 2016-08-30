@@ -29,6 +29,7 @@ import us.kbase.auth2.lib.exceptions.InvalidTokenException;
 import us.kbase.auth2.lib.exceptions.MissingParameterException;
 import us.kbase.auth2.lib.exceptions.NoSuchTokenException;
 import us.kbase.auth2.lib.exceptions.NoTokenProvidedException;
+import us.kbase.auth2.lib.exceptions.UnauthorizedException;
 import us.kbase.auth2.lib.storage.exceptions.AuthStorageException;
 import us.kbase.auth2.lib.token.HashedToken;
 import us.kbase.auth2.lib.token.IncomingToken;
@@ -39,6 +40,7 @@ public class Tokens {
 	
 	//TODO TEST
 	//TODO JAVADOC
+	//TODO NOW only show create dialog if allowed, same for server token checkbox
 
 	@Inject
 	private Authentication auth;
@@ -77,7 +79,8 @@ public class Tokens {
 			@FormParam("tokenname") final String tokenName,
 			@FormParam("tokentype") final String tokenType)
 			throws AuthStorageException, MissingParameterException,
-			NoTokenProvidedException, InvalidTokenException {
+			NoTokenProvidedException, InvalidTokenException,
+			UnauthorizedException {
 		return createtoken(tokenName, tokenType, userToken);
 	}
 	
@@ -90,7 +93,8 @@ public class Tokens {
 			@HeaderParam("authentication") final String headerToken,
 			final CreateTokenParams input)
 			throws AuthStorageException, MissingParameterException,
-			InvalidTokenException, NoTokenProvidedException {
+			InvalidTokenException, NoTokenProvidedException,
+			UnauthorizedException {
 		return createtoken(input.getName(), input.getType(),
 				cookieToken == null || cookieToken.isEmpty() ?
 						headerToken : cookieToken);
@@ -157,7 +161,8 @@ public class Tokens {
 			final String tokenType,
 			final String userToken)
 			throws AuthStorageException, MissingParameterException,
-			NoTokenProvidedException, InvalidTokenException {
+			NoTokenProvidedException, InvalidTokenException,
+			UnauthorizedException {
 		checkToken(userToken);
 		return new APINewToken(auth.createToken(new IncomingToken(userToken),
 				tokenName, "server".equals(tokenType)));

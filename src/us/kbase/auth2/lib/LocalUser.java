@@ -29,7 +29,7 @@ public class LocalUser extends AuthUser {
 			final UserName userName,
 			final String email,
 			final String fullName,
-			final List<String> roles,
+			final List<Role> roles,
 			final List<String> customRoles,
 			final byte[] passwordHash,
 			final byte[] salt,

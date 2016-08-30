@@ -8,6 +8,7 @@ import java.util.LinkedList;
 import java.util.List;
 import java.util.Map;
 import java.util.UUID;
+import java.util.stream.Collectors;
 
 import org.bson.Document;
 
@@ -23,6 +24,7 @@ import com.mongodb.client.result.DeleteResult;
 
 import us.kbase.auth2.lib.AuthUser;
 import us.kbase.auth2.lib.LocalUser;
+import us.kbase.auth2.lib.Role;
 import us.kbase.auth2.lib.UserName;
 import us.kbase.auth2.lib.exceptions.NoSuchTokenException;
 import us.kbase.auth2.lib.exceptions.NoSuchUserException;
@@ -232,7 +234,10 @@ public class MongoStorage implements AuthStorage {
 			throws AuthStorageException, NoSuchUserException {
 		final Document user = getUserDoc(userName, true);
 		@SuppressWarnings("unchecked")
-		final List<String> roles = (List<String>) user.get(Fields.USER_ROLES);
+		final List<String> rolestr =
+				(List<String>) user.get(Fields.USER_ROLES);
+		final List<Role> roles = rolestr.stream()
+				.map(s -> Role.getRole(s)).collect(Collectors.toList());
 		@SuppressWarnings("unchecked")
 		final List<String> croles = (List<String>) user.get(
 				Fields.USER_CUSTOM_ROLES);
@@ -360,7 +365,10 @@ public class MongoStorage implements AuthStorage {
 			throws AuthStorageException, NoSuchUserException {
 		final Document user = getUserDoc(userName, false);
 		@SuppressWarnings("unchecked")
-		final List<String> roles = (List<String>) user.get(Fields.USER_ROLES);
+		final List<String> rolestr =
+				(List<String>) user.get(Fields.USER_ROLES);
+		final List<Role> roles = rolestr.stream()
+				.map(s -> Role.getRole(s)).collect(Collectors.toList());
 		@SuppressWarnings("unchecked")
 		final List<String> croles = (List<String>) user.get(
 				Fields.USER_CUSTOM_ROLES);
@@ -399,6 +407,24 @@ public class MongoStorage implements AuthStorage {
 		try {
 			db.getCollection(COL_TOKEN).deleteMany(new Document(
 					Fields.TOKEN_USER_NAME, userName.getName()));
+		} catch (MongoException e) {
+			throw new AuthStorageException("Connection to database failed", e);
+		}
+	}
+
+	@Override
+	public void setRoles(final UserName userName, final List<Role> roles)
+			throws AuthStorageException, NoSuchUserException {
+		final List<String> strrl = roles.stream().map(r -> r.getRole())
+				.collect(Collectors.toList());
+		try {
+			final Document ret = db.getCollection(COL_USERS).findOneAndUpdate(
+					new Document(Fields.USER_NAME, userName.getName()),
+					new Document("$set",
+							new Document(Fields.USER_ROLES, strrl)));
+			if (ret == null) {
+				throw new NoSuchUserException(userName.getName());
+			}
 		} catch (MongoException e) {
 			throw new AuthStorageException("Connection to database failed", e);
 		}

@@ -5,6 +5,7 @@ import java.util.UUID;
 
 import us.kbase.auth2.lib.AuthUser;
 import us.kbase.auth2.lib.LocalUser;
+import us.kbase.auth2.lib.Role;
 import us.kbase.auth2.lib.UserName;
 import us.kbase.auth2.lib.exceptions.NoSuchTokenException;
 import us.kbase.auth2.lib.exceptions.NoSuchUserException;
@@ -49,5 +50,8 @@ public interface AuthStorage {
 			throws AuthStorageException, NoSuchTokenException;
 
 	void deleteTokens(UserName userName) throws AuthStorageException;
+
+	void setRoles(UserName userName, List<Role> roles)
+			throws AuthStorageException, NoSuchUserException;
 
 }

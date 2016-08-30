@@ -4,6 +4,7 @@ import static us.kbase.auth2.lib.Utils.checkString;
 
 import java.security.NoSuchAlgorithmException;
 import java.util.Date;
+import java.util.List;
 import java.util.UUID;
 
 import us.kbase.auth2.cryptutils.PasswordCrypt;
@@ -14,6 +15,7 @@ import us.kbase.auth2.lib.exceptions.InvalidTokenException;
 import us.kbase.auth2.lib.exceptions.MissingParameterException;
 import us.kbase.auth2.lib.exceptions.NoSuchTokenException;
 import us.kbase.auth2.lib.exceptions.NoSuchUserException;
+import us.kbase.auth2.lib.exceptions.UnauthorizedException;
 import us.kbase.auth2.lib.exceptions.UserExistsException;
 import us.kbase.auth2.lib.storage.AuthStorage;
 import us.kbase.auth2.lib.storage.exceptions.AuthStorageException;
@@ -129,10 +131,14 @@ public class Authentication {
 			final String tokenName,
 			final boolean serverToken)
 			throws AuthStorageException, MissingParameterException,
-			InvalidTokenException {
+			InvalidTokenException, UnauthorizedException {
 		checkString(tokenName, "token name");
-		final HashedToken ht = getToken(token);
-		//TODO NOW check user has rights to create dev or server token
+		final AuthUser au = getUser(token);
+		final Role reqRole = serverToken ? Role.SERV_TOKEN : Role.DEV_TOKEN;
+		if (!Role.hasRole(au.getRoles(), reqRole)) {
+			throw new UnauthorizedException(AuthError.UNAUTHORIZED,
+					"User %s is not authorized to create this token type.");
+		}
 		final long life;
 		//TODO CONFIG make token lifetime configurable
 		if (serverToken) {
@@ -148,7 +154,7 @@ public class Authentication {
 			exp = now + life;
 		}
 		final NewToken t = new NewToken(tokenName, tokens.getToken(),
-				ht.getUserName(), new Date(exp));
+				au.getUserName(), new Date(exp));
 		storage.storeToken(t.getHashedToken());
 		return t;
 	}
@@ -218,9 +224,29 @@ public class Authentication {
 			final IncomingToken adminToken,
 			final UserName userName)
 			throws AuthStorageException, NoSuchUserException {
+		if (userName == null) {
+			throw new NullPointerException("userName");
+		}
 		//TODO ADMIN check user is admin
 		return storage.getUser(userName);
-		// TODO Auto-generated method stub
+	}
+
+
+	public void updateRoles(
+			final IncomingToken adminToken,
+			final UserName userName,
+			final List<Role> roles)
+			throws NoSuchUserException, AuthStorageException {
+		//TODO ADMIN check user is admin
+		for (final Role r: roles) {
+			if (r == null) {
+				throw new NullPointerException("no null roles");
+			}
+		}
+		if (userName == null) {
+			throw new NullPointerException("userName");
+		}
+		storage.setRoles(userName, roles);
 	}
 
 }

@@ -13,7 +13,7 @@ public class AuthUser {
 	private final String email;
 	private final UserName userName;
 	private final boolean isLocal;
-	private final List<String> roles;
+	private final List<Role> roles;
 	private final List<String> customRoles;
 	
 	public AuthUser(
@@ -27,7 +27,7 @@ public class AuthUser {
 		this.email = email;
 		this.userName = userName;
 		this.isLocal = isLocal;
-		this.roles = Collections.unmodifiableList(new LinkedList<String>());
+		this.roles = Collections.unmodifiableList(new LinkedList<Role>());
 		this.customRoles = Collections.unmodifiableList(
 				new LinkedList<String>());
 	}
@@ -37,7 +37,7 @@ public class AuthUser {
 			final String email,
 			final String fullName,
 			final boolean isLocal,
-			List<String> roles,
+			List<Role> roles,
 			List<String> customRoles) {
 		super();
 		//TODO NOW check for nulls & empty strings - should email & fullName be allowed as empty strings?
@@ -71,7 +71,7 @@ public class AuthUser {
 		return isLocal;
 	}
 
-	public List<String> getRoles() {
+	public List<Role> getRoles() {
 		return roles;
 	}
 

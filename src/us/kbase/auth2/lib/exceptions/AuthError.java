@@ -1,6 +1,6 @@
 package us.kbase.auth2.lib.exceptions;
 
-public enum AuthError {
+public enum AuthError { //TODO NOW rename to ErrorTypes
 	
 	//TODO TEST unit tests
 	//TODO JAVADOC

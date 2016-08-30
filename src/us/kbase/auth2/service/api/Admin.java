@@ -1,5 +1,8 @@
 package us.kbase.auth2.service.api;
 
+import java.util.HashMap;
+import java.util.LinkedList;
+import java.util.List;
 import java.util.Map;
 
 import javax.inject.Inject;
@@ -12,6 +15,7 @@ import javax.ws.rs.PathParam;
 import javax.ws.rs.Produces;
 import javax.ws.rs.QueryParam;
 import javax.ws.rs.core.MediaType;
+import javax.ws.rs.core.MultivaluedMap;
 
 import org.glassfish.jersey.server.mvc.Template;
 
@@ -20,6 +24,7 @@ import com.google.common.collect.ImmutableMap;
 import us.kbase.auth2.lib.AuthUser;
 import us.kbase.auth2.lib.Authentication;
 import us.kbase.auth2.lib.Password;
+import us.kbase.auth2.lib.Role;
 import us.kbase.auth2.lib.UserName;
 import us.kbase.auth2.lib.exceptions.MissingParameterException;
 import us.kbase.auth2.lib.exceptions.NoSuchUserException;
@@ -84,16 +89,53 @@ public class Admin {
 	}
 	
 	@GET
-	@Path("/roles/{user}")
-	@Template(name = "/adminrolesuser")
-	public Map<String, String> userRoles(
+	@Path("/user/{user}")
+	@Template(name = "/adminuser")
+	@Produces(MediaType.TEXT_HTML)
+	public Map<String, Object> userDisplay(
 			@PathParam("user") final String user)
 		throws AuthStorageException, NoSuchUserException {
 		//TODO ADMIN get adminname from token & check
 		final AuthUser au = auth.getUserAsAdmin(
 				new IncomingToken("fake"), new UserName(user));
-		return null;
+		final Map<String, Object> ret = new HashMap<>();
+		ret.put("roleurl", "/admin/user/" + user + "/roles");
+		ret.put("user", au.getUserName().getName());
+		ret.put("full", au.getFullName());
+		ret.put("email", au.getEmail());
+		ret.put("local", au.isLocal());
+		final List<Role> r = au.getRoles();
+		ret.put("admin", Role.hasRole(r, Role.ADMIN));
+		ret.put("serv", Role.hasRole(r, Role.SERV_TOKEN));
+		ret.put("dev", Role.hasRole(r, Role.DEV_TOKEN));
+		ret.put("custom", au.getCustomRoles());
+		return ret;
 	}
 
+	@POST
+	@Path("/user/{user}/roles")
+	@Consumes(MediaType.APPLICATION_FORM_URLENCODED)
+	public void changeRoles(
+			@PathParam("user") final String user,
+			final MultivaluedMap<String, String> form)
+			throws NoSuchUserException, AuthStorageException {
+		//TODO ADMIN get adminname from token & check
+		final List<Role> roles = new LinkedList<>();
+		addRoleFromForm(form, roles, "admin", Role.ADMIN);
+		addRoleFromForm(form, roles, "dev", Role.DEV_TOKEN);
+		addRoleFromForm(form, roles, "serv", Role.SERV_TOKEN);
+		auth.updateRoles(new IncomingToken("fake"), new UserName(user), roles);
+		
+	}
+
+	private void addRoleFromForm(
+			final MultivaluedMap<String, String> form,
+			final List<Role> roles,
+			final String rstr,
+			final Role role) {
+		if (form.get(rstr) != null) {
+			roles.add(role);
+		}
+	}
 
 }
