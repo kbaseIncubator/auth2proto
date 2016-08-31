@@ -42,6 +42,10 @@ public class Authentication {
 	//TODO ADMIN deactivate account
 	//TODO ADMIN force user pwd reset
 	//TODO NOW tokens - redirect to standard login if not logged in (other pages as well)
+	//TODO USERPROFILE email & username change propagation
+	//TODO USERCONFIG set email & username privacy & respect
+	//TODO USERCONFIG set email & username
+	//TODO ADMIN option to allow all users to make dev token
 	
 	private final AuthStorage storage;
 	private final TokenGenerator tokens;
