@@ -145,8 +145,8 @@ public class MongoStorage implements AuthStorage {
 		} catch (MongoWriteException dk) {
 			if (!isDuplicateKeyException(dk)) {
 				throw new StorageInitException(
-						"There was a problem communicating with the database",
-						dk);
+						"There was a problem communicating with the " +
+						"database: " + dk.getMessage(), dk);
 			}
 			//ok, the version doc is already there, this isn't the first
 			//startup
@@ -161,8 +161,8 @@ public class MongoStorage implements AuthStorage {
 			if ((Integer) doc.get(Fields.CONFIG_SCHEMA_VERSION) !=
 					SCHEMA_VERSION) {
 				throw new StorageInitException(String.format(
-						"Incompatible database schema. Server is v%s, DB is v%s",
-						SCHEMA_VERSION,
+						"Incompatible database schema. Server is v%s, " +
+						"DB is v%s", SCHEMA_VERSION,
 						doc.get(Fields.CONFIG_SCHEMA_VERSION)));
 			}
 			if ((Boolean) doc.get(Fields.CONFIG_UPDATE)) {
@@ -173,7 +173,8 @@ public class MongoStorage implements AuthStorage {
 			}
 		} catch (MongoException me) {
 			throw new StorageInitException(
-					"There was a problem communicating with the database", me);
+					"There was a problem communicating with the database: " +
+					me.getMessage(), me);
 		}
 	}
 
@@ -194,7 +195,7 @@ public class MongoStorage implements AuthStorage {
 					}
 				} catch (MongoException me) {
 					throw new StorageInitException(
-							"Failed to create index", me);
+							"Failed to create index: " + me.getMessage(), me);
 				}
 			}
 		}

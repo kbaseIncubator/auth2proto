@@ -28,13 +28,14 @@ import us.kbase.auth2.lib.token.IncomingToken;
 public class Authentication {
 
 	//TODO TEST unit tests
+	//TODO TEST test logging on startup
+	//TODO TEST test logging on calls
 	//TODO JAVADOC 
 	//TODO AUTH schema version
 	//TODO AUTH handle root user somehow (spec chars unallowed in usernames?)
 	//TODO AUTH server root should return server version (and urls for endpoints?)
 	//TODO AUTH check workspace for other useful things like the schema manager
 	//TODO NOW logging everywhere - on login, on logout, on create / delete / expire token
-	//TODO NOW custom roles set up via ui
 	//TODO SCOPES configure scopes via ui
 	//TODO SCOPES configure scope on login via ui
 	//TODO SCOPES restricted scopes - allow for specific roles or users (or for specific clients via oauth2)
@@ -46,6 +47,7 @@ public class Authentication {
 	//TODO USERCONFIG set email & username privacy & respect
 	//TODO USERCONFIG set email & username
 	//TODO ADMIN option to allow all users to make dev token
+	//TODO NOW allow redirect url on login
 	
 	private final AuthStorage storage;
 	private final TokenGenerator tokens;

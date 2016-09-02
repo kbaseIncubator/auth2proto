@@ -1,0 +1,22 @@
+# Example deployment configuration file for the KBase authentication server
+# MKII.
+# Make a copy, fill in as required, and set KB_DEPLOYMENT_CFG to point to the
+# new file before starting the server.
+
+[authserv2]
+
+mongo-host=
+mong-db=
+mongo-user=
+mongo-pwd=
+
+# the name of the service to report when logging to syslog.
+log-name=KBaseAuthServ2
+
+#identity-providers=globus, google
+identity-providers=globus
+identity-provider-globus-image-url=/assets/globus.png
+identity-provider-globus-client-id=
+identity-provider-globus-client-secret=
+identity-provider-globus-redirect-uri=https://kbase.us/services/authorization2/login/complete
+

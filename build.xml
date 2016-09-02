@@ -45,6 +45,7 @@
     <include name="slf4j/slf4j-api-1.7.7.jar"/>
     <include name="logback/logback-core-1.1.2.jar"/>
     <include name="logback/logback-classic-1.1.2.jar"/>
+    <include name="ini4j/ini4j-0.5.2.jar"/>
   </fileset>
 
   <fileset dir="./lib" id="intlib">
