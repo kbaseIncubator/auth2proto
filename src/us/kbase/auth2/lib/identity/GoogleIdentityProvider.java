@@ -1,4 +1,4 @@
-package us.kbase.auth2.service.identity;
+package us.kbase.auth2.lib.identity;
 
 import java.net.URL;
 

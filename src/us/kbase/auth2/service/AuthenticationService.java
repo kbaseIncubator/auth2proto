@@ -17,16 +17,16 @@ import com.mongodb.client.MongoDatabase;
 import ch.qos.logback.classic.Level;
 import ch.qos.logback.classic.Logger;
 import us.kbase.auth2.lib.Authentication;
+import us.kbase.auth2.lib.identity.GlobusIdentityProvider;
+import us.kbase.auth2.lib.identity.GoogleIdentityProvider;
+import us.kbase.auth2.lib.identity.IdentityProvider;
+import us.kbase.auth2.lib.identity.IdentityProviderConfig;
 import us.kbase.auth2.lib.storage.AuthStorage;
 import us.kbase.auth2.lib.storage.exceptions.StorageInitException;
 import us.kbase.auth2.lib.storage.mongo.MongoStorage;
 import us.kbase.auth2.service.LoggingFilter;
 import us.kbase.auth2.service.exceptions.AuthConfigurationException;
 import us.kbase.auth2.service.exceptions.ExceptionHandler;
-import us.kbase.auth2.service.identity.GlobusIdentityProvider;
-import us.kbase.auth2.service.identity.GoogleIdentityProvider;
-import us.kbase.auth2.service.identity.IdentityProvider;
-import us.kbase.auth2.service.identity.IdentityProviderConfig;
 import us.kbase.auth2.service.kbase.KBaseAuthConfig;
 import us.kbase.auth2.service.template.TemplateProcessor;
 import us.kbase.auth2.service.template.mustache.MustacheProcessor;
@@ -76,7 +76,8 @@ public class AuthenticationService extends ResourceConfig {
 		packages("us.kbase.auth2.service.api");
 		register(JacksonFeature.class);
 		register(MustacheMvcFeature.class);
-		property(MustacheMvcFeature.TEMPLATE_BASE_PATH, "templates");
+		final String templatePath = "templates";
+		property(MustacheMvcFeature.TEMPLATE_BASE_PATH, templatePath);
 		register(LoggingFilter.class);
 		register(ExceptionHandler.class);
 		final Authentication auth = buildAuth(c, mc);
@@ -84,7 +85,7 @@ public class AuthenticationService extends ResourceConfig {
 			@Override
 			protected void configure() {
 				bind(auth).to(Authentication.class);
-				bind(new MustacheProcessor(Paths.get("templates")
+				bind(new MustacheProcessor(Paths.get(templatePath)
 						.toAbsolutePath()))
 					.to(TemplateProcessor.class);
 			}

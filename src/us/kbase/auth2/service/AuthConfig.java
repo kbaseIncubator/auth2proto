@@ -2,7 +2,7 @@ package us.kbase.auth2.service;
 
 import java.util.Set;
 
-import us.kbase.auth2.service.identity.IdentityProviderConfig;
+import us.kbase.auth2.lib.identity.IdentityProviderConfig;
 
 public interface AuthConfig {
 
