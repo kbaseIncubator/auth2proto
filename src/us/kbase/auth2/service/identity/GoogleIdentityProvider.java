@@ -1,8 +1,8 @@
-package us.kbase.auth2.service;
+package us.kbase.auth2.service.identity;
 
-public class GlobusIdentityProvider implements IdentityProvider {
+public class GoogleIdentityProvider implements IdentityProvider {
 
-	public GlobusIdentityProvider(final IdentityProviderConfig idc) {
+	public GoogleIdentityProvider(final IdentityProviderConfig idc) {
 		// TODO Auto-generated constructor stub
 	}
 

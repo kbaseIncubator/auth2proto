@@ -25,7 +25,7 @@ import us.kbase.auth2.lib.storage.AuthStorage;
 import us.kbase.auth2.lib.storage.exceptions.AuthStorageException;
 import us.kbase.auth2.lib.token.NewToken;
 import us.kbase.auth2.lib.token.TokenSet;
-import us.kbase.auth2.service.IdentityProvider;
+import us.kbase.auth2.service.identity.IdentityProvider;
 import us.kbase.auth2.lib.token.HashedToken;
 import us.kbase.auth2.lib.token.IncomingToken;
 

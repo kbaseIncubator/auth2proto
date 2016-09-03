@@ -14,8 +14,8 @@ import org.slf4j.LoggerFactory;
 
 import us.kbase.auth2.service.AuthConfig;
 import us.kbase.auth2.service.SLF4JAutoLogger;
-import us.kbase.auth2.service.IdentityProviderConfig;
 import us.kbase.auth2.service.exceptions.AuthConfigurationException;
+import us.kbase.auth2.service.identity.IdentityProviderConfig;
 import us.kbase.common.service.JsonServerSyslog;
 
 public class KBaseAuthConfig implements AuthConfig {

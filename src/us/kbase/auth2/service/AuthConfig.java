@@ -2,6 +2,8 @@ package us.kbase.auth2.service;
 
 import java.util.Set;
 
+import us.kbase.auth2.service.identity.IdentityProviderConfig;
+
 public interface AuthConfig {
 
 	//TODO JAVADOC
