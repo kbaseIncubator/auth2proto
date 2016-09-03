@@ -1,11 +1,13 @@
 package us.kbase.auth2.service.identity;
 
+import java.net.URL;
+
 public interface IdentityProvider {
 
 	//TODO JAVADOC
 	
 	String getProviderName();
-	String getLoginURI(String state);
+	URL getLoginURI(String state);
 	//X getToken(String authcode);
 	
 }

@@ -38,10 +38,6 @@ public class AuthenticationService extends ResourceConfig {
 	//TODO TEST
 	//TODO JAVADOC
 	
-	private static final String ID_PROV_GOOGLE = "google";
-	private static final String ID_PROV_GLOBUS = "globus";
-	
-	
 	private static MongoClient mc;
 	@SuppressWarnings("unused")
 	private final SLF4JAutoLogger logger; //keep a reference to prevent GC
@@ -128,10 +124,10 @@ public class AuthenticationService extends ResourceConfig {
 		for (final IdentityProviderConfig idc:
 				c.getIdentityProviderConfigs()) {
 			switch (idc.getIdentityProviderName()) {
-				case ID_PROV_GOOGLE:
+				case GoogleIdentityProvider.NAME:
 					ips.add(new GoogleIdentityProvider(idc));
 					break;
-				case ID_PROV_GLOBUS:
+				case GlobusIdentityProvider.NAME:
 					ips.add(new GlobusIdentityProvider(idc));
 					break;
 				default:

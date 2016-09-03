@@ -1,21 +1,33 @@
 package us.kbase.auth2.service.identity;
 
+import java.net.URL;
+
 public class GlobusIdentityProvider implements IdentityProvider {
 
+	public static final String NAME = "Globus";
+	
+	private final IdentityProviderConfig cfg;
+	
 	public GlobusIdentityProvider(final IdentityProviderConfig idc) {
-		// TODO Auto-generated constructor stub
+		if (idc == null) {
+			throw new NullPointerException("idc");
+		}
+		if (!NAME.equals(idc.getIdentityProviderName())) {
+			throw new IllegalArgumentException("Bad config name: " +
+					idc.getIdentityProviderName());
+		}
+		this.cfg = idc;
 	}
 
 	@Override
 	public String getProviderName() {
-		// TODO Auto-generated method stub
-		return null;
+		return NAME;
 	}
 
 	@Override
-	public String getLoginURI(final String state) {
+	public URL getLoginURI(final String state) {
 		// TODO Auto-generated method stub
-		return null;
+		return cfg.getRedirectURL(); // TODO NOW this is completely wrong
 	}
 
 }
