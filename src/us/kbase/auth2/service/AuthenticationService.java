@@ -1,6 +1,8 @@
 package us.kbase.auth2.service;
 
 import java.nio.file.Paths;
+import java.util.HashSet;
+import java.util.Set;
 
 import org.glassfish.hk2.utilities.binding.AbstractBinder;
 import org.glassfish.jersey.jackson.JacksonFeature;
@@ -32,6 +34,10 @@ public class AuthenticationService extends ResourceConfig {
 	//TODO TEST
 	//TODO JAVADOC
 	
+	private static final String ID_PROV_GOOGLE = "google";
+	private static final String ID_PROV_GLOBUS = "globus";
+	
+	
 	private static MongoClient mc;
 	@SuppressWarnings("unused")
 	private final SLF4JAutoLogger logger; //keep a reference to prevent GC
@@ -45,7 +51,12 @@ public class AuthenticationService extends ResourceConfig {
 			buildApp(c);
 		} catch (StorageInitException e) {
 			LoggerFactory.getLogger(getClass()).error(
-					"Failed to initialize storage engine", e);
+					"Failed to initialize storage engine: " + e.getMessage(),
+					e);
+			throw e;
+		} catch (AuthConfigurationException e) {
+			LoggerFactory.getLogger(getClass()).error(
+					"Invalid configuration: " + e.getMessage(), e);
 			throw e;
 		}
 	}
@@ -55,7 +66,8 @@ public class AuthenticationService extends ResourceConfig {
 				.setLevel(Level.INFO);
 	}
 
-	private void buildApp(final AuthConfig c) throws StorageInitException {
+	private void buildApp(final AuthConfig c)
+			throws StorageInitException, AuthConfigurationException {
 		synchronized(this) {
 			if (mc == null) {
 				mc = buildMongo(c);
@@ -91,7 +103,7 @@ public class AuthenticationService extends ResourceConfig {
 	}
 	
 	private Authentication buildAuth(final AuthConfig c, final MongoClient mc)
-			throws StorageInitException {
+			throws StorageInitException, AuthConfigurationException {
 		final MongoDatabase db;
 		try {
 			db = mc.getDatabase(c.getMongoDatabase());
@@ -103,9 +115,31 @@ public class AuthenticationService extends ResourceConfig {
 		}
 		//TODO MONGO & TEST authenticate to db with user/pwd
 		final AuthStorage s = new MongoStorage(db);
-		return new Authentication(s);
+		return new Authentication(s, getIdentityProviders(c));
 	}
 	
+	private Set<IdentityProvider> getIdentityProviders(final AuthConfig c)
+			throws AuthConfigurationException {
+		final Set<IdentityProvider> ips = new HashSet<>();
+		for (final IdentityProviderConfig idc:
+				c.getIdentityProviderConfigs()) {
+			switch (idc.getIdentityProviderName()) {
+				case ID_PROV_GOOGLE:
+					ips.add(new GoogleIdentityProvider(idc));
+					break;
+				case ID_PROV_GLOBUS:
+					ips.add(new GlobusIdentityProvider(idc));
+					break;
+				default:
+					throw new AuthConfigurationException(
+							"Unknown identity provider: " +
+							idc.getIdentityProviderName());
+			}
+				
+		}
+		return ips;
+	}
+
 	static void shutdown() {
 		mc.close();
 	}

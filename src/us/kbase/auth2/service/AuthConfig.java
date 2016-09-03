@@ -7,7 +7,7 @@ public interface AuthConfig {
 	//TODO JAVADOC
 	
 	SLF4JAutoLogger getLogger();
-	Set<IdentityProvider> getIdentityProviders();
+	Set<IdentityProviderConfig> getIdentityProviderConfigs();
 	String getMongoHost();
 	String getMongoDatabase();
 	String getMongoUser();

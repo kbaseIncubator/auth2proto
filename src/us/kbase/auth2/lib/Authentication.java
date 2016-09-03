@@ -4,7 +4,10 @@ import static us.kbase.auth2.lib.Utils.checkString;
 
 import java.security.NoSuchAlgorithmException;
 import java.util.Date;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
+import java.util.Set;
 import java.util.UUID;
 import java.util.stream.Collectors;
 
@@ -22,6 +25,7 @@ import us.kbase.auth2.lib.storage.AuthStorage;
 import us.kbase.auth2.lib.storage.exceptions.AuthStorageException;
 import us.kbase.auth2.lib.token.NewToken;
 import us.kbase.auth2.lib.token.TokenSet;
+import us.kbase.auth2.service.IdentityProvider;
 import us.kbase.auth2.lib.token.HashedToken;
 import us.kbase.auth2.lib.token.IncomingToken;
 
@@ -50,10 +54,13 @@ public class Authentication {
 	//TODO NOW allow redirect url on login
 	
 	private final AuthStorage storage;
+	private final Map<String, IdentityProvider> idprov;
 	private final TokenGenerator tokens;
 	private final PasswordCrypt pwdcrypt;
 	
-	public Authentication(final AuthStorage storage) {
+	public Authentication(
+			final AuthStorage storage,
+			final Set<IdentityProvider> set) {
 		System.out.println("starting application");
 		try {
 			tokens = new TokenGenerator();
@@ -65,6 +72,12 @@ public class Authentication {
 			throw new NullPointerException("storage");
 		}
 		this.storage = storage;
+		this.idprov = new HashMap<>();
+		if (set != null) {
+			for (final IdentityProvider id: set) {
+				idprov.put(id.getProviderName(), id);
+			}
+		}
 	}
 
 

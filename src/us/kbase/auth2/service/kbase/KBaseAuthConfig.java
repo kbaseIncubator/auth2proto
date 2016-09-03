@@ -2,6 +2,10 @@ package us.kbase.auth2.service.kbase;
 
 import java.io.File;
 import java.io.IOException;
+import java.net.MalformedURLException;
+import java.net.URL;
+import java.util.Collections;
+import java.util.HashSet;
 import java.util.Map;
 import java.util.Set;
 
@@ -10,7 +14,7 @@ import org.slf4j.LoggerFactory;
 
 import us.kbase.auth2.service.AuthConfig;
 import us.kbase.auth2.service.SLF4JAutoLogger;
-import us.kbase.auth2.service.IdentityProvider;
+import us.kbase.auth2.service.IdentityProviderConfig;
 import us.kbase.auth2.service.exceptions.AuthConfigurationException;
 import us.kbase.common.service.JsonServerSyslog;
 
@@ -42,7 +46,7 @@ public class KBaseAuthConfig implements AuthConfig {
 	private final String mongoDB;
 	private final String mongoUser;
 	private final char[] mongoPwd;
-	private final Set<IdentityProvider> providers;
+	private final Set<IdentityProviderConfig> providers;
 
 	public KBaseAuthConfig() throws AuthConfigurationException {
 		final Map<String, String> cfg = getConfig();
@@ -68,16 +72,51 @@ public class KBaseAuthConfig implements AuthConfig {
 			}
 			mongoPwd = mongop == null ? null : mongop.toCharArray();
 			mongop = null; //gc
+			providers = getProviders(cfg);
 		} catch (AuthConfigurationException e) {
 			LoggerFactory.getLogger(getClass()).error(
 					"Configuration error", e);
 			throw e;
 		}
-		
-		
-		providers = null; //TODO NOW Providers immutable set
 	}
 	
+	private Set<IdentityProviderConfig> getProviders(final Map<String, String> cfg)
+			throws AuthConfigurationException {
+		final String comsepProv = getString(KEY_ID_PROV, cfg);
+		final Set<IdentityProviderConfig> ips = new HashSet<>();
+		if (comsepProv == null) {
+			return ips;
+		}
+		for (String p: comsepProv.split(",")) {
+			p = p.trim();
+			if (p.isEmpty()) {
+				continue;
+			}
+			final String pre = KEY_PREFIX_ID_PROVS + p;
+			final String imgURL = getString( // relative url
+					pre + KEY_SUFFIX_ID_PROVS_IMG, cfg, true);
+			final String cliid = getString(
+					pre + KEY_SUFFIX_ID_PROVS_CLIENT_ID, cfg, true);
+			final String clisec = getString(
+					pre + KEY_SUFFIX_ID_PROVS_CLIENT_SEC, cfg, true);
+			final String redirectURL = getString(
+					pre + KEY_SUFFIX_ID_PROVS_CLIENT_ID, cfg, true);
+			final URL redirect;
+			try {
+				redirect = new URL(redirectURL);
+			} catch (MalformedURLException e) {
+				throw new AuthConfigurationException(String.format(
+						"Value %s of parameter %s in section %s of config " +
+						"file %s is not a valid URL",
+						redirectURL, pre + KEY_SUFFIX_ID_PROVS_REDIRECT,
+						CFG_LOC, cfg.get(TEMP_KEY_CFG_FILE)));
+			}
+			ips.add(new IdentityProviderConfig(
+					p, cliid, clisec, imgURL, redirect));
+		}
+		return Collections.unmodifiableSet(ips);
+	}
+
 	private static class JsonServerSysLogAutoLogger implements SLF4JAutoLogger {
 		@SuppressWarnings("unused")
 		private JsonServerSyslog logger; // keep a reference to avoid gc
@@ -146,7 +185,7 @@ public class KBaseAuthConfig implements AuthConfig {
 	}
 
 	@Override
-	public Set<IdentityProvider> getIdentityProviders() {
+	public Set<IdentityProviderConfig> getIdentityProviderConfigs() {
 		return providers;
 	}
 
