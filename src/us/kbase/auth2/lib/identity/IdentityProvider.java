@@ -7,6 +7,7 @@ public interface IdentityProvider {
 	//TODO JAVADOC
 	
 	String getProviderName();
+	String getRelativeImageURL();
 	URL getLoginURI(String state);
 	//X getToken(String authcode);
 	

@@ -4,10 +4,11 @@ import static us.kbase.auth2.lib.Utils.checkString;
 
 import java.security.NoSuchAlgorithmException;
 import java.util.Date;
-import java.util.HashMap;
+import java.util.LinkedList;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
+import java.util.TreeMap;
 import java.util.UUID;
 import java.util.stream.Collectors;
 
@@ -72,7 +73,7 @@ public class Authentication {
 			throw new NullPointerException("storage");
 		}
 		this.storage = storage;
-		this.idprov = new HashMap<>();
+		this.idprov = new TreeMap<>();
 		if (set != null) {
 			for (final IdentityProvider id: set) {
 				idprov.put(id.getProviderName(), id);
@@ -294,5 +295,10 @@ public class Authentication {
 		final List<String> rstr = roles.stream().map(r -> r.getName())
 				.collect(Collectors.toList());
 		storage.setCustomRoles(userName, rstr);
+	}
+
+
+	public List<IdentityProvider> getIdentityProviders() {
+		return new LinkedList<IdentityProvider>(idprov.values());
 	}
 }

@@ -1,0 +1,16 @@
+<html>
+<body>
+
+{{#hasprov}}
+<h3>Login to KBase with:</h3>
+{{/hasprov}}
+
+{{#providers}}
+<p><a href="{{urlpre}}{{name}}"><img src="{{img}}" alt="{{name}}"/></a></p> 
+{{/providers}}
+
+{{^providers}}
+Sorry, login to KBase is currently disabled.
+{{/providers}}
+</body>
+</html>

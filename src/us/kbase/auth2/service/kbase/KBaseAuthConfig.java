@@ -34,7 +34,7 @@ public class KBaseAuthConfig implements AuthConfig {
 	private static final String KEY_MONGO_USER = "mongo-user";
 	private static final String KEY_MONGO_PWD = "mongo-pwd";
 	private static final String KEY_ID_PROV = "identity-providers";
-	private static final String KEY_PREFIX_ID_PROVS = "identity-providers-";
+	private static final String KEY_PREFIX_ID_PROVS = "identity-provider-";
 	private static final String KEY_SUFFIX_ID_PROVS_IMG = "-image-url";
 	private static final String KEY_SUFFIX_ID_PROVS_CLIENT_ID = "-client-id";
 	private static final String KEY_SUFFIX_ID_PROVS_CLIENT_SEC =
@@ -100,7 +100,7 @@ public class KBaseAuthConfig implements AuthConfig {
 			final String clisec = getString(
 					pre + KEY_SUFFIX_ID_PROVS_CLIENT_SEC, cfg, true);
 			final String redirectURL = getString(
-					pre + KEY_SUFFIX_ID_PROVS_CLIENT_ID, cfg, true);
+					pre + KEY_SUFFIX_ID_PROVS_REDIRECT, cfg, true);
 			final URL redirect;
 			try {
 				redirect = new URL(redirectURL);

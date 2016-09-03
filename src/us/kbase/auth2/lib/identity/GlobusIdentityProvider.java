@@ -23,6 +23,11 @@ public class GlobusIdentityProvider implements IdentityProvider {
 	public String getProviderName() {
 		return NAME;
 	}
+	
+	@Override
+	public String getRelativeImageURL() {
+		return cfg.getRelativeImageURL();
+	}
 
 	@Override
 	public URL getLoginURI(final String state) {
