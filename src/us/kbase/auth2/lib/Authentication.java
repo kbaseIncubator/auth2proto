@@ -3,6 +3,7 @@ package us.kbase.auth2.lib;
 import static us.kbase.auth2.lib.Utils.checkString;
 
 import java.security.NoSuchAlgorithmException;
+import java.util.Collections;
 import java.util.Date;
 import java.util.LinkedList;
 import java.util.List;
@@ -18,6 +19,7 @@ import us.kbase.auth2.lib.exceptions.ErrorType;
 import us.kbase.auth2.lib.exceptions.AuthenticationException;
 import us.kbase.auth2.lib.exceptions.InvalidTokenException;
 import us.kbase.auth2.lib.exceptions.MissingParameterException;
+import us.kbase.auth2.lib.exceptions.NoSuchIdentityProviderException;
 import us.kbase.auth2.lib.exceptions.NoSuchTokenException;
 import us.kbase.auth2.lib.exceptions.NoSuchUserException;
 import us.kbase.auth2.lib.exceptions.UnauthorizedException;
@@ -73,12 +75,14 @@ public class Authentication {
 			throw new NullPointerException("storage");
 		}
 		this.storage = storage;
-		this.idprov = new TreeMap<>();
+		final Map<String, IdentityProvider> idp = new TreeMap<>();
 		if (set != null) {
 			for (final IdentityProvider id: set) {
-				idprov.put(id.getProviderName(), id);
+				idp.put(id.getProviderName(), id);
 			}
 		}
+		this.idprov = Collections.unmodifiableMap(idp);
+		
 	}
 
 
@@ -300,5 +304,19 @@ public class Authentication {
 
 	public List<IdentityProvider> getIdentityProviders() {
 		return new LinkedList<IdentityProvider>(idprov.values());
+	}
+
+	// note not saved in DB
+	public String getBareToken() {
+		return tokens.getToken();
+	}
+
+
+	public IdentityProvider getIdentityProvider(final String provider)
+			throws NoSuchIdentityProviderException {
+		if (!idprov.containsKey(provider)) {
+			throw new NoSuchIdentityProviderException(provider); 
+		}
+		return idprov.get(provider);
 	}
 }

@@ -13,6 +13,7 @@ public enum ErrorType {
 	USER_ALREADY_EXISTS		(30001, "User already exists"),
 	NO_SUCH_USER			(30002, "No such user"),
 	NO_SUCH_TOKEN			(30003, "No such token"),
+	NO_SUCH_IDENT_PROV		(30004, "No such identity provider"),
 	UNSUPPORTED_OP			(40001, "Unsupported opertation");
 	
 	private final int errcode;

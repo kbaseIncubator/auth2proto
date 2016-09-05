@@ -36,10 +36,11 @@ public class KBaseAuthConfig implements AuthConfig {
 	private static final String KEY_ID_PROV = "identity-providers";
 	private static final String KEY_PREFIX_ID_PROVS = "identity-provider-";
 	private static final String KEY_SUFFIX_ID_PROVS_IMG = "-image-url";
+	private static final String KEY_SUFFIX_ID_PROVS_URL = "-base-url";
 	private static final String KEY_SUFFIX_ID_PROVS_CLIENT_ID = "-client-id";
 	private static final String KEY_SUFFIX_ID_PROVS_CLIENT_SEC =
 			"-client-secret";
-	private static final String KEY_SUFFIX_ID_PROVS_REDIRECT = "-redirect-uri";
+	private static final String KEY_SUFFIX_ID_PROVS_REDIRECT = "-redirect-url";
 	
 	private final SLF4JAutoLogger logger;
 	private final String mongoHost;
@@ -99,25 +100,31 @@ public class KBaseAuthConfig implements AuthConfig {
 					pre + KEY_SUFFIX_ID_PROVS_CLIENT_ID, cfg, true);
 			final String clisec = getString(
 					pre + KEY_SUFFIX_ID_PROVS_CLIENT_SEC, cfg, true);
-			final String redirectURL = getString(
-					pre + KEY_SUFFIX_ID_PROVS_REDIRECT, cfg, true);
-			final URL redirect;
-			try {
-				redirect = new URL(redirectURL);
-			} catch (MalformedURLException e) {
-				throw new AuthConfigurationException(String.format(
-						"Value %s of parameter %s in section %s of config " +
-						"file %s is not a valid URL",
-						redirectURL, pre + KEY_SUFFIX_ID_PROVS_REDIRECT,
-						CFG_LOC, cfg.get(TEMP_KEY_CFG_FILE)));
-			}
+			final URL redirect = getURL(pre + KEY_SUFFIX_ID_PROVS_REDIRECT,
+					cfg);
+			final URL base = getURL(pre + KEY_SUFFIX_ID_PROVS_URL, cfg);
+
 			ips.add(new IdentityProviderConfig(
-					p, cliid, clisec, imgURL, redirect));
+					p, base, cliid, clisec, imgURL, redirect));
 		}
 		return Collections.unmodifiableSet(ips);
 	}
+	
+	private URL getURL(final String key, final Map<String, String> cfg)
+			throws AuthConfigurationException {
+		final String url = getString(key, cfg, true);
+		try {
+			return new URL(url);
+		} catch (MalformedURLException e) {
+			throw new AuthConfigurationException(String.format(
+					"Value %s of parameter %s in section %s of config " +
+					"file %s is not a valid URL",
+					url, key, CFG_LOC, cfg.get(TEMP_KEY_CFG_FILE)));
+		}
+	}
 
-	private static class JsonServerSysLogAutoLogger implements SLF4JAutoLogger {
+	private static class JsonServerSysLogAutoLogger
+			implements SLF4JAutoLogger {
 		@SuppressWarnings("unused")
 		private JsonServerSyslog logger; // keep a reference to avoid gc
 

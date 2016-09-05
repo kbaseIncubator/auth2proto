@@ -14,12 +14,15 @@ mongo-pwd=
 log-name=KBaseAuthServ2
 
 identity-providers=Globus, Google
+
+identity-provider-Globus-base-url=https://auth.globus.org
 identity-provider-Globus-image-url=/assets/globus.png
 identity-provider-Globus-client-id=
 identity-provider-Globus-client-secret=
-identity-provider-Globus-redirect-uri=https://kbase.us/services/authorization2/login/complete/globus
+identity-provider-Globus-redirect-url=https://kbase.us/services/authorization2/login/complete/globus
 
+identity-provider-Google-base-url=https://google.com/stuff
 identity-provider-Google-image-url=/assets/google.png
 identity-provider-Google-client-id=
 identity-provider-Google-client-secret=
-identity-provider-Google-redirect-uri=https://kbase.us/services/authorization2/login/complete/google
+identity-provider-Google-redirect-url=https://kbase.us/services/authorization2/login/complete/google

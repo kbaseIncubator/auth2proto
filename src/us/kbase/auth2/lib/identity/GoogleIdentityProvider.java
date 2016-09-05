@@ -30,9 +30,9 @@ public class GoogleIdentityProvider implements IdentityProvider {
 	}
 
 	@Override
-	public URL getLoginURI(final String state) {
+	public URL getLoginURL(final String state) {
 		// TODO Auto-generated method stub
-		return cfg.getRedirectURL(); // TODO NOW this is completely wrong
+		// TODO NOW this is completely wrong
+		return cfg.getRedirectURL();
 	}
-
 }

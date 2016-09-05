@@ -8,7 +8,8 @@ public interface IdentityProvider {
 	
 	String getProviderName();
 	String getRelativeImageURL();
-	URL getLoginURI(String state);
+	//note state will be url encoded.
+	URL getLoginURL(String state);
 	//X getToken(String authcode);
 	
 }

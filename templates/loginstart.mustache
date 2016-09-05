@@ -9,8 +9,16 @@
 <p><a href="{{urlpre}}{{name}}"><img src="{{img}}" alt="{{name}}"/></a></p> 
 {{/providers}}
 
-{{^providers}}
+{{#hasprov}}
+You will be redirected to the identity provider website where you will be asked
+to allow KBase to view your account information - your account ID, email
+address, and name.<br/>
+You will have 30 minutes to complete the login process.
+{{/hasprov}}
+
+{{^hasprov}}
 Sorry, login to KBase is currently disabled.
-{{/providers}}
+{{/hasprov}}
+
 </body>
 </html>
