@@ -4,7 +4,17 @@ import java.net.MalformedURLException;
 import java.net.URI;
 import java.net.URISyntaxException;
 import java.net.URL;
+import java.util.Base64;
+import java.util.Map;
 
+import javax.ws.rs.client.Client;
+import javax.ws.rs.client.ClientBuilder;
+import javax.ws.rs.client.Entity;
+import javax.ws.rs.client.WebTarget;
+import javax.ws.rs.core.MediaType;
+import javax.ws.rs.core.MultivaluedHashMap;
+import javax.ws.rs.core.MultivaluedMap;
+import javax.ws.rs.core.Response;
 import javax.ws.rs.core.UriBuilder;
 
 public class GlobusIdentityProvider implements IdentityProvider {
@@ -14,7 +24,11 @@ public class GlobusIdentityProvider implements IdentityProvider {
 			"urn:globus:auth:scope:auth.globus.org:view_identities " + 
 			"email";
 	private static final String LOGIN_PATH = "/v2/oauth2/authorize";
+	private static final String TOKEN_PATH = "/v2/oauth2/token";
 	private static final String AUTH_CODE_PARAM = "code";
+	
+	//thread safe
+	private static final Client cli = ClientBuilder.newClient();
 	
 	private final IdentityProviderConfig cfg;
 	
@@ -74,5 +88,43 @@ public class GlobusIdentityProvider implements IdentityProvider {
 		} catch (URISyntaxException e) {
 			throw new RuntimeException("This should be impossible", e);
 		}
+	}
+
+	@Override
+	public IdentitySet getIdentities(final String authcode) {
+		/* Note authcode only works once. After that globus returns
+		 * {error=invalid_grant}
+		 */
+		final String bauth = "Basic " + Base64.getEncoder().encodeToString(
+				(cfg.getClientID() + ":" + cfg.getClientSecrect()).getBytes());
+		
+		final MultivaluedMap<String, String> formParameters =
+				new MultivaluedHashMap<>();
+		formParameters.add("code", authcode);
+		formParameters.add("redirect_uri", cfg.getRedirectURL().toString());
+		formParameters.add("grant_type", "authorization_code");
+		
+		final URI target = UriBuilder.fromUri(toURI(cfg.getBaseURL()))
+				.path(TOKEN_PATH).build();
+		
+		final WebTarget wt = cli.target(target);
+		Response r = null;
+		try {
+			r = wt.request(MediaType.APPLICATION_JSON_TYPE)
+					.header("Authorization", bauth)
+					.post(Entity.form(formParameters));
+			@SuppressWarnings("unchecked")
+			final Map<String, Object> m = r.readEntity(Map.class);
+			//TODO NOW handle {error=?} in object and check response code
+			System.out.println(m);
+		} finally {
+			if (r != null) {
+				r.close();
+			}
+		}
+		
+		
+		// TODO Auto-generated method stub
+		return null;
 	}
 }

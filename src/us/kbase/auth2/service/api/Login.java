@@ -3,6 +3,7 @@ package us.kbase.auth2.service.api;
 import java.net.URI;
 import java.net.URISyntaxException;
 import java.net.URL;
+import java.security.NoSuchProviderException;
 import java.util.HashMap;
 import java.util.LinkedList;
 import java.util.List;
@@ -24,6 +25,7 @@ import javax.ws.rs.core.UriInfo;
 import org.glassfish.jersey.server.mvc.Viewable;
 
 import us.kbase.auth2.lib.Authentication;
+import us.kbase.auth2.lib.LoginResult;
 import us.kbase.auth2.lib.exceptions.AuthenticationException;
 import us.kbase.auth2.lib.exceptions.ErrorType;
 import us.kbase.auth2.lib.exceptions.MissingParameterException;
@@ -77,7 +79,8 @@ public class Login {
 			@PathParam("provider") String provider,
 			@CookieParam("statevar") final String state,
 			@Context final UriInfo uriInfo)
-			throws MissingParameterException, AuthenticationException {
+			throws MissingParameterException, AuthenticationException,
+			NoSuchProviderException {
 		provider = upperCase(provider);
 		final MultivaluedMap<String, String> qps =
 				uriInfo.getQueryParameters();
@@ -92,6 +95,7 @@ public class Login {
 			throw new AuthenticationException(ErrorType.AUTHENTICATION_FAILED,
 					"State values do not match, this may be a CXRF attack");
 		}
+		final LoginResult lr = auth.login(provider, authcode);
 		//TODO NOW complete method
 		return Response.ok().entity("Hi " + provider).build();
 	}

@@ -3,6 +3,7 @@ package us.kbase.auth2.lib;
 import static us.kbase.auth2.lib.Utils.checkString;
 
 import java.security.NoSuchAlgorithmException;
+import java.security.NoSuchProviderException;
 import java.util.Collections;
 import java.util.Date;
 import java.util.LinkedList;
@@ -25,6 +26,7 @@ import us.kbase.auth2.lib.exceptions.NoSuchUserException;
 import us.kbase.auth2.lib.exceptions.UnauthorizedException;
 import us.kbase.auth2.lib.exceptions.UserExistsException;
 import us.kbase.auth2.lib.identity.IdentityProvider;
+import us.kbase.auth2.lib.identity.IdentitySet;
 import us.kbase.auth2.lib.storage.AuthStorage;
 import us.kbase.auth2.lib.storage.exceptions.AuthStorageException;
 import us.kbase.auth2.lib.token.NewToken;
@@ -318,5 +320,21 @@ public class Authentication {
 			throw new NoSuchIdentityProviderException(provider); 
 		}
 		return idprov.get(provider);
+	}
+
+
+	public LoginResult login(final String provider, final String authcode)
+			throws NoSuchProviderException, MissingParameterException {
+		final IdentityProvider idp = idprov.get(provider);
+		if (idp == null) {
+			throw new NoSuchProviderException(provider);
+		}
+		if (authcode == null || authcode.trim().isEmpty()) {
+			throw new MissingParameterException("authorization code");
+		}
+		final IdentitySet ids = idp.getIdentities(authcode);
+		System.out.println(ids);
+		// TODO Auto-generated method stub
+		return null;
 	}
 }

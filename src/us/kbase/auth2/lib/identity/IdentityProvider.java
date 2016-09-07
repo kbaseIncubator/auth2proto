@@ -11,6 +11,6 @@ public interface IdentityProvider {
 	//note state will be url encoded.
 	URL getLoginURL(String state);
 	String getAuthCodeQueryParamName();
-	//X getToken(String authcode);
+	IdentitySet getIdentities(String authcode);
 	
 }
