@@ -9,16 +9,24 @@ import java.util.List;
 import java.util.Map;
 
 import javax.inject.Inject;
+import javax.ws.rs.CookieParam;
 import javax.ws.rs.GET;
 import javax.ws.rs.Path;
+import javax.ws.rs.PathParam;
 import javax.ws.rs.QueryParam;
+import javax.ws.rs.core.Context;
 import javax.ws.rs.core.Cookie;
+import javax.ws.rs.core.MultivaluedMap;
 import javax.ws.rs.core.NewCookie;
 import javax.ws.rs.core.Response;
+import javax.ws.rs.core.UriInfo;
 
 import org.glassfish.jersey.server.mvc.Viewable;
 
 import us.kbase.auth2.lib.Authentication;
+import us.kbase.auth2.lib.exceptions.AuthenticationException;
+import us.kbase.auth2.lib.exceptions.ErrorType;
+import us.kbase.auth2.lib.exceptions.MissingParameterException;
 import us.kbase.auth2.lib.exceptions.NoSuchIdentityProviderException;
 import us.kbase.auth2.lib.identity.IdentityProvider;
 
@@ -43,7 +51,7 @@ public class Login {
 			final String state = auth.getBareToken();
 			final URI target = toURI(idp.getLoginURL(state));
 			return Response.temporaryRedirect(target).cookie(new NewCookie(
-					new Cookie("statevar", state, "/login", null),
+					new Cookie("statevar", state),
 							"loginstate", 30 * 60, false)).build();
 			//TODO NOW make secure cookie configurable
 		} else {
@@ -53,16 +61,51 @@ public class Login {
 			for (final IdentityProvider idp: auth.getIdentityProviders()) {
 				final Map<String, String> rep = new HashMap<>();
 				rep.put("name", idp.getProviderName());
-				rep.put("img", idp.getRelativeImageURL());
+				rep.put("img", "../" + idp.getRelativeImageURL());
 				provs.add(rep);
 			}
 			ret.put("hasprov", !provs.isEmpty());
-			ret.put("urlpre", "/login?provider=");
+			ret.put("urlpre", "?provider=");
 			return Response.ok().entity(new Viewable("/loginstart", ret))
 					.build();
 		}
 	}
 	
+	@GET
+	@Path("/complete/{provider}")
+	public Response loginComplete(
+			@PathParam("provider") String provider,
+			@CookieParam("statevar") final String state,
+			@Context final UriInfo uriInfo)
+			throws MissingParameterException, AuthenticationException {
+		provider = upperCase(provider);
+		final MultivaluedMap<String, String> qps =
+				uriInfo.getQueryParameters();
+		final IdentityProvider idp = auth.getIdentityProvider(provider);
+		final String authcode = qps.getFirst(idp.getAuthCodeQueryParamName());
+		final String retstate = qps.getFirst("state"); //may need to be configurable
+		if (state == null || state.trim().isEmpty()) {
+			throw new MissingParameterException(
+					"Couldn't retrieve state value from cookie");
+		}
+		if (!state.equals(retstate)) {
+			throw new AuthenticationException(ErrorType.AUTHENTICATION_FAILED,
+					"State values do not match, this may be a CXRF attack");
+		}
+		//TODO NOW complete method
+		return Response.ok().entity("Hi " + provider).build();
+	}
+	
+	// assumes non-null, len > 0
+	private String upperCase(final String provider) {
+		final String first = new String(Character.toChars(
+				Character.toUpperCase(provider.codePointAt(0))));
+		if (provider.length() == first.length()) {
+			return first;
+		}
+		return first + provider.substring(first.length());
+	}
+
 	//Assumes valid URI in URL form
 	private URI toURI(final URL loginURL) {
 		try {

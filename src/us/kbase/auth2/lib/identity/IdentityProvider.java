@@ -10,6 +10,7 @@ public interface IdentityProvider {
 	String getRelativeImageURL();
 	//note state will be url encoded.
 	URL getLoginURL(String state);
+	String getAuthCodeQueryParamName();
 	//X getToken(String authcode);
 	
 }

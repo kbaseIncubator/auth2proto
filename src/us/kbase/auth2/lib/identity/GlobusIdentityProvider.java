@@ -14,6 +14,7 @@ public class GlobusIdentityProvider implements IdentityProvider {
 			"urn:globus:auth:scope:auth.globus.org:view_identities " + 
 			"email";
 	private static final String LOGIN_PATH = "/v2/oauth2/authorize";
+	private static final String AUTH_CODE_PARAM = "code";
 	
 	private final IdentityProviderConfig cfg;
 	
@@ -51,9 +52,14 @@ public class GlobusIdentityProvider implements IdentityProvider {
 				.build();
 		return toURL(target);
 	}
+	
+	@Override
+	public String getAuthCodeQueryParamName() {
+		return AUTH_CODE_PARAM;
+	}
 
 	//Assumes valid URL in URI form
-	private URL toURL(URI baseURI) {
+	private URL toURL(final URI baseURI) {
 		try {
 			return baseURI.toURL();
 		} catch (MalformedURLException e) {

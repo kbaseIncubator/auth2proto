@@ -35,4 +35,10 @@ public class GoogleIdentityProvider implements IdentityProvider {
 		// TODO NOW this is completely wrong
 		return cfg.getRedirectURL();
 	}
+
+	@Override
+	public String getAuthCodeQueryParamName() {
+		// TODO Auto-generated method stub
+		return null;
+	}
 }
