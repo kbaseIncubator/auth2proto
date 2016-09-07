@@ -84,6 +84,7 @@ public class Login {
 		provider = upperCase(provider);
 		final MultivaluedMap<String, String> qps =
 				uriInfo.getQueryParameters();
+		//TODO NOW handle error in params
 		final IdentityProvider idp = auth.getIdentityProvider(provider);
 		final String authcode = qps.getFirst(idp.getAuthCodeQueryParamName());
 		final String retstate = qps.getFirst("state"); //may need to be configurable
@@ -96,7 +97,7 @@ public class Login {
 					"State values do not match, this may be a CXRF attack");
 		}
 		final LoginResult lr = auth.login(provider, authcode);
-		//TODO NOW complete method
+		//TODO NOW complete method, redirect to new page, don't build a page - hides auth code
 		return Response.ok().entity("Hi " + provider).build();
 	}
 	
