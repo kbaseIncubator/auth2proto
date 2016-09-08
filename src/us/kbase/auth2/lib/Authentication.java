@@ -17,6 +17,7 @@ import java.util.stream.Collectors;
 import us.kbase.auth2.cryptutils.PasswordCrypt;
 import us.kbase.auth2.cryptutils.TokenGenerator;
 import us.kbase.auth2.lib.exceptions.ErrorType;
+import us.kbase.auth2.lib.exceptions.IdentityRetrievalException;
 import us.kbase.auth2.lib.exceptions.AuthenticationException;
 import us.kbase.auth2.lib.exceptions.InvalidTokenException;
 import us.kbase.auth2.lib.exceptions.MissingParameterException;
@@ -324,7 +325,8 @@ public class Authentication {
 
 
 	public LoginResult login(final String provider, final String authcode)
-			throws NoSuchProviderException, MissingParameterException {
+			throws NoSuchProviderException, MissingParameterException,
+			IdentityRetrievalException {
 		final IdentityProvider idp = idprov.get(provider);
 		if (idp == null) {
 			throw new NoSuchProviderException(provider);
@@ -332,7 +334,9 @@ public class Authentication {
 		if (authcode == null || authcode.trim().isEmpty()) {
 			throw new MissingParameterException("authorization code");
 		}
-		final IdentitySet ids = idp.getIdentities(authcode);
+		final String accessToken = idp.getAccessToken(authcode);
+		final IdentitySet ids = idp.getIdentities(accessToken);
+		//TODO NOW store accessToken & provide temp token if a choice must be made by the user
 		System.out.println(ids);
 		// TODO Auto-generated method stub
 		return null;

@@ -8,6 +8,7 @@ public enum ErrorType {
 	AUTHENTICATION_FAILED	(10000, "Authentication failed"),
 	NO_TOKEN				(10001, "No authentication token"),
 	INVALID_TOKEN			(10002, "Invalid token"),
+	ID_RETRIEVAL_FAILED		(10003, "Identity retrieval failed"),
 	UNAUTHORIZED			(20000, "Unauthorized"),
 	MISSING_PARAMETER		(30000, "Missing input parameter"),
 	USER_ALREADY_EXISTS		(30001, "User already exists"),

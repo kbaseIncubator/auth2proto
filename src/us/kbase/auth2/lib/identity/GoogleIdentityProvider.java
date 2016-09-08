@@ -4,6 +4,10 @@ import java.net.URL;
 
 public class GoogleIdentityProvider implements IdentityProvider {
 
+	//TODO TEST
+		//TODO JAVADOC
+		
+	
 	public static final String NAME = "Google";
 	
 	private final IdentityProviderConfig cfg;
@@ -44,6 +48,12 @@ public class GoogleIdentityProvider implements IdentityProvider {
 
 	@Override
 	public IdentitySet getIdentities(final String authcode) {
+		// TODO Auto-generated method stub
+		return null;
+	}
+
+	@Override
+	public String getAccessToken(final String authcode) {
 		// TODO Auto-generated method stub
 		return null;
 	}
