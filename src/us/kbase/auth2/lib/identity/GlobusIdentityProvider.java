@@ -5,6 +5,7 @@ import java.net.URI;
 import java.net.URISyntaxException;
 import java.net.URL;
 import java.util.Base64;
+import java.util.LinkedList;
 import java.util.List;
 import java.util.Map;
 
@@ -33,6 +34,7 @@ public class GlobusIdentityProvider implements IdentityProvider {
 	private static final String LOGIN_PATH = "/v2/oauth2/authorize";
 	private static final String TOKEN_PATH = "/v2/oauth2/token";
 	private static final String INTROSPECT_PATH = TOKEN_PATH + "/introspect";
+	private static final String IDENTITIES_PATH = "/v2/api/identities";
 	private static final String AUTH_CODE_PARAM = "code";
 	
 	//thread safe
@@ -113,28 +115,83 @@ public class GlobusIdentityProvider implements IdentityProvider {
 		formParameters.add("token", accessToken);
 		formParameters.add("include", "identities_set");
 		
-		final Map<String, Object> m = globusRequest(formParameters, target);
-		System.out.println(m);
-		@SuppressWarnings("unchecked")
-		final List<String> audience = (List<String>) m.get("aud");
+		final Map<String, Object> m = globusPostRequest(
+				formParameters, target);
 		// per Globus spec, check that the audience for the requests includes
 		// our client
+		@SuppressWarnings("unchecked")
+		final List<String> audience = (List<String>) m.get("aud");
 		if (!audience.contains(cfg.getClientID())) {
 			throw new IdentityRetrievalException(
 					"The audience for the Globus request does not include " +
 					"this client");
 		}
-		final String primary = (String) m.get("sub");
+		final String id = (String) m.get("sub");
+		final String username = (String) m.get("username");
+		final String name = (String) m.get("name");
+		final String email = (String) m.get("email");
+		final RemoteIdentity primary = new RemoteIdentity(
+				NAME, id, username, name, email);
 		@SuppressWarnings("unchecked")
-		final List<String> secondary = (List<String>) m.get("identities_set");
-		secondary.remove(primary);
+		final List<String> secids = (List<String>) m.get("identities_set");
+		//TODO NOW if secids null or emtpy continue
+		secids.remove(id);
 		System.out.println(primary);
-		System.out.println(secondary);
+		
+		final URI idtarget = UriBuilder.fromUri(toURI(cfg.getBaseURL()))
+				.path(IDENTITIES_PATH)
+				.queryParam("ids", String.join(",", secids))
+				.build();
+		
+		final Map<String, Object> ids = globusGetRequest(
+				accessToken, idtarget);
+		@SuppressWarnings("unchecked")
+		final List<Map<String, String>> sids =
+				(List<Map<String, String>>) ids.get("identities");
+		//TODO NOW check that all identities are in returned list
+		final List<RemoteIdentity> secondaries = makeIdents(sids);
+		System.out.println(secondaries);
 		
 		
 		
 		// TODO Auto-generated method stub
 		return null;
+	}
+
+	private List<RemoteIdentity> makeIdents(
+			final List<Map<String, String>> sids) {
+		final List<RemoteIdentity> ret = new LinkedList<>();
+		for (final Map<String, String> id: sids) {
+			final String uid = (String) id.get("id");
+			final String username = (String) id.get("username");
+			final String name = (String) id.get("name");
+			final String email = (String) id.get("email");
+			final RemoteIdentity rid = new RemoteIdentity(
+					NAME, uid, username, name, email);
+			ret.add(rid);
+		}
+		return ret;
+	}
+
+	private Map<String, Object> globusGetRequest(
+			final String accessToken,
+			final URI idtarget) {
+		final WebTarget wt = cli.target(idtarget);
+		Response r = null;
+		try {
+			r = wt.request(MediaType.APPLICATION_JSON_TYPE)
+					.header("Authorization", "Bearer " + accessToken)
+					.get();
+			//TODO TEST with 500s with HTML
+			@SuppressWarnings("unchecked")
+			final Map<String, Object> mtemp = r.readEntity(Map.class);
+			//TODO NOW handle {error=?} in object and check response code
+			return mtemp;
+		} finally {
+			if (r != null) {
+				r.close();
+			}
+		}
 	}
 
 	@Override
@@ -149,11 +206,12 @@ public class GlobusIdentityProvider implements IdentityProvider {
 		final URI target = UriBuilder.fromUri(toURI(cfg.getBaseURL()))
 				.path(TOKEN_PATH).build();
 		
-		final Map<String, Object> m = globusRequest(formParameters, target);
+		final Map<String, Object> m = globusPostRequest(
+				formParameters, target);
 		return (String) m.get("access_token");
 	}
 
-	private Map<String, Object> globusRequest(
+	private Map<String, Object> globusPostRequest(
 			final MultivaluedMap<String, String> formParameters,
 			final URI target) {
 		final String bauth = "Basic " + Base64.getEncoder().encodeToString(
@@ -165,6 +223,7 @@ public class GlobusIdentityProvider implements IdentityProvider {
 					.header("Authorization", bauth)
 					.post(Entity.form(formParameters));
 			@SuppressWarnings("unchecked")
+			//TODO TEST with 500s with HTML
 			final Map<String, Object> mtemp = r.readEntity(Map.class);
 			//TODO NOW handle {error=?} in object and check response code
 			return mtemp;
