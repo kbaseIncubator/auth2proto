@@ -5,11 +5,15 @@ Unit tests & documentation for code in this repo is not required.
 
 To start server
 ---------------
+install jetty (see jetty-config.md for version)  
 clone kbase/jars into the parent folder of this repo  
 ant compile  
 ant buildwar  
-install jetty (see jetty-config.md for version)  
-./jettybase$ java -jar ~/jetty/jetty-distribution-9.3.11.v20160721/start.jar   
+copy deploy.cfg.example to deploy.cfg and fill in appropriately  
+`export KB_DEPLOYMENT_CONFIG=<path to deploy.cfg>`  
+start mongodb  
+cd jettybase  
+./jettybase$ java -jar -Djetty.port=20002 ~/jetty/jetty-distribution-9.3.11.v20160721/start.jar  
 
 Start & stop server
 -------------------
