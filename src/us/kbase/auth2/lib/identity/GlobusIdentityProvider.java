@@ -100,12 +100,55 @@ public class GlobusIdentityProvider implements IdentityProvider {
 		}
 	}
 
+	private static class Idents {
+		public final RemoteIdentity primary;
+		public final List<String> secondaryIDs;
+		
+		public Idents(RemoteIdentity primary, List<String> secondaryIDs) {
+			super();
+			this.primary = primary;
+			this.secondaryIDs = secondaryIDs;
+		}
+	}
+	
 	@Override
-	public IdentitySet getIdentities(final String accessToken)
+	public IdentitySet getIdentities(final String authCode)
 			throws IdentityRetrievalException {
 		/* Note authcode only works once. After that globus returns
 		 * {error=invalid_grant}
 		 */
+		
+		final String accessToken = getAccessToken(authCode);
+		final Idents idents = getPrimaryIdentity(accessToken);
+		final List<RemoteIdentity> secondaries = getSecondaryIdentities(
+				accessToken, idents.secondaryIDs);
+		
+		return new IdentitySet(idents.primary, secondaries);
+	}
+
+	private List<RemoteIdentity> getSecondaryIdentities(
+			final String accessToken,
+			final List<String> secondaryIDs) {
+		if (secondaryIDs.isEmpty()) {
+			return new LinkedList<>();
+		}
+		final URI idtarget = UriBuilder.fromUri(toURI(cfg.getBaseURL()))
+				.path(IDENTITIES_PATH)
+				.queryParam("ids", String.join(",", secondaryIDs))
+				.build();
+		
+		final Map<String, Object> ids = globusGetRequest(
+				accessToken, idtarget);
+		@SuppressWarnings("unchecked")
+		final List<Map<String, String>> sids =
+				(List<Map<String, String>>) ids.get("identities");
+		//TODO NOW check that all identities are in returned list
+		final List<RemoteIdentity> secondaries = makeIdents(sids);
+		return secondaries;
+	}
+
+	private Idents getPrimaryIdentity(final String accessToken)
+			throws IdentityRetrievalException {
 		
 		final URI target = UriBuilder.fromUri(toURI(cfg.getBaseURL()))
 				.path(INTROSPECT_PATH).build();
@@ -134,28 +177,9 @@ public class GlobusIdentityProvider implements IdentityProvider {
 				NAME, id, username, name, email);
 		@SuppressWarnings("unchecked")
 		final List<String> secids = (List<String>) m.get("identities_set");
-		//TODO NOW if secids null or emtpy continue
 		secids.remove(id);
-		System.out.println(primary);
 		
-		final URI idtarget = UriBuilder.fromUri(toURI(cfg.getBaseURL()))
-				.path(IDENTITIES_PATH)
-				.queryParam("ids", String.join(",", secids))
-				.build();
-		
-		final Map<String, Object> ids = globusGetRequest(
-				accessToken, idtarget);
-		@SuppressWarnings("unchecked")
-		final List<Map<String, String>> sids =
-				(List<Map<String, String>>) ids.get("identities");
-		//TODO NOW check that all identities are in returned list
-		final List<RemoteIdentity> secondaries = makeIdents(sids);
-		System.out.println(secondaries);
-		
-		
-		
-		// TODO Auto-generated method stub
-		return null;
+		return new Idents(primary, secids);
 	}
 
 	private List<RemoteIdentity> makeIdents(
@@ -194,8 +218,7 @@ public class GlobusIdentityProvider implements IdentityProvider {
 		}
 	}
 
-	@Override
-	public String getAccessToken(final String authcode) {
+	private String getAccessToken(final String authcode) {
 		
 		final MultivaluedMap<String, String> formParameters =
 				new MultivaluedHashMap<>();

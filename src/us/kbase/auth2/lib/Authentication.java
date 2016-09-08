@@ -334,9 +334,11 @@ public class Authentication {
 		if (authcode == null || authcode.trim().isEmpty()) {
 			throw new MissingParameterException("authorization code");
 		}
-		final String accessToken = idp.getAccessToken(authcode);
-		final IdentitySet ids = idp.getIdentities(accessToken);
-		//TODO NOW store accessToken & provide temp token if a choice must be made by the user
+		final IdentitySet ids = idp.getIdentities(authcode);
+		//TODO NOW find ids in database
+		//TODO NOW if primary id exists & no secondaries, login and provide token
+		//TODO NOW otherwise, provide choice to create kbase id for primary if not already, and provide choices to login as secondaries
+		//TODO NOW store ids & provide temp token if a choice must be made by the user
 		System.out.println(ids);
 		// TODO Auto-generated method stub
 		return null;

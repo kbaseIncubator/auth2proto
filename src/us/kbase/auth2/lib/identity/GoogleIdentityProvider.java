@@ -52,9 +52,4 @@ public class GoogleIdentityProvider implements IdentityProvider {
 		return null;
 	}
 
-	@Override
-	public String getAccessToken(final String authcode) {
-		// TODO Auto-generated method stub
-		return null;
-	}
 }

@@ -15,6 +15,5 @@ public interface IdentityProvider {
 	String getAuthCodeQueryParamName();
 	IdentitySet getIdentities(String authcode)
 			throws IdentityRetrievalException;
-	String getAccessToken(String authcode);
 	
 }
