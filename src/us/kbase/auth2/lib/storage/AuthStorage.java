@@ -1,6 +1,7 @@
 package us.kbase.auth2.lib.storage;
 
 import java.util.List;
+import java.util.Set;
 import java.util.UUID;
 
 import us.kbase.auth2.lib.AuthUser;
@@ -11,9 +12,11 @@ import us.kbase.auth2.lib.UserName;
 import us.kbase.auth2.lib.exceptions.NoSuchTokenException;
 import us.kbase.auth2.lib.exceptions.NoSuchUserException;
 import us.kbase.auth2.lib.exceptions.UserExistsException;
+import us.kbase.auth2.lib.identity.RemoteIdentity;
 import us.kbase.auth2.lib.storage.exceptions.AuthStorageException;
 import us.kbase.auth2.lib.token.HashedToken;
 import us.kbase.auth2.lib.token.IncomingHashedToken;
+import us.kbase.auth2.lib.token.TemporaryHashedToken;
 
 public interface AuthStorage {
 	
@@ -38,6 +41,8 @@ public interface AuthStorage {
 
 	AuthUser getUser(UserName userName)
 			throws AuthStorageException, NoSuchUserException;
+	
+	AuthUser getUser(RemoteIdentity remoteID);
 
 	LocalUser getLocalUser(UserName userName)
 			throws AuthStorageException, NoSuchUserException;
@@ -65,4 +70,9 @@ public interface AuthStorage {
 	void setCustomRoles(UserName userName, List<String> r)
 			throws NoSuchUserException, AuthStorageException;
 
+	// assumes token is unique
+	void storeIdentitiesTemporarily(
+			TemporaryHashedToken hashedToken,
+			Set<TemporaryStoredIdentity> idsToStore)
+			throws AuthStorageException;
 }

@@ -1,7 +1,7 @@
 package us.kbase.auth2.lib.identity;
 
 import java.util.Collections;
-import java.util.List;
+import java.util.Set;
 
 public class IdentitySet {
 	
@@ -9,22 +9,22 @@ public class IdentitySet {
 	//TODO JAVADOC
 	
 	private final RemoteIdentity primary;
-	private final List<RemoteIdentity> secondaries;
+	private final Set<RemoteIdentity> secondaries;
 	
 	public IdentitySet(
 			final RemoteIdentity primary,
-			final List<RemoteIdentity> secondaries) {
+			final Set<RemoteIdentity> secondaries) {
 		super();
 		//TODO NOW check for nulls
 		this.primary = primary;
-		this.secondaries = Collections.unmodifiableList(secondaries);
+		this.secondaries = Collections.unmodifiableSet(secondaries);
 	}
 
 	public RemoteIdentity getPrimary() {
 		return primary;
 	}
 
-	public List<RemoteIdentity> getSecondaries() {
+	public Set<RemoteIdentity> getSecondaries() {
 		return secondaries;
 	}
 

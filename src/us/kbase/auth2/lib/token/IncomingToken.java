@@ -7,7 +7,7 @@ public class IncomingToken {
 	//TODO TEST
 	//TODO JAVADOC
 	
-	private String token;
+	private final String token;
 
 	public IncomingToken(final String token) {
 		checkString(token, "token", true);

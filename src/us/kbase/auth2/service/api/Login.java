@@ -31,6 +31,7 @@ import us.kbase.auth2.lib.exceptions.ErrorType;
 import us.kbase.auth2.lib.exceptions.MissingParameterException;
 import us.kbase.auth2.lib.exceptions.NoSuchIdentityProviderException;
 import us.kbase.auth2.lib.identity.IdentityProvider;
+import us.kbase.auth2.lib.storage.exceptions.AuthStorageException;
 
 @Path("/login")
 public class Login {
@@ -80,7 +81,7 @@ public class Login {
 			@CookieParam("statevar") final String state,
 			@Context final UriInfo uriInfo)
 			throws MissingParameterException, AuthenticationException,
-			NoSuchProviderException {
+			NoSuchProviderException, AuthStorageException {
 		provider = upperCase(provider);
 		final MultivaluedMap<String, String> qps =
 				uriInfo.getQueryParameters();
@@ -97,6 +98,12 @@ public class Login {
 					"State values do not match, this may be a CXRF attack");
 		}
 		final LoginResult lr = auth.login(provider, authcode);
+		System.out.println(lr);
+		if (lr.isLoggedIn()) {
+			//TODO NOW handle login - set cookie, redirect (to user page if no redirect)
+		} else {
+			//TODO NOW set temp cookie, redirect to /complete/ with lr info
+		}
 		//TODO NOW complete method, redirect to new page, don't build a page - hides auth code
 		return Response.ok().entity("Hi " + provider).build();
 	}

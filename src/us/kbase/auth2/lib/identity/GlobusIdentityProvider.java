@@ -5,9 +5,10 @@ import java.net.URI;
 import java.net.URISyntaxException;
 import java.net.URL;
 import java.util.Base64;
-import java.util.LinkedList;
+import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
+import java.util.Set;
 
 import javax.ws.rs.client.Client;
 import javax.ws.rs.client.ClientBuilder;
@@ -102,9 +103,9 @@ public class GlobusIdentityProvider implements IdentityProvider {
 
 	private static class Idents {
 		public final RemoteIdentity primary;
-		public final List<String> secondaryIDs;
+		public final Set<String> secondaryIDs;
 		
-		public Idents(RemoteIdentity primary, List<String> secondaryIDs) {
+		public Idents(RemoteIdentity primary, Set<String> secondaryIDs) {
 			super();
 			this.primary = primary;
 			this.secondaryIDs = secondaryIDs;
@@ -120,17 +121,17 @@ public class GlobusIdentityProvider implements IdentityProvider {
 		
 		final String accessToken = getAccessToken(authCode);
 		final Idents idents = getPrimaryIdentity(accessToken);
-		final List<RemoteIdentity> secondaries = getSecondaryIdentities(
+		final Set<RemoteIdentity> secondaries = getSecondaryIdentities(
 				accessToken, idents.secondaryIDs);
 		
 		return new IdentitySet(idents.primary, secondaries);
 	}
 
-	private List<RemoteIdentity> getSecondaryIdentities(
+	private Set<RemoteIdentity> getSecondaryIdentities(
 			final String accessToken,
-			final List<String> secondaryIDs) {
+			final Set<String> secondaryIDs) {
 		if (secondaryIDs.isEmpty()) {
-			return new LinkedList<>();
+			return new HashSet<>();
 		}
 		final URI idtarget = UriBuilder.fromUri(toURI(cfg.getBaseURL()))
 				.path(IDENTITIES_PATH)
@@ -143,7 +144,7 @@ public class GlobusIdentityProvider implements IdentityProvider {
 		final List<Map<String, String>> sids =
 				(List<Map<String, String>>) ids.get("identities");
 		//TODO NOW check that all identities are in returned list
-		final List<RemoteIdentity> secondaries = makeIdents(sids);
+		final Set<RemoteIdentity> secondaries = makeIdents(sids);
 		return secondaries;
 	}
 
@@ -179,13 +180,14 @@ public class GlobusIdentityProvider implements IdentityProvider {
 		final List<String> secids = (List<String>) m.get("identities_set");
 		secids.remove(id);
 		
-		return new Idents(primary, secids);
+		return new Idents(primary, new HashSet<>(secids));
 	}
 
-	private List<RemoteIdentity> makeIdents(
+	private Set<RemoteIdentity> makeIdents(
 			final List<Map<String, String>> sids) {
-		final List<RemoteIdentity> ret = new LinkedList<>();
+		final Set<RemoteIdentity> ret = new HashSet<>();
 		for (final Map<String, String> id: sids) {
+			//TODO NOW add equals and hashcode to remote identity
 			final String uid = (String) id.get("id");
 			final String username = (String) id.get("username");
 			final String name = (String) id.get("name");

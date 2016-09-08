@@ -6,9 +6,12 @@ import java.security.NoSuchAlgorithmException;
 import java.security.NoSuchProviderException;
 import java.util.Collections;
 import java.util.Date;
+import java.util.HashMap;
+import java.util.HashSet;
 import java.util.LinkedList;
 import java.util.List;
 import java.util.Map;
+import java.util.Map.Entry;
 import java.util.Set;
 import java.util.TreeMap;
 import java.util.UUID;
@@ -18,6 +21,7 @@ import us.kbase.auth2.cryptutils.PasswordCrypt;
 import us.kbase.auth2.cryptutils.TokenGenerator;
 import us.kbase.auth2.lib.exceptions.ErrorType;
 import us.kbase.auth2.lib.exceptions.IdentityRetrievalException;
+import us.kbase.auth2.lib.LoginResult.LoginResultBuilder;
 import us.kbase.auth2.lib.exceptions.AuthenticationException;
 import us.kbase.auth2.lib.exceptions.InvalidTokenException;
 import us.kbase.auth2.lib.exceptions.MissingParameterException;
@@ -28,9 +32,12 @@ import us.kbase.auth2.lib.exceptions.UnauthorizedException;
 import us.kbase.auth2.lib.exceptions.UserExistsException;
 import us.kbase.auth2.lib.identity.IdentityProvider;
 import us.kbase.auth2.lib.identity.IdentitySet;
+import us.kbase.auth2.lib.identity.RemoteIdentity;
 import us.kbase.auth2.lib.storage.AuthStorage;
+import us.kbase.auth2.lib.storage.TemporaryStoredIdentity;
 import us.kbase.auth2.lib.storage.exceptions.AuthStorageException;
 import us.kbase.auth2.lib.token.NewToken;
+import us.kbase.auth2.lib.token.TemporaryToken;
 import us.kbase.auth2.lib.token.TokenSet;
 import us.kbase.auth2.lib.token.HashedToken;
 import us.kbase.auth2.lib.token.IncomingToken;
@@ -326,7 +333,7 @@ public class Authentication {
 
 	public LoginResult login(final String provider, final String authcode)
 			throws NoSuchProviderException, MissingParameterException,
-			IdentityRetrievalException {
+			IdentityRetrievalException, AuthStorageException {
 		final IdentityProvider idp = idprov.get(provider);
 		if (idp == null) {
 			throw new NoSuchProviderException(provider);
@@ -335,12 +342,63 @@ public class Authentication {
 			throw new MissingParameterException("authorization code");
 		}
 		final IdentitySet ids = idp.getIdentities(authcode);
+		final AuthUser primary = storage.getUser(ids.getPrimary());
+		final Map<RemoteIdentity, AuthUser> filteredIDs = filterSecondaries(
+				ids.getSecondaries());
+		final LoginResultBuilder b;
+		if (primary == null || !filteredIDs.isEmpty()) {
+			final int expmin = primary == null ? 30 : 10;
+			final TemporaryToken tt = new TemporaryToken(tokens.getToken(),
+					new Date(new Date().getTime() + (expmin * 60 * 1000)));
+			b = new LoginResultBuilder(
+					ids.getPrimary(), tt);
+			if (primary != null) {
+				b.withLocalPrimary(primary);
+			}
+			final Set<TemporaryStoredIdentity> idsToStore =
+					processSecondaryIDs(b, filteredIDs);
+			idsToStore.add(new TemporaryStoredIdentity(
+					ids.getPrimary(), true));
+			storage.storeIdentitiesTemporarily(
+					tt.getHashedToken(), idsToStore);
+		} else {
+			//TODO NOW if reset required, make reset token
+			final NewToken t = new NewToken(tokens.getToken(),
+					primary.getUserName(),
+					//TODO CONFIG make token lifetime configurable
+					new Date(new Date().getTime() + (14 * 24 * 60 * 60 * 1000)));
+			storage.storeToken(t.getHashedToken());
+			b = new LoginResultBuilder(t);
+		}
+		return b.build();
 		//TODO NOW find ids in database
 		//TODO NOW if primary id exists & no secondaries, login and provide token
 		//TODO NOW otherwise, provide choice to create kbase id for primary if not already, and provide choices to login as secondaries
 		//TODO NOW store ids & provide temp token if a choice must be made by the user
-		System.out.println(ids);
-		// TODO Auto-generated method stub
-		return null;
+	}
+
+
+	private Map<RemoteIdentity, AuthUser> filterSecondaries(
+			final Set<RemoteIdentity> secondaries) {
+		final Map<RemoteIdentity, AuthUser> ret = new HashMap<>();
+		for (final RemoteIdentity ri: secondaries) {
+			final AuthUser u = storage.getUser(ri);
+			if (u != null && !ret.containsValue(u)) {
+				ret.put(ri, u);
+			}
+		}
+		return ret;
+	}
+
+	//assumes no duplicate authusers in map values
+	private Set<TemporaryStoredIdentity> processSecondaryIDs(
+			final LoginResultBuilder b,
+			final Map<RemoteIdentity, AuthUser> ids) {
+		final Set<TemporaryStoredIdentity> secondaries = new HashSet<>();
+		for (final Entry<RemoteIdentity, AuthUser> id: ids.entrySet()) {
+			secondaries.add(new TemporaryStoredIdentity(id.getKey(), false));
+			b.withSecondary(id.getKey(), id.getValue());
+		}
+		return secondaries;
 	}
 }

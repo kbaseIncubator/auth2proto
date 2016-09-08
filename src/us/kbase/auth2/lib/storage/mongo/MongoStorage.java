@@ -7,7 +7,9 @@ import java.util.HashMap;
 import java.util.LinkedList;
 import java.util.List;
 import java.util.Map;
+import java.util.Set;
 import java.util.UUID;
+import java.util.concurrent.TimeUnit;
 import java.util.stream.Collectors;
 
 import org.bson.Document;
@@ -32,11 +34,14 @@ import us.kbase.auth2.lib.exceptions.MissingParameterException;
 import us.kbase.auth2.lib.exceptions.NoSuchTokenException;
 import us.kbase.auth2.lib.exceptions.NoSuchUserException;
 import us.kbase.auth2.lib.exceptions.UserExistsException;
+import us.kbase.auth2.lib.identity.RemoteIdentity;
 import us.kbase.auth2.lib.storage.AuthStorage;
+import us.kbase.auth2.lib.storage.TemporaryStoredIdentity;
 import us.kbase.auth2.lib.storage.exceptions.AuthStorageException;
 import us.kbase.auth2.lib.storage.exceptions.StorageInitException;
 import us.kbase.auth2.lib.token.HashedToken;
 import us.kbase.auth2.lib.token.IncomingHashedToken;
+import us.kbase.auth2.lib.token.TemporaryHashedToken;
 
 public class MongoStorage implements AuthStorage {
 
@@ -80,6 +85,7 @@ public class MongoStorage implements AuthStorage {
 	private static final String COL_USERS = "users";
 	private static final String COL_CONFIG = "config";
 	private static final String COL_TOKEN = "tokens";
+	private static final String COL_TEMP_TOKEN = "temptokens";
 	private static final String COL_CUST_ROLES = "cust_roles";
 	
 	private static final Map<String, Map<List<String>, IndexOptions>> INDEXES;
@@ -109,7 +115,20 @@ public class MongoStorage implements AuthStorage {
 		token.put(Arrays.asList(Fields.TOKEN_USER_NAME), null);
 		token.put(Arrays.asList(Fields.TOKEN_TOKEN), IDX_UNIQ);
 		token.put(Arrays.asList(Fields.TOKEN_ID), IDX_UNIQ);
+		token.put(Arrays.asList(Fields.TOKEN_EXPIRY),
+				// this causes the tokens to expire at their expiration date
+				//TODO TEST that tokens expire appropriately
+				new IndexOptions().expireAfter(0L, TimeUnit.SECONDS));
 		INDEXES.put(COL_TOKEN, token);
+		
+		//temporary token indexes
+		final Map<List<String>, IndexOptions> temptoken = new HashMap<>();
+		temptoken.put(Arrays.asList(Fields.TOKEN_TOKEN), IDX_UNIQ);
+		temptoken.put(Arrays.asList(Fields.TOKEN_EXPIRY),
+				// this causes the tokens to expire at their expiration date
+				//TODO TEST that tokens expire appropriately
+				new IndexOptions().expireAfter(0L, TimeUnit.SECONDS));
+		INDEXES.put(COL_TEMP_TOKEN, temptoken);
 		
 		//config indexes
 		final Map<List<String>, IndexOptions> cfg = new HashMap<>();
@@ -499,6 +518,46 @@ public class MongoStorage implements AuthStorage {
 			final List<String> roles)
 			throws NoSuchUserException, AuthStorageException {
 		setRoles(userName, roles, Fields.USER_CUSTOM_ROLES);
+		
+	}
+
+	@Override
+	public AuthUser getUser(final RemoteIdentity remoteID) {
+		// TODO Auto-generated method stub
+		// TODO NOW update identity for user if name, email, uid are different
+		return null;
+	}
+
+	@Override
+	public void storeIdentitiesTemporarily(
+			final TemporaryHashedToken t,
+			final Set<TemporaryStoredIdentity> identitySet)
+			throws AuthStorageException {
+		final List<Document> ids = new LinkedList<>();
+		for (final TemporaryStoredIdentity id: identitySet) {
+			ids.add(new Document(
+					Fields.TEMP_TOKEN_IDENTITIES_PROVIDER, id.getProvider())
+					.append(Fields.TEMP_TOKEN_IDENTITIES_ID, id.getId())
+					.append(Fields.TEMP_TOKEN_IDENTITIES_PRIME,
+							id.isPrimary()));
+		}
+		
+		final Document td = new Document(
+				Fields.TEMP_TOKEN_ID, t.getId().toString())
+				.append(Fields.TEMP_TOKEN_TOKEN, t.getTokenHash())
+				.append(Fields.TEMP_TOKEN_EXPIRY, t.getExpirationDate())
+				.append(Fields.TEMP_TOKEN_CREATION, t.getCreationDate())
+				.append(Fields.TEMP_TOKEN_IDENTITIES, ids);
+		try {
+			db.getCollection(COL_TEMP_TOKEN).insertOne(td);
+			/* could catch a duplicate key exception here but that indicates
+			 * a programming error - should never try to insert a duplicate
+			 *  token
+			 */
+		} catch (MongoException me) {
+			throw new AuthStorageException(
+					"Connection to database failed", me);
+		}
 		
 	}
 }
