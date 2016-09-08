@@ -102,6 +102,9 @@ public class Login {
 		if (lr.isLoggedIn()) {
 			//TODO NOW handle login - set cookie, redirect (to user page if no redirect)
 		} else {
+			final LoginResultTransfer lrt = new LoginResultTransfer(lr);
+			//TODO NOW well shit can't post here. Need to set the cookie and redirect to next stage, and use that cookie to fetch the IDs.
+			return Response.temporaryRedirect("/complete/").
 			//TODO NOW set temp cookie, redirect to /complete/ with lr info
 		}
 		//TODO NOW complete method, redirect to new page, don't build a page - hides auth code

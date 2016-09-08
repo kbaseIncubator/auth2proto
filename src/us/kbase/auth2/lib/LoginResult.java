@@ -145,6 +145,11 @@ public class LoginResult {
 			if (user == null) {
 				throw new NullPointerException("user");
 			}
+			if (!primary.getProvider().equals(remote.getProvider())) {
+				throw new LoginResultBuildException(
+						"Provider of secondary identity does not equal that " +
+						"of primary identity");
+			}
 			// not expecting many values here, so O(n) is ok
 			if (secondaries.containsValue(user)) {
 				throw new LoginResultBuildException(
