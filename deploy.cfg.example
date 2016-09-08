@@ -16,6 +16,7 @@ log-name=KBaseAuthServ2
 identity-providers=Globus, Google
 
 identity-provider-Globus-base-url=https://auth.globus.org
+# note path from the webapps folder to the image. If doesn't start with '/' will be prefixed
 identity-provider-Globus-image-url=/assets/globus.png
 identity-provider-Globus-client-id=
 identity-provider-Globus-client-secret=

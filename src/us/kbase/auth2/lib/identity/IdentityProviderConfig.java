@@ -27,7 +27,11 @@ public class IdentityProviderConfig {
 		this.identityProviderName = identityProviderName;
 		this.clientID = clientID;
 		this.clientSecrect = clientSecrect;
-		this.relativeImageURL = relativeImageURL;
+		if (!relativeImageURL.trim().startsWith("/")) {
+			this.relativeImageURL = "/" + relativeImageURL.trim();
+		} else {
+			this.relativeImageURL = relativeImageURL.trim();
+		}
 		this.redirectURL = redirectURL;
 		this.baseURL = baseURL;
 		checkValidURI(this.redirectURL, "Redirect url");

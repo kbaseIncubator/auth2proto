@@ -63,7 +63,7 @@ public class Login {
 			for (final IdentityProvider idp: auth.getIdentityProviders()) {
 				final Map<String, String> rep = new HashMap<>();
 				rep.put("name", idp.getProviderName());
-				rep.put("img", "../" + idp.getRelativeImageURL());
+				rep.put("img", ".." + idp.getRelativeImageURL());
 				provs.add(rep);
 			}
 			ret.put("hasprov", !provs.isEmpty());
