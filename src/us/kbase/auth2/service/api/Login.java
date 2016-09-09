@@ -1,5 +1,7 @@
 package us.kbase.auth2.service.api;
 
+import static us.kbase.auth2.service.api.CookieUtils.getCookie;
+
 import java.net.URI;
 import java.net.URISyntaxException;
 import java.net.URL;
@@ -30,6 +32,7 @@ import us.kbase.auth2.lib.exceptions.AuthenticationException;
 import us.kbase.auth2.lib.exceptions.ErrorType;
 import us.kbase.auth2.lib.exceptions.MissingParameterException;
 import us.kbase.auth2.lib.exceptions.NoSuchIdentityProviderException;
+import us.kbase.auth2.lib.exceptions.NoTokenProvidedException;
 import us.kbase.auth2.lib.identity.IdentityProvider;
 import us.kbase.auth2.lib.storage.exceptions.AuthStorageException;
 
@@ -76,16 +79,16 @@ public class Login {
 	
 	@GET
 	@Path("/complete/{provider}")
-	public Response loginComplete(
+	public Response login(
 			@PathParam("provider") String provider,
 			@CookieParam("statevar") final String state,
 			@Context final UriInfo uriInfo)
 			throws MissingParameterException, AuthenticationException,
 			NoSuchProviderException, AuthStorageException {
+		//TODO NOW handle error in params (provider, state)
 		provider = upperCase(provider);
 		final MultivaluedMap<String, String> qps =
 				uriInfo.getQueryParameters();
-		//TODO NOW handle error in params
 		final IdentityProvider idp = auth.getIdentityProvider(provider);
 		final String authcode = qps.getFirst(idp.getAuthCodeQueryParamName());
 		final String retstate = qps.getFirst("state"); //may need to be configurable
@@ -98,17 +101,41 @@ public class Login {
 					"State values do not match, this may be a CXRF attack");
 		}
 		final LoginResult lr = auth.login(provider, authcode);
-		System.out.println(lr);
+		final Response r;
+		// always redirect so the authcode doesn't remain in the title bar
+		// note nginx will rewrite the redirect appropriately so absolute
+		// redirects are ok
 		if (lr.isLoggedIn()) {
-			//TODO NOW handle login - set cookie, redirect (to user page if no redirect)
+			//TODO NOW use provided redirect, default to user profile
+			r = Response.temporaryRedirect(toURI("/tokens"))
+			//TODO NOW can't set keep me logged in here, so set in profile
+					.cookie(getCookie(lr.getToken(), true)).build();
 		} else {
-			final LoginResultTransfer lrt = new LoginResultTransfer(lr);
-			//TODO NOW well shit can't post here. Need to set the cookie and redirect to next stage, and use that cookie to fetch the IDs.
-			return Response.temporaryRedirect("/complete/").
-			//TODO NOW set temp cookie, redirect to /complete/ with lr info
+			r = Response.temporaryRedirect(toURI("/login/complete")).cookie(
+					new NewCookie(new Cookie(
+									"in-process-login-token",
+									lr.getTemporaryToken().getToken(),
+									"..", null),
+							//TODO CONFIG make secure cookie configurable
+							"authtoken", NewCookie.DEFAULT_MAX_AGE, false))
+					.build();
+			//TODO NOW make image paths URIs
 		}
-		//TODO NOW complete method, redirect to new page, don't build a page - hides auth code
-		return Response.ok().entity("Hi " + provider).build();
+		return r;
+	}
+	
+	@GET
+	@Path("/complete")
+	public Response loginComplete(
+			@CookieParam("in-process-login-token") final String token)
+			throws NoTokenProvidedException {
+		if (token == null || token.trim().isEmpty()) {
+			throw new NoTokenProvidedException(
+					"Missing in-process-login-token");
+		}
+		System.out.println(token);
+		//TODO NOW fetch ids from DB, show page for login/signup.
+		return Response.ok().build();
 	}
 	
 	// assumes non-null, len > 0
@@ -125,6 +152,15 @@ public class Login {
 	private URI toURI(final URL loginURL) {
 		try {
 			return loginURL.toURI();
+		} catch (URISyntaxException e) {
+			throw new RuntimeException("This should be impossible", e);
+		}
+	}
+	
+	//Assumes valid URI in String form
+	private URI toURI(final String uri) {
+		try {
+			return new URI(uri);
 		} catch (URISyntaxException e) {
 			throw new RuntimeException("This should be impossible", e);
 		}

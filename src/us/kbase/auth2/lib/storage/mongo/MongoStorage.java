@@ -527,6 +527,13 @@ public class MongoStorage implements AuthStorage {
 		// TODO NOW update identity for user if name, email, uid are different
 		return null;
 	}
+	
+	@Override
+	public boolean hasUser(final RemoteIdentity remoteID) {
+		// TODO Auto-generated method stub
+		// TODO NOW update identity for user if name, email, uid are different
+		return false;
+	}
 
 	@Override
 	public void storeIdentitiesTemporarily(

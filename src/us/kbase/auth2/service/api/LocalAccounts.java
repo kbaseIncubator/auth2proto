@@ -1,6 +1,7 @@
 package us.kbase.auth2.service.api;
 
-import java.util.Date;
+import static us.kbase.auth2.service.api.CookieUtils.getCookie;
+
 import java.util.Map;
 
 import javax.inject.Inject;
@@ -10,9 +11,7 @@ import javax.ws.rs.GET;
 import javax.ws.rs.POST;
 import javax.ws.rs.Path;
 import javax.ws.rs.Produces;
-import javax.ws.rs.core.Cookie;
 import javax.ws.rs.core.MediaType;
-import javax.ws.rs.core.NewCookie;
 import javax.ws.rs.core.Response;
 
 import org.glassfish.jersey.server.mvc.Template;
@@ -74,27 +73,4 @@ public class LocalAccounts {
 				.cookie(getCookie(t, stayLoggedIn == null))
 				.build();
 	}
-	
-	private NewCookie getCookie(final NewToken t, final boolean session) {
-		return new NewCookie(new Cookie("token", t.getToken(), "/", null),
-				"authtoken", getMaxAge(t, session), false);
-		//TODO CONFIG make secure cookie configurable
-	}
-	
-	private int getMaxAge(final NewToken t, final boolean session) {
-		if (session) {
-			return NewCookie.DEFAULT_MAX_AGE;
-		}
-		final long exp = (long) Math.floor((
-				t.getExpirationDate().getTime() - new Date().getTime()) /
-				1000.0);
-		if (exp > Integer.MAX_VALUE) {
-			return Integer.MAX_VALUE;
-		}
-		if (exp < 0) {
-			return 0;
-		}
-		return (int) exp;
-	}
-	
 }

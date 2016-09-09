@@ -44,6 +44,8 @@ public interface AuthStorage {
 	
 	AuthUser getUser(RemoteIdentity remoteID);
 
+	boolean hasUser(RemoteIdentity id);
+
 	LocalUser getLocalUser(UserName userName)
 			throws AuthStorageException, NoSuchUserException;
 
@@ -75,4 +77,5 @@ public interface AuthStorage {
 			TemporaryHashedToken hashedToken,
 			Set<TemporaryStoredIdentity> idsToStore)
 			throws AuthStorageException;
+
 }
