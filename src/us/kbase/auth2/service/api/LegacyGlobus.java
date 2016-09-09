@@ -99,11 +99,18 @@ public class LegacyGlobus {
 	@Produces(MediaType.APPLICATION_JSON)
 	public Map<String, Object> getUser(
 			@HeaderParam("x-globus-goauthtoken") final String xtoken,
-			@HeaderParam("globus-goauthtoken") String token,
+			@HeaderParam("authorization") String token,
 			@PathParam("user") final String user)
 			throws UnauthorizedException, AuthStorageException,
 			NoSuchUserException {
-		
+		if (token != null) {
+			final String[] bits = token.trim().split("\\s+");
+			if (bits.length != 2) {
+				throw new UnauthorizedException(
+						ErrorType.NO_TOKEN, "Invalid authorization header");
+			}
+			token = bits[1];
+		}
 		token = getGlobusToken(xtoken, token);
 		final AuthUser u;
 		try {

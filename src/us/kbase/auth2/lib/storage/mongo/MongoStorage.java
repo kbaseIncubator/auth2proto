@@ -122,8 +122,8 @@ public class MongoStorage implements AuthStorage {
 		
 		//temporary token indexes
 		final Map<List<String>, IndexOptions> temptoken = new HashMap<>();
-		temptoken.put(Arrays.asList(Fields.TOKEN_TOKEN), IDX_UNIQ);
-		temptoken.put(Arrays.asList(Fields.TOKEN_EXPIRY),
+		temptoken.put(Arrays.asList(Fields.TEMP_TOKEN_TOKEN), IDX_UNIQ);
+		temptoken.put(Arrays.asList(Fields.TEMP_TOKEN_EXPIRY),
 				// this causes the tokens to expire at their expiration date
 				//TODO TEST that tokens expire appropriately
 				new IndexOptions().expireAfter(0L, TimeUnit.SECONDS));
