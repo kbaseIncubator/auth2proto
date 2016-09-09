@@ -3,24 +3,36 @@ package us.kbase.auth2.lib;
 import static us.kbase.auth2.lib.Utils.checkString;
 
 import java.security.NoSuchAlgorithmException;
+import java.security.NoSuchProviderException;
+import java.util.Collections;
 import java.util.Date;
+import java.util.LinkedList;
 import java.util.List;
+import java.util.Map;
+import java.util.Set;
+import java.util.TreeMap;
 import java.util.UUID;
 import java.util.stream.Collectors;
 
 import us.kbase.auth2.cryptutils.PasswordCrypt;
 import us.kbase.auth2.cryptutils.TokenGenerator;
 import us.kbase.auth2.lib.exceptions.ErrorType;
+import us.kbase.auth2.lib.exceptions.IdentityRetrievalException;
 import us.kbase.auth2.lib.exceptions.AuthenticationException;
 import us.kbase.auth2.lib.exceptions.InvalidTokenException;
 import us.kbase.auth2.lib.exceptions.MissingParameterException;
+import us.kbase.auth2.lib.exceptions.NoSuchIdentityProviderException;
 import us.kbase.auth2.lib.exceptions.NoSuchTokenException;
 import us.kbase.auth2.lib.exceptions.NoSuchUserException;
 import us.kbase.auth2.lib.exceptions.UnauthorizedException;
 import us.kbase.auth2.lib.exceptions.UserExistsException;
+import us.kbase.auth2.lib.identity.IdentityProvider;
+import us.kbase.auth2.lib.identity.IdentitySet;
+import us.kbase.auth2.lib.identity.RemoteIdentity;
 import us.kbase.auth2.lib.storage.AuthStorage;
 import us.kbase.auth2.lib.storage.exceptions.AuthStorageException;
 import us.kbase.auth2.lib.token.NewToken;
+import us.kbase.auth2.lib.token.TemporaryToken;
 import us.kbase.auth2.lib.token.TokenSet;
 import us.kbase.auth2.lib.token.HashedToken;
 import us.kbase.auth2.lib.token.IncomingToken;
@@ -28,13 +40,14 @@ import us.kbase.auth2.lib.token.IncomingToken;
 public class Authentication {
 
 	//TODO TEST unit tests
+	//TODO TEST test logging on startup
+	//TODO TEST test logging on calls
 	//TODO JAVADOC 
 	//TODO AUTH schema version
 	//TODO AUTH handle root user somehow (spec chars unallowed in usernames?)
 	//TODO AUTH server root should return server version (and urls for endpoints?)
 	//TODO AUTH check workspace for other useful things like the schema manager
 	//TODO NOW logging everywhere - on login, on logout, on create / delete / expire token
-	//TODO NOW custom roles set up via ui
 	//TODO SCOPES configure scopes via ui
 	//TODO SCOPES configure scope on login via ui
 	//TODO SCOPES restricted scopes - allow for specific roles or users (or for specific clients via oauth2)
@@ -46,12 +59,16 @@ public class Authentication {
 	//TODO USERCONFIG set email & username privacy & respect
 	//TODO USERCONFIG set email & username
 	//TODO ADMIN option to allow all users to make dev token
+	//TODO NOW allow redirect url on login
 	
 	private final AuthStorage storage;
+	private final Map<String, IdentityProvider> idprov;
 	private final TokenGenerator tokens;
 	private final PasswordCrypt pwdcrypt;
 	
-	public Authentication(final AuthStorage storage) {
+	public Authentication(
+			final AuthStorage storage,
+			final Set<IdentityProvider> set) {
 		System.out.println("starting application");
 		try {
 			tokens = new TokenGenerator();
@@ -63,6 +80,14 @@ public class Authentication {
 			throw new NullPointerException("storage");
 		}
 		this.storage = storage;
+		final Map<String, IdentityProvider> idp = new TreeMap<>();
+		if (set != null) {
+			for (final IdentityProvider id: set) {
+				idp.put(id.getProviderName(), id);
+			}
+		}
+		this.idprov = Collections.unmodifiableMap(idp);
+		
 	}
 
 
@@ -279,5 +304,64 @@ public class Authentication {
 		final List<String> rstr = roles.stream().map(r -> r.getName())
 				.collect(Collectors.toList());
 		storage.setCustomRoles(userName, rstr);
+	}
+
+
+	public List<IdentityProvider> getIdentityProviders() {
+		return new LinkedList<IdentityProvider>(idprov.values());
+	}
+
+	// note not saved in DB
+	public String getBareToken() {
+		return tokens.getToken();
+	}
+
+
+	public IdentityProvider getIdentityProvider(final String provider)
+			throws NoSuchIdentityProviderException {
+		if (!idprov.containsKey(provider)) {
+			throw new NoSuchIdentityProviderException(provider); 
+		}
+		return idprov.get(provider);
+	}
+
+
+	public LoginResult login(final String provider, final String authcode)
+			throws NoSuchProviderException, MissingParameterException,
+			IdentityRetrievalException, AuthStorageException {
+		final IdentityProvider idp = idprov.get(provider);
+		if (idp == null) {
+			throw new NoSuchProviderException(provider);
+		}
+		if (authcode == null || authcode.trim().isEmpty()) {
+			throw new MissingParameterException("authorization code");
+		}
+		final IdentitySet ids = idp.getIdentities(authcode);
+		final AuthUser primary = storage.getUser(ids.getPrimary());
+		final Set<RemoteIdentity> filteredIDs = ids.getSecondaries().stream()
+				.filter(id -> storage.hasUser(id)).collect(Collectors.toSet());
+		final LoginResult lr;
+		if (primary == null || !filteredIDs.isEmpty()) {
+			final int expmin = primary == null ? 30 : 10;
+			final TemporaryToken tt = new TemporaryToken(tokens.getToken(),
+					new Date(new Date().getTime() + (expmin * 60 * 1000)));
+			filteredIDs.add(ids.getPrimary());
+			storage.storeIdentitiesTemporarily(
+					tt.getHashedToken(), filteredIDs);
+			lr = new LoginResult(tt);
+		} else {
+			//TODO NOW if reset required, make reset token
+			final NewToken t = new NewToken(tokens.getToken(),
+					primary.getUserName(),
+					//TODO CONFIG make token lifetime configurable
+					new Date(new Date().getTime() + (14 * 24 * 60 * 60 * 1000)));
+			storage.storeToken(t.getHashedToken());
+			lr = new LoginResult(t);
+		}
+		return lr;
+		//TODO NOW find ids in database
+		//TODO NOW if primary id exists & no secondaries, login and provide token
+		//TODO NOW otherwise, provide choice to create kbase id for primary if not already, and provide choices to login as secondaries
+		//TODO NOW store ids & provide temp token if a choice must be made by the user
 	}
 }

@@ -4,6 +4,7 @@ import java.io.PrintWriter;
 import java.io.StringWriter;
 import java.util.Arrays;
 import java.util.Collections;
+import java.util.Date;
 import java.util.List;
 
 import javax.ws.rs.WebApplicationException;
@@ -18,6 +19,7 @@ import us.kbase.auth2.lib.exceptions.AuthException;
 import us.kbase.auth2.lib.exceptions.AuthenticationException;
 import us.kbase.auth2.lib.exceptions.NoDataException;
 import us.kbase.auth2.lib.exceptions.UnauthorizedException;
+import us.kbase.common.service.JsonServerSyslog;
 
 @JsonInclude(Include.NON_NULL)
 public class ErrorMessage {
@@ -31,6 +33,8 @@ public class ErrorMessage {
 	private final String appError;
 	private final String message;
 	private final String exception;
+	private final String callID;
+	private final long time = new Date().getTime();
 	@JsonIgnore
 	private final List<String> exceptionLines;
 	@JsonIgnore
@@ -40,6 +44,7 @@ public class ErrorMessage {
 		if (ex == null) {
 			throw new NullPointerException("exp");
 		}
+		callID = JsonServerSyslog.getCurrentRpcInfo().getId(); // may be null
 		if (includeTrace) {
 			final StringWriter st = new StringWriter();
 			ex.printStackTrace(new PrintWriter(st));
@@ -113,6 +118,14 @@ public class ErrorMessage {
 		return hasException;
 	}
 
+	public String getCallID() {
+		return callID;
+	}
+
+	public long getTime() {
+		return time;
+	}
+
 	@Override
 	public String toString() {
 		StringBuilder builder = new StringBuilder();
@@ -128,6 +141,10 @@ public class ErrorMessage {
 		builder.append(message);
 		builder.append(", exception=");
 		builder.append(exception);
+		builder.append(", callID=");
+		builder.append(callID);
+		builder.append(", time=");
+		builder.append(time);
 		builder.append(", exceptionLines=");
 		builder.append(exceptionLines);
 		builder.append(", hasException=");

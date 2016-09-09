@@ -36,6 +36,19 @@ public class Fields {
 	public static final String TOKEN_NAME = "name";
 	public static final String TOKEN_CREATION = "create";
 	
+	//temporary token fields
+	public static final String TEMP_TOKEN_TOKEN = "token";
+	public static final String TEMP_TOKEN_EXPIRY = "expires";
+	public static final String TEMP_TOKEN_ID = "id";
+	public static final String TEMP_TOKEN_CREATION = "create";
+	public static final String TEMP_TOKEN_IDENTITIES = "idents";
+	public static final String TEMP_TOKEN_IDENTITIES_PROVIDER = "prov";
+	public static final String TEMP_TOKEN_IDENTITIES_ID = "id";
+	public static final String TEMP_TOKEN_IDENTITIES_PRIME = "primary";
+	public static final String TEMP_TOKEN_IDENTITIES_USER = "uid";
+	public static final String TEMP_TOKEN_IDENTITIES_NAME = "fullname";
+	public static final String TEMP_TOKEN_IDENTITIES_EMAIL = "email";
+	
 	//Custom roles fields
 	public static final String ROLES_ID = "id";
 	public static final String ROLES_NAME = "name";

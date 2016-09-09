@@ -45,5 +45,6 @@
 	<classpathentry kind="lib" path="/jars/lib/jars/logback/logback-classic-1.1.2.jar"/>
 	<classpathentry kind="lib" path="/jars/lib/jars/logback/logback-core-1.1.2.jar"/>
 	<classpathentry kind="lib" path="lib/mongo/mongo-java-driver-3.3.0.jar"/>
+	<classpathentry kind="lib" path="/jars/lib/jars/ini4j/ini4j-0.5.2.jar"/>
 	<classpathentry kind="output" path="bin"/>
 </classpath>
