@@ -45,6 +45,9 @@ public class Fields {
 	public static final String TEMP_TOKEN_IDENTITIES_PROVIDER = "prov";
 	public static final String TEMP_TOKEN_IDENTITIES_ID = "id";
 	public static final String TEMP_TOKEN_IDENTITIES_PRIME = "primary";
+	public static final String TEMP_TOKEN_IDENTITIES_USER = "uid";
+	public static final String TEMP_TOKEN_IDENTITIES_NAME = "fullname";
+	public static final String TEMP_TOKEN_IDENTITIES_EMAIL = "email";
 	
 	//Custom roles fields
 	public static final String ROLES_ID = "id";

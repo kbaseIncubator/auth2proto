@@ -36,7 +36,6 @@ import us.kbase.auth2.lib.exceptions.NoSuchUserException;
 import us.kbase.auth2.lib.exceptions.UserExistsException;
 import us.kbase.auth2.lib.identity.RemoteIdentity;
 import us.kbase.auth2.lib.storage.AuthStorage;
-import us.kbase.auth2.lib.storage.TemporaryStoredIdentity;
 import us.kbase.auth2.lib.storage.exceptions.AuthStorageException;
 import us.kbase.auth2.lib.storage.exceptions.StorageInitException;
 import us.kbase.auth2.lib.token.HashedToken;
@@ -538,15 +537,21 @@ public class MongoStorage implements AuthStorage {
 	@Override
 	public void storeIdentitiesTemporarily(
 			final TemporaryHashedToken t,
-			final Set<TemporaryStoredIdentity> identitySet)
+			final Set<RemoteIdentity> identitySet)
 			throws AuthStorageException {
 		final List<Document> ids = new LinkedList<>();
-		for (final TemporaryStoredIdentity id: identitySet) {
+		for (final RemoteIdentity id: identitySet) {
 			ids.add(new Document(
 					Fields.TEMP_TOKEN_IDENTITIES_PROVIDER, id.getProvider())
 					.append(Fields.TEMP_TOKEN_IDENTITIES_ID, id.getId())
 					.append(Fields.TEMP_TOKEN_IDENTITIES_PRIME,
-							id.isPrimary()));
+							id.isPrimary())
+					.append(Fields.TEMP_TOKEN_IDENTITIES_USER,
+							id.getUsername())
+					.append(Fields.TEMP_TOKEN_IDENTITIES_NAME,
+							id.getFullname())
+					.append(Fields.TEMP_TOKEN_IDENTITIES_EMAIL,
+							id.getEmail()));
 		}
 		
 		final Document td = new Document(

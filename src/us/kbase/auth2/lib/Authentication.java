@@ -30,7 +30,6 @@ import us.kbase.auth2.lib.identity.IdentityProvider;
 import us.kbase.auth2.lib.identity.IdentitySet;
 import us.kbase.auth2.lib.identity.RemoteIdentity;
 import us.kbase.auth2.lib.storage.AuthStorage;
-import us.kbase.auth2.lib.storage.TemporaryStoredIdentity;
 import us.kbase.auth2.lib.storage.exceptions.AuthStorageException;
 import us.kbase.auth2.lib.token.NewToken;
 import us.kbase.auth2.lib.token.TemporaryToken;
@@ -346,13 +345,9 @@ public class Authentication {
 			final int expmin = primary == null ? 30 : 10;
 			final TemporaryToken tt = new TemporaryToken(tokens.getToken(),
 					new Date(new Date().getTime() + (expmin * 60 * 1000)));
-			final Set<TemporaryStoredIdentity> idsToStore =
-					filteredIDs.stream().map(id -> new TemporaryStoredIdentity(
-							id, false)).collect(Collectors.toSet());
-			idsToStore.add(new TemporaryStoredIdentity(
-					ids.getPrimary(), true));
+			filteredIDs.add(ids.getPrimary());
 			storage.storeIdentitiesTemporarily(
-					tt.getHashedToken(), idsToStore);
+					tt.getHashedToken(), filteredIDs);
 			lr = new LoginResult(tt);
 		} else {
 			//TODO NOW if reset required, make reset token

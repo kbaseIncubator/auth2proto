@@ -75,7 +75,7 @@ public interface AuthStorage {
 	// assumes token is unique
 	void storeIdentitiesTemporarily(
 			TemporaryHashedToken hashedToken,
-			Set<TemporaryStoredIdentity> idsToStore)
+			Set<RemoteIdentity> ids)
 			throws AuthStorageException;
 
 }

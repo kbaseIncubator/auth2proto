@@ -15,7 +15,7 @@ The two repos above need to be in the same parent folder.
 To start server
 ---------------
 start mongodb  
-cd into the auth2 repo
+cd into the auth2 repo  
 ant compile  
 ant buildwar  
 copy deploy.cfg.example to deploy.cfg and fill in appropriately  

@@ -144,7 +144,7 @@ public class GlobusIdentityProvider implements IdentityProvider {
 		final List<Map<String, String>> sids =
 				(List<Map<String, String>>) ids.get("identities");
 		//TODO NOW check that all identities are in returned list
-		final Set<RemoteIdentity> secondaries = makeIdents(sids);
+		final Set<RemoteIdentity> secondaries = makeSecondaryIdents(sids);
 		return secondaries;
 	}
 
@@ -175,7 +175,7 @@ public class GlobusIdentityProvider implements IdentityProvider {
 		final String name = (String) m.get("name");
 		final String email = (String) m.get("email");
 		final RemoteIdentity primary = new RemoteIdentity(
-				NAME, id, username, name, email);
+				NAME, id, username, name, email, true);
 		@SuppressWarnings("unchecked")
 		final List<String> secids = (List<String>) m.get("identities_set");
 		secids.remove(id);
@@ -183,7 +183,7 @@ public class GlobusIdentityProvider implements IdentityProvider {
 		return new Idents(primary, new HashSet<>(secids));
 	}
 
-	private Set<RemoteIdentity> makeIdents(
+	private Set<RemoteIdentity> makeSecondaryIdents(
 			final List<Map<String, String>> sids) {
 		final Set<RemoteIdentity> ret = new HashSet<>();
 		for (final Map<String, String> id: sids) {
@@ -193,7 +193,7 @@ public class GlobusIdentityProvider implements IdentityProvider {
 			final String name = (String) id.get("name");
 			final String email = (String) id.get("email");
 			final RemoteIdentity rid = new RemoteIdentity(
-					NAME, uid, username, name, email);
+					NAME, uid, username, name, email, false);
 			ret.add(rid);
 		}
 		return ret;
