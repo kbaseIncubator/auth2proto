@@ -1,6 +1,5 @@
 package us.kbase.auth2.lib.storage;
 
-import java.util.List;
 import java.util.Set;
 import java.util.UUID;
 
@@ -29,15 +28,11 @@ public interface AuthStorage {
 	 * system occurs.
 	 * @throws UserExistsException if the user already exists.
 	 */
-	void createLocalAccount(LocalUser local)
+	void createLocalUser(LocalUser local)
 			throws AuthStorageException, UserExistsException;
 
-	/** Store a token in the database. No checking is done on the validity
-	 * of the token - passing in tokens with bad data is a programming error.
-	 * @param t the token to store.
-	 * @throws AuthStorageException if the token could not be stored.
-	 */
-	void storeToken(HashedToken t) throws AuthStorageException;
+	void createUser(AuthUser authUser)
+			throws UserExistsException, AuthStorageException;
 
 	AuthUser getUser(UserName userName)
 			throws AuthStorageException, NoSuchUserException;
@@ -48,34 +43,44 @@ public interface AuthStorage {
 
 	LocalUser getLocalUser(UserName userName)
 			throws AuthStorageException, NoSuchUserException;
+	
+	/** Store a token in the database. No checking is done on the validity
+	 * of the token - passing in tokens with bad data is a programming error.
+	 * @param t the token to store.
+	 * @throws AuthStorageException if the token could not be stored.
+	 */
+	void storeToken(HashedToken t) throws AuthStorageException;
 
 	HashedToken getToken(IncomingHashedToken token)
 			throws AuthStorageException, NoSuchTokenException;
 
-	List<HashedToken> getTokens(UserName userName) throws AuthStorageException;
+	Set<HashedToken> getTokens(UserName userName) throws AuthStorageException;
 
 	void deleteToken(UserName userName, UUID tokenId)
 			throws AuthStorageException, NoSuchTokenException;
 
 	void deleteTokens(UserName userName) throws AuthStorageException;
 
-	void setRoles(UserName userName, List<Role> roles)
+	void setRoles(UserName userName, Set<Role> roles)
 			throws AuthStorageException, NoSuchUserException;
 
 	void setCustomRole(CustomRole role) throws AuthStorageException;
 
-	List<CustomRole> getCustomRoles() throws AuthStorageException;
+	Set<CustomRole> getCustomRoles() throws AuthStorageException;
 
-	List<CustomRole> getCustomRoles(List<UUID> roleIds)
+	Set<CustomRole> getCustomRoles(Set<UUID> roleIds)
 			throws AuthStorageException;
 
-	void setCustomRoles(UserName userName, List<String> r)
+	void setCustomRoles(UserName userName, Set<String> roles)
 			throws NoSuchUserException, AuthStorageException;
 
 	// assumes token is unique
 	void storeIdentitiesTemporarily(
-			TemporaryHashedToken hashedToken,
+			TemporaryHashedToken token,
 			Set<RemoteIdentity> ids)
 			throws AuthStorageException;
 
+	Set<RemoteIdentity> getTemporaryIdentities(
+			IncomingHashedToken token)
+			throws AuthStorageException, NoSuchTokenException;
 }

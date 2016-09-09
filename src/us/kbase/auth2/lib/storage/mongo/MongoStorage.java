@@ -4,6 +4,7 @@ package us.kbase.auth2.lib.storage.mongo;
 import java.util.Arrays;
 import java.util.Base64;
 import java.util.HashMap;
+import java.util.HashSet;
 import java.util.LinkedList;
 import java.util.List;
 import java.util.Map;
@@ -102,9 +103,9 @@ public class MongoStorage implements AuthStorage {
 		users.put(Arrays.asList(Fields.USER_NAME), IDX_UNIQ);
 		//find user by provider and ensure providers are 1:1 with users
 		users.put(Arrays.asList(
-				Fields.USER_ID_PROVIDERS + Fields.FIELD_SEP +
+				Fields.USER_IDENTITIES + Fields.FIELD_SEP +
 					Fields.PROVIDER_FULL_NAME,
-				Fields.USER_ID_PROVIDERS + Fields.FIELD_SEP +
+				Fields.USER_IDENTITIES + Fields.FIELD_SEP +
 					Fields.PROVIDER_USER_ID),
 				IDX_UNIQ_SPARSE);
 		INDEXES.put(COL_USERS, users);
@@ -220,7 +221,7 @@ public class MongoStorage implements AuthStorage {
 	}
 	
 	@Override
-	public void createLocalAccount(final LocalUser local)
+	public void createLocalUser(final LocalUser local)
 			throws UserExistsException, AuthStorageException {
 		final String pwdhsh = Base64.getEncoder().encodeToString(
 				local.getPasswordHash());
@@ -240,7 +241,6 @@ public class MongoStorage implements AuthStorage {
 			db.getCollection(COL_USERS).insertOne(u);
 		} catch (MongoWriteException mwe) {
 			if (isDuplicateKeyException(mwe)) {
-				System.out.println(mwe);
 				throw new UserExistsException(local.getUserName().getName());
 			} else {
 				throw new AuthStorageException("Database write failed", mwe);
@@ -268,12 +268,48 @@ public class MongoStorage implements AuthStorage {
 				new UserName(user.getString(Fields.USER_NAME)),
 				user.getString(Fields.USER_EMAIL),
 				user.getString(Fields.USER_FULL_NAME),
-				roles,
-				croles,
+				new HashSet<>(roles),
+				new HashSet<>(croles),
 				Base64.getDecoder().decode(
 						user.getString(Fields.USER_PWD_HSH)),
 				Base64.getDecoder().decode(user.getString(Fields.USER_SALT)),
 				user.getBoolean(Fields.USER_RESET_PWD));
+	}
+	
+	@Override
+	public void createUser(final AuthUser user)
+			throws UserExistsException, AuthStorageException {
+		if (user.isLocal()) {
+			throw new IllegalArgumentException("cannot create a local user");
+		}
+		if (user.getIdentities().size() > 1) {
+			throw new IllegalArgumentException(
+					"user can only have one identity");
+		}
+		final RemoteIdentity ri = user.getIdentities().iterator().next();
+		final Document id = identityToDocument(ri);
+				
+		final Document u = new Document(
+				Fields.USER_NAME, user.getUserName().getName())
+				.append(Fields.USER_LOCAL, false)
+				.append(Fields.USER_EMAIL, user.getEmail())
+				.append(Fields.USER_FULL_NAME, user.getFullName())
+				.append(Fields.USER_ROLES, new LinkedList<String>())
+				.append(Fields.USER_CUSTOM_ROLES, new LinkedList<String>())
+				.append(Fields.USER_IDENTITIES, Arrays.asList(id));
+		try {
+			db.getCollection(COL_USERS).insertOne(u);
+		} catch (MongoWriteException mwe) {
+			if (isDuplicateKeyException(mwe)) {
+				//TODO NOW handle case where duplicate is a remote id, not the username
+				throw new UserExistsException(user.getUserName().getName());
+			} else {
+				throw new AuthStorageException("Database write failed", mwe);
+			}
+		} catch (MongoException me) {
+			throw new AuthStorageException(
+					"Connection to database failed", me);
+		}
 	}
 
 	private Document getUserDoc(final UserName userName, final boolean local)
@@ -365,12 +401,12 @@ public class MongoStorage implements AuthStorage {
 	}
 
 	@Override
-	public List<HashedToken> getTokens(final UserName userName)
+	public Set<HashedToken> getTokens(final UserName userName)
 			throws AuthStorageException {
 		if (userName == null) {
 			throw new NullPointerException("userName");
 		}
-		final List<HashedToken> ret = new LinkedList<>();
+		final Set<HashedToken> ret = new HashSet<>();
 		try {
 			final FindIterable<Document> ts = db.getCollection(COL_TOKEN).find(
 					new Document(Fields.TOKEN_USER_NAME, userName.getName()));
@@ -395,13 +431,16 @@ public class MongoStorage implements AuthStorage {
 		@SuppressWarnings("unchecked")
 		final List<String> croles = (List<String>) user.get(
 				Fields.USER_CUSTOM_ROLES);
+		@SuppressWarnings("unchecked")
+		final List<Document> ids = (List<Document>)
+				user.get(Fields.USER_IDENTITIES);
 		return new AuthUser(
 				new UserName(user.getString(Fields.USER_NAME)),
 				user.getString(Fields.USER_EMAIL),
 				user.getString(Fields.USER_FULL_NAME),
-				user.getBoolean(Fields.USER_LOCAL),
-				roles,
-				croles);
+				makeIdentities(ids),
+				new HashSet<>(roles),
+				new HashSet<>(croles));
 	}
 
 	@Override
@@ -436,16 +475,16 @@ public class MongoStorage implements AuthStorage {
 	}
 
 	@Override
-	public void setRoles(final UserName userName, final List<Role> roles)
+	public void setRoles(final UserName userName, final Set<Role> roles)
 			throws AuthStorageException, NoSuchUserException {
-		final List<String> strrl = roles.stream().map(r -> r.getRole())
-				.collect(Collectors.toList());
+		final Set<String> strrl = roles.stream().map(r -> r.getRole())
+				.collect(Collectors.toSet());
 		setRoles(userName, strrl, Fields.USER_ROLES);
 	}
 
 	private void setRoles(
 			final UserName userName,
-			final List<String> roles,
+			final Set<String> roles,
 			final String field)
 			throws NoSuchUserException, AuthStorageException {
 		try {
@@ -478,16 +517,16 @@ public class MongoStorage implements AuthStorage {
 	}
 	
 	@Override
-	public List<CustomRole> getCustomRoles() throws AuthStorageException {
+	public Set<CustomRole> getCustomRoles() throws AuthStorageException {
 		return getCustomRoles(new Document());
 	}
 
-	private List<CustomRole> getCustomRoles(final Document query)
+	private Set<CustomRole> getCustomRoles(final Document query)
 			throws AuthStorageException {
 		try {
 			final FindIterable<Document> roles =
 					db.getCollection(COL_CUST_ROLES).find(query);
-			final List<CustomRole> ret = new LinkedList<>();
+			final Set<CustomRole> ret = new HashSet<>();
 			for (final Document d: roles) {
 				ret.add(new CustomRole(
 						UUID.fromString(d.getString(Fields.ROLES_ID)),
@@ -504,7 +543,7 @@ public class MongoStorage implements AuthStorage {
 	}
 
 	@Override
-	public List<CustomRole> getCustomRoles(final List<UUID> roleIds)
+	public Set<CustomRole> getCustomRoles(final Set<UUID> roleIds)
 			throws AuthStorageException {
 		return getCustomRoles(new Document(Fields.ROLES_ID,
 				new Document("$in", roleIds.stream().map(i -> i.toString())
@@ -514,7 +553,7 @@ public class MongoStorage implements AuthStorage {
 	@Override
 	public void setCustomRoles(
 			final UserName userName,
-			final List<String> roles)
+			final Set<String> roles)
 			throws NoSuchUserException, AuthStorageException {
 		setRoles(userName, roles, Fields.USER_CUSTOM_ROLES);
 		
@@ -541,17 +580,7 @@ public class MongoStorage implements AuthStorage {
 			throws AuthStorageException {
 		final List<Document> ids = new LinkedList<>();
 		for (final RemoteIdentity id: identitySet) {
-			ids.add(new Document(
-					Fields.TEMP_TOKEN_IDENTITIES_PROVIDER, id.getProvider())
-					.append(Fields.TEMP_TOKEN_IDENTITIES_ID, id.getId())
-					.append(Fields.TEMP_TOKEN_IDENTITIES_PRIME,
-							id.isPrimary())
-					.append(Fields.TEMP_TOKEN_IDENTITIES_USER,
-							id.getUsername())
-					.append(Fields.TEMP_TOKEN_IDENTITIES_NAME,
-							id.getFullname())
-					.append(Fields.TEMP_TOKEN_IDENTITIES_EMAIL,
-							id.getEmail()));
+			ids.add(identityToDocument(id));
 		}
 		
 		final Document td = new Document(
@@ -571,5 +600,53 @@ public class MongoStorage implements AuthStorage {
 					"Connection to database failed", me);
 		}
 		
+	}
+
+	private Document identityToDocument(final RemoteIdentity id) {
+		return new Document(
+				Fields.IDENTITIES_PROVIDER, id.getProvider())
+				.append(Fields.IDENTITIES_ID, id.getId())
+				.append(Fields.IDENTITIES_PRIME, id.isPrimary())
+				.append(Fields.IDENTITIES_USER, id.getUsername())
+				.append(Fields.IDENTITIES_NAME, id.getFullname())
+				.append(Fields.IDENTITIES_EMAIL, id.getEmail());
+	}
+	
+	@Override
+	public Set<RemoteIdentity> getTemporaryIdentities(
+			final IncomingHashedToken token)
+			throws AuthStorageException, NoSuchTokenException {
+		final Document d = findOne(COL_TEMP_TOKEN,
+				new Document(Fields.TEMP_TOKEN_TOKEN, token.getTokenHash()));
+		if (d == null) {
+			throw new NoSuchTokenException("Token not found");
+		}
+		@SuppressWarnings("unchecked")
+		final List<Document> ids =
+				(List<Document>) d.get(Fields.TEMP_TOKEN_IDENTITIES);
+		if (ids == null || ids.isEmpty()) {
+			final String tid = d.getString(Fields.TEMP_TOKEN_ID);
+			throw new AuthStorageException(String.format(
+					"Temporary token %s has no associated IDs", tid));
+		}
+		final Set<RemoteIdentity> ret = makeIdentities(ids);
+		return ret;
+	}
+
+	private Set<RemoteIdentity> makeIdentities(final List<Document> ids) {
+		final Set<RemoteIdentity> ret = new HashSet<>();
+		if (ids == null) {
+			return ret;
+		}
+		for (final Document i: ids) {
+			ret.add(new RemoteIdentity(
+					i.getString(Fields.IDENTITIES_PROVIDER),
+					i.getString(Fields.IDENTITIES_ID),
+					i.getString(Fields.IDENTITIES_USER),
+					i.getString(Fields.IDENTITIES_NAME),
+					i.getString(Fields.IDENTITIES_EMAIL),
+					i.getBoolean(Fields.IDENTITIES_PRIME)));
+		}
+		return ret;
 	}
 }

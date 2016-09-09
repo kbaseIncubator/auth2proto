@@ -1,9 +1,11 @@
 package us.kbase.auth2.service.api;
 
 import java.util.HashMap;
+import java.util.HashSet;
 import java.util.LinkedList;
 import java.util.List;
 import java.util.Map;
+import java.util.Set;
 import java.util.UUID;
 
 import javax.inject.Inject;
@@ -101,7 +103,7 @@ public class Admin {
 		final IncomingToken adminToken = new IncomingToken("fake");
 		final AuthUser au = auth.getUserAsAdmin(
 				adminToken, new UserName(user));
-		final List<CustomRole> roles = auth.getCustomRoles(adminToken);
+		final Set<CustomRole> roles = auth.getCustomRoles(adminToken);
 		final Map<String, Object> ret = new HashMap<>();
 		ret.put("custom", setUpCustomRoles(roles, au.getCustomRoles()));
 		ret.put("roleurl", "/admin/user/" + user + "/roles");
@@ -109,7 +111,7 @@ public class Admin {
 		ret.put("full", au.getFullName());
 		ret.put("email", au.getEmail());
 		ret.put("local", au.isLocal());
-		final List<Role> r = au.getRoles();
+		final Set<Role> r = au.getRoles();
 		//TODO ADMIN only show admin button if root user
 		//TODO ADMIN only allow changing admin status if root user
 		ret.put("admin", Role.hasRole(r, Role.ADMIN));
@@ -121,14 +123,14 @@ public class Admin {
 	// might make more sense to have separate create and edit methods for roles
 
 	private List<Map<String, Object>> setUpCustomRoles(
-			final List<CustomRole> roles, final List<String> hasRoles) {
+			final Set<CustomRole> roles, final Set<String> set) {
 		final List<Map<String, Object>> ret = new LinkedList<>();
 		for (final CustomRole r: roles) {
 			ret.add(ImmutableMap.of(
 					"name", r.getName(),
 					"desc", r.getDesc(),
 					"id", r.getId(),
-					"has", hasRoles.contains(r.getName())));
+					"has", set.contains(r.getName())));
 		}
 		return ret;
 	}
@@ -141,7 +143,7 @@ public class Admin {
 			final MultivaluedMap<String, String> form)
 			throws NoSuchUserException, AuthStorageException {
 		//TODO ADMIN get adminname from token & check
-		final List<Role> roles = new LinkedList<>();
+		final Set<Role> roles = new HashSet<>();
 		addRoleFromForm(form, roles, "admin", Role.ADMIN);
 		addRoleFromForm(form, roles, "dev", Role.DEV_TOKEN);
 		addRoleFromForm(form, roles, "serv", Role.SERV_TOKEN);
@@ -152,8 +154,8 @@ public class Admin {
 		
 	}
 
-	private List<UUID> getRoleIds(final MultivaluedMap<String, String> form) {
-		final List<UUID> ret = new LinkedList<>();
+	private Set<UUID> getRoleIds(final MultivaluedMap<String, String> form) {
+		final Set<UUID> ret = new HashSet<>();
 		for (final String s: form.keySet()) {
 			if (form.get(s) != null) {
 				try {
@@ -168,7 +170,7 @@ public class Admin {
 
 	private void addRoleFromForm(
 			final MultivaluedMap<String, String> form,
-			final List<Role> roles,
+			final Set<Role> roles,
 			final String rstr,
 			final Role role) {
 		if (form.get(rstr) != null) {
@@ -181,7 +183,7 @@ public class Admin {
 	@Template(name = "/admincustomroles")
 	public Map<String, Object> customRoles() throws AuthStorageException {
 		//TODO ADMIN check is admin
-		final List<CustomRole> roles = auth.getCustomRoles(
+		final Set<CustomRole> roles = auth.getCustomRoles(
 				new IncomingToken("fake"));
 		return ImmutableMap.of("custroleurl", "/admin/customroles/set",
 				"roles", roles);

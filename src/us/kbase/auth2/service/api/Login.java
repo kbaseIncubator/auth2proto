@@ -13,7 +13,9 @@ import java.util.Map;
 
 import javax.inject.Inject;
 import javax.ws.rs.CookieParam;
+import javax.ws.rs.FormParam;
 import javax.ws.rs.GET;
+import javax.ws.rs.POST;
 import javax.ws.rs.Path;
 import javax.ws.rs.PathParam;
 import javax.ws.rs.QueryParam;
@@ -24,23 +26,31 @@ import javax.ws.rs.core.NewCookie;
 import javax.ws.rs.core.Response;
 import javax.ws.rs.core.UriInfo;
 
+import org.glassfish.jersey.server.mvc.Template;
 import org.glassfish.jersey.server.mvc.Viewable;
 
 import us.kbase.auth2.lib.Authentication;
+import us.kbase.auth2.lib.LoginIdentities;
 import us.kbase.auth2.lib.LoginToken;
+import us.kbase.auth2.lib.UserName;
 import us.kbase.auth2.lib.exceptions.AuthenticationException;
 import us.kbase.auth2.lib.exceptions.ErrorType;
+import us.kbase.auth2.lib.exceptions.InvalidTokenException;
 import us.kbase.auth2.lib.exceptions.MissingParameterException;
 import us.kbase.auth2.lib.exceptions.NoSuchIdentityProviderException;
 import us.kbase.auth2.lib.exceptions.NoTokenProvidedException;
+import us.kbase.auth2.lib.exceptions.UserExistsException;
 import us.kbase.auth2.lib.identity.IdentityProvider;
 import us.kbase.auth2.lib.storage.exceptions.AuthStorageException;
+import us.kbase.auth2.lib.token.IncomingToken;
+import us.kbase.auth2.lib.token.NewToken;
 
 @Path("/login")
 public class Login {
 
 	//TODO TEST
 	//TODO JAVADOC
+	//TODO NOW test entire api with nginx path changes (e.g. location /foo/bar mapped to / of this server
 	
 	@Inject
 	private Authentication auth;
@@ -57,7 +67,8 @@ public class Login {
 			final String state = auth.getBareToken();
 			final URI target = toURI(idp.getLoginURL(state));
 			return Response.temporaryRedirect(target).cookie(new NewCookie(
-					new Cookie("statevar", state),
+					//TODO TEST path works with nginx path rewriting
+					new Cookie("statevar", state, "/login/complete", null),
 							"loginstate", 30 * 60, false)).build();
 			//TODO NOW make secure cookie configurable
 		} else {
@@ -115,7 +126,8 @@ public class Login {
 					new NewCookie(new Cookie(
 									"in-process-login-token",
 									lr.getTemporaryToken().getToken(),
-									"..", null),
+									//TODO TEST cookies work with nginx path rewriting
+									"/login", null),
 							//TODO CONFIG make secure cookie configurable
 							"authtoken", NewCookie.DEFAULT_MAX_AGE, false))
 					.build();
@@ -126,16 +138,80 @@ public class Login {
 	
 	@GET
 	@Path("/complete")
-	public Response loginComplete(
-			@CookieParam("in-process-login-token") final String token)
-			throws NoTokenProvidedException {
+	@Template(name = "/loginchoice")
+	public Map<String, Object> loginComplete(
+			@CookieParam("in-process-login-token") final String token,
+			@Context final UriInfo uriInfo)
+			throws NoTokenProvidedException, AuthStorageException,
+			InvalidTokenException {
 		if (token == null || token.trim().isEmpty()) {
 			throw new NoTokenProvidedException(
 					"Missing in-process-login-token");
 		}
+		final LoginIdentities ids = auth.getLoginState(
+				new IncomingToken(token.trim()));
 		
-		//TODO NOW fetch ids from DB, show page for login/signup.
-		return Response.ok().build();
+		final Map<String, Object> ret = new HashMap<>();
+		if (ids.getPrimaryUser() == null) {
+			ret.put("create", true);
+			ret.put("provider", ids.getPrimary().getProvider());
+			ret.put("id", ids.getPrimary().getId());
+			//TODO NOW get safe username from db
+			ret.put("usernamesugg", ids.getPrimary().getUsername()
+					.split("@")[0]);
+			ret.put("username", ids.getPrimary().getUsername());
+			ret.put("fullname", ids.getPrimary().getFullname());
+			ret.put("email", ids.getPrimary().getEmail());
+			final String createurl;
+			if (uriInfo.getAbsolutePath().toString().endsWith("/")) {
+				createurl = "../create";
+			} else {
+				createurl = "./create";
+			}
+			ret.put("createurl", createurl);
+			//TODO NOW handle secondaries
+			
+		} else {
+			//TODO NOW handle secondaries
+			//TODO NOW handle primary with authuser
+		}
+		
+		return ret;
+	}
+	
+	@POST
+	@Path("/create")
+	public Response createUser(
+			@CookieParam("in-process-login-token") final String token,
+			@FormParam("provider") final String provider,
+			@FormParam("id") final String remoteID,
+			@FormParam("user") final String userName,
+			@FormParam("full") final String fullName,
+			@FormParam("email") final String email,
+			@FormParam("stayLoggedIn") final String stayLoggedIn,
+			@FormParam("private") final String nameAndEmailPrivate)
+			throws AuthenticationException, AuthStorageException,
+				UserExistsException, NoTokenProvidedException {
+		if (token == null || token.trim().isEmpty()) {
+			throw new NoTokenProvidedException(
+					"Missing in-process-login-token");
+		}
+		//TODO NOW sanity check inputs
+		final boolean sessionLogin = stayLoggedIn == null ||
+				stayLoggedIn.isEmpty();
+		final boolean priv = nameAndEmailPrivate != null &&
+				nameAndEmailPrivate.isEmpty();
+		
+		
+		// might want to enapsulate the user data in a NewUser class
+		final NewToken newtoken = auth.createUser(new IncomingToken(token),
+				provider, remoteID, new UserName(userName), fullName, email,
+				sessionLogin, priv);
+		//TODO NOW use provided redirect, default to user profile
+		//TODO NOW why the hell is this POSTing?
+		return Response.temporaryRedirect(toURI("/tokens"))
+		//TODO NOW can't set keep me logged in here, so set in profile
+				.cookie(getCookie(newtoken, true)).build();
 	}
 	
 	// assumes non-null, len > 0

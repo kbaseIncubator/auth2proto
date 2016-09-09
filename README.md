@@ -21,7 +21,7 @@ ant buildwar
 copy deploy.cfg.example to deploy.cfg and fill in appropriately  
 `export KB_DEPLOYMENT_CONFIG=<path to deploy.cfg>`  
 cd jettybase  
-./jettybase$ java -jar -Djetty.port=<port> <path to jetty install>/start.jar  
+`./jettybase$ java -jar -Djetty.port=<port> <path to jetty install>/start.jar`  
 
 Start & stop server w/o a pid
 -----------------------------

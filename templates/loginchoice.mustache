@@ -1,0 +1,24 @@
+<html>
+<body>
+
+{{#create}}
+<p>Create a KBase account linked to:<br/>
+Provider: {{provider}}<br/>
+User: {{username}}
+</p>
+<form action="{{createurl}}" method="post">
+	User name: <input type="text" name="user" value="{{usernamesugg}}"/><br/>
+	Full name: <input type="text" name="full" value="{{fullname}}"/><br/>
+	Email: <input type="text" name="email" value="{{email}}"/></br/>
+	Don't expire my sessions when I close my browser: <input type="checkbox" name="stayLoggedIn"/></br/>
+	Keep name and email private: <input type="checkbox" name="private"/></br/>
+	<input type="hidden" name="id" value="{{id}}"/>
+	<input type="hidden" name="provider" value="{{provider}}"/>
+	<input type="submit" value="Create"/>
+</form>
+{{/create}}
+
+
+
+</html>
+</body>
