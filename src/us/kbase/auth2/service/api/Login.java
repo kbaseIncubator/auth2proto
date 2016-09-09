@@ -66,7 +66,7 @@ public class Login {
 					provider);
 			final String state = auth.getBareToken();
 			final URI target = toURI(idp.getLoginURL(state));
-			return Response.temporaryRedirect(target).cookie(new NewCookie(
+			return Response.seeOther(target).cookie(new NewCookie(
 					//TODO TEST path works with nginx path rewriting
 					new Cookie("statevar", state, "/login/complete", null),
 							"loginstate", 30 * 60, false)).build();
@@ -118,11 +118,11 @@ public class Login {
 		// redirects are ok
 		if (lr.isLoggedIn()) {
 			//TODO NOW use provided redirect, default to user profile
-			r = Response.temporaryRedirect(toURI("/tokens"))
+			r = Response.seeOther(toURI("/tokens"))
 			//TODO NOW can't set keep me logged in here, so set in profile
 					.cookie(getCookie(lr.getToken(), true)).build();
 		} else {
-			r = Response.temporaryRedirect(toURI("/login/complete")).cookie(
+			r = Response.seeOther(toURI("/login/complete")).cookie(
 					new NewCookie(new Cookie(
 									"in-process-login-token",
 									lr.getTemporaryToken().getToken(),
@@ -209,7 +209,7 @@ public class Login {
 				sessionLogin, priv);
 		//TODO NOW use provided redirect, default to user profile
 		//TODO NOW why the hell is this POSTing?
-		return Response.temporaryRedirect(toURI("/tokens"))
+		return Response.seeOther(toURI("/tokens"))
 		//TODO NOW can't set keep me logged in here, so set in profile
 				.cookie(getCookie(newtoken, true)).build();
 	}
