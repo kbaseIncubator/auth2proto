@@ -27,7 +27,7 @@ import javax.ws.rs.core.UriInfo;
 import org.glassfish.jersey.server.mvc.Viewable;
 
 import us.kbase.auth2.lib.Authentication;
-import us.kbase.auth2.lib.LoginResult;
+import us.kbase.auth2.lib.LoginToken;
 import us.kbase.auth2.lib.exceptions.AuthenticationException;
 import us.kbase.auth2.lib.exceptions.ErrorType;
 import us.kbase.auth2.lib.exceptions.MissingParameterException;
@@ -100,7 +100,7 @@ public class Login {
 			throw new AuthenticationException(ErrorType.AUTHENTICATION_FAILED,
 					"State values do not match, this may be a CXRF attack");
 		}
-		final LoginResult lr = auth.login(provider, authcode);
+		final LoginToken lr = auth.login(provider, authcode);
 		final Response r;
 		// always redirect so the authcode doesn't remain in the title bar
 		// note nginx will rewrite the redirect appropriately so absolute
@@ -133,7 +133,7 @@ public class Login {
 			throw new NoTokenProvidedException(
 					"Missing in-process-login-token");
 		}
-		System.out.println(token);
+		
 		//TODO NOW fetch ids from DB, show page for login/signup.
 		return Response.ok().build();
 	}

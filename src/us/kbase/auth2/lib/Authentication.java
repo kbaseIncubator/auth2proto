@@ -326,7 +326,7 @@ public class Authentication {
 	}
 
 
-	public LoginResult login(final String provider, final String authcode)
+	public LoginToken login(final String provider, final String authcode)
 			throws NoSuchProviderException, MissingParameterException,
 			IdentityRetrievalException, AuthStorageException {
 		final IdentityProvider idp = idprov.get(provider);
@@ -340,7 +340,7 @@ public class Authentication {
 		final AuthUser primary = storage.getUser(ids.getPrimary());
 		final Set<RemoteIdentity> filteredIDs = ids.getSecondaries().stream()
 				.filter(id -> storage.hasUser(id)).collect(Collectors.toSet());
-		final LoginResult lr;
+		final LoginToken lr;
 		if (primary == null || !filteredIDs.isEmpty()) {
 			final int expmin = primary == null ? 30 : 10;
 			final TemporaryToken tt = new TemporaryToken(tokens.getToken(),
@@ -348,7 +348,7 @@ public class Authentication {
 			filteredIDs.add(ids.getPrimary());
 			storage.storeIdentitiesTemporarily(
 					tt.getHashedToken(), filteredIDs);
-			lr = new LoginResult(tt);
+			lr = new LoginToken(tt);
 		} else {
 			//TODO NOW if reset required, make reset token
 			final NewToken t = new NewToken(tokens.getToken(),
@@ -356,7 +356,7 @@ public class Authentication {
 					//TODO CONFIG make token lifetime configurable
 					new Date(new Date().getTime() + (14 * 24 * 60 * 60 * 1000)));
 			storage.storeToken(t.getHashedToken());
-			lr = new LoginResult(t);
+			lr = new LoginToken(t);
 		}
 		return lr;
 		//TODO NOW find ids in database
