@@ -3,14 +3,14 @@ package us.kbase.auth2.lib;
 import us.kbase.auth2.lib.token.NewToken;
 import us.kbase.auth2.lib.token.TemporaryToken;
 
-public class LoginResult {
+public class LoginToken {
 
 	//TODO TEST
 	//TODO JAVADOC
 	private final NewToken token;
 	private final TemporaryToken temporaryToken;
 	
-	public LoginResult(final TemporaryToken token) {
+	public LoginToken(final TemporaryToken token) {
 		if (token == null) {
 			throw new NullPointerException("token");
 		}
@@ -18,7 +18,7 @@ public class LoginResult {
 		this.token = null;
 	}
 	
-	public LoginResult(final NewToken token) {
+	public LoginToken(final NewToken token) {
 		if (token == null) {
 			throw new NullPointerException("token");
 		}

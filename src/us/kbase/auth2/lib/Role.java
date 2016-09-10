@@ -51,7 +51,7 @@ public enum Role {
 	}
 	
 	public static boolean hasRole(
-			final List<Role> possesed,
+			final Set<Role> possesed,
 			final Role required) {
 		final Set<Role> granted = possesed.stream()
 				.flatMap(r -> grantedRoles(r).stream())

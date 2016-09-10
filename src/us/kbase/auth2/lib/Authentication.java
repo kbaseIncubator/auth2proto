@@ -4,8 +4,11 @@ import static us.kbase.auth2.lib.Utils.checkString;
 
 import java.security.NoSuchAlgorithmException;
 import java.security.NoSuchProviderException;
+import java.util.Arrays;
 import java.util.Collections;
 import java.util.Date;
+import java.util.HashMap;
+import java.util.HashSet;
 import java.util.LinkedList;
 import java.util.List;
 import java.util.Map;
@@ -106,10 +109,10 @@ public class Authentication {
 		final byte[] salt = pwdcrypt.generateSalt();
 		final byte[] passwordHash = pwdcrypt.getEncryptedPassword(
 				pwd.getPassword(), salt);
-		final LocalUser lu = new LocalUser(userName, email, fullName,
-				passwordHash, salt, true);
+		final LocalUser lu = new LocalUser(userName, email, fullName, null,
+				null, passwordHash, salt, true);
 		//TODO NOW store creation date
-		storage.createLocalAccount(lu);
+		storage.createLocalUser(lu);
 		return pwd;
 	}
 	
@@ -264,7 +267,7 @@ public class Authentication {
 	public void updateRoles(
 			final IncomingToken adminToken,
 			final UserName userName,
-			final List<Role> roles)
+			final Set<Role> roles)
 			throws NoSuchUserException, AuthStorageException {
 		//TODO ADMIN check user is admin
 		for (final Role r: roles) {
@@ -288,7 +291,7 @@ public class Authentication {
 				UUID.randomUUID(), name, description));
 	}
 
-	public List<CustomRole> getCustomRoles(final IncomingToken incomingToken)
+	public Set<CustomRole> getCustomRoles(final IncomingToken incomingToken)
 			throws AuthStorageException {
 		//TODO ADMIN check user is admin
 		return storage.getCustomRoles();
@@ -297,12 +300,12 @@ public class Authentication {
 	public void updateCustomRoles(
 			final IncomingToken adminToken,
 			final UserName userName,
-			final List<UUID> roleIds)
+			final Set<UUID> roleIds)
 			throws AuthStorageException, NoSuchUserException {
 		//TODO ADMIN check user is admin
-		final List<CustomRole> roles = storage.getCustomRoles(roleIds);
-		final List<String> rstr = roles.stream().map(r -> r.getName())
-				.collect(Collectors.toList());
+		final Set<CustomRole> roles = storage.getCustomRoles(roleIds);
+		final Set<String> rstr = roles.stream().map(r -> r.getName())
+				.collect(Collectors.toSet());
 		storage.setCustomRoles(userName, rstr);
 	}
 
@@ -325,8 +328,11 @@ public class Authentication {
 		return idprov.get(provider);
 	}
 
-
-	public LoginResult login(final String provider, final String authcode)
+	// split from getloginstate since the user may need to make a choice
+	// we assume that this is via a html page and therefore a redirect should
+	// occur before said choice to hide the authcode, hence the temporary
+	// token instead of returning the choices directly
+	public LoginToken login(final String provider, final String authcode)
 			throws NoSuchProviderException, MissingParameterException,
 			IdentityRetrievalException, AuthStorageException {
 		final IdentityProvider idp = idprov.get(provider);
@@ -340,7 +346,7 @@ public class Authentication {
 		final AuthUser primary = storage.getUser(ids.getPrimary());
 		final Set<RemoteIdentity> filteredIDs = ids.getSecondaries().stream()
 				.filter(id -> storage.hasUser(id)).collect(Collectors.toSet());
-		final LoginResult lr;
+		final LoginToken lr;
 		if (primary == null || !filteredIDs.isEmpty()) {
 			final int expmin = primary == null ? 30 : 10;
 			final TemporaryToken tt = new TemporaryToken(tokens.getToken(),
@@ -348,7 +354,7 @@ public class Authentication {
 			filteredIDs.add(ids.getPrimary());
 			storage.storeIdentitiesTemporarily(
 					tt.getHashedToken(), filteredIDs);
-			lr = new LoginResult(tt);
+			lr = new LoginToken(tt);
 		} else {
 			//TODO NOW if reset required, make reset token
 			final NewToken t = new NewToken(tokens.getToken(),
@@ -356,12 +362,105 @@ public class Authentication {
 					//TODO CONFIG make token lifetime configurable
 					new Date(new Date().getTime() + (14 * 24 * 60 * 60 * 1000)));
 			storage.storeToken(t.getHashedToken());
-			lr = new LoginResult(t);
+			lr = new LoginToken(t);
 		}
 		return lr;
-		//TODO NOW find ids in database
-		//TODO NOW if primary id exists & no secondaries, login and provide token
-		//TODO NOW otherwise, provide choice to create kbase id for primary if not already, and provide choices to login as secondaries
-		//TODO NOW store ids & provide temp token if a choice must be made by the user
+		//TODO NOW provide choice to create kbase id for primary if not already, and provide choices to login as secondaries
+	}
+
+
+	public LoginIdentities getLoginState(final IncomingToken token)
+			throws AuthStorageException, InvalidTokenException {
+		if (token == null) {
+			throw new NullPointerException("token");
+		}
+		final Set<RemoteIdentity> ids = getTemporaryIdentities(token);
+		RemoteIdentity primary = null;
+		String provider = null;
+		for (final RemoteIdentity ri: ids) {
+			if (provider == null) {
+				provider = ri.getProvider();
+			} else if (!provider.equals(ri.getProvider())) {
+				throw new AuthStorageException("More than one identity " +
+						"provider associated with this token");
+			}
+			if (ri.isPrimary()) {
+				if (primary != null) {
+					throw new AuthStorageException("More than one primary " +
+							"identity associated with this token");
+				}
+				primary = ri;
+			}
+		}
+		if (primary == null) {
+			throw new AuthStorageException(
+					"No primary identity associated with this token");
+		}
+		ids.remove(primary);
+		final AuthUser pu = storage.getUser(primary);
+		final Map<RemoteIdentity, AuthUser> secs = processSecondaries(ids);
+		return new LoginIdentities(primary, pu, secs);
+	}
+
+
+	private Set<RemoteIdentity> getTemporaryIdentities(
+			final IncomingToken token)
+			throws AuthStorageException, InvalidTokenException {
+		final Set<RemoteIdentity> ids;
+		try {
+			ids = storage.getTemporaryIdentities(
+					token.getHashedToken());
+		} catch (NoSuchTokenException e) {
+			throw new InvalidTokenException();
+		}
+		return ids;
+	}
+
+
+	private Map<RemoteIdentity, AuthUser> processSecondaries(
+			final Set<RemoteIdentity> ids)
+			throws AuthStorageException {
+		final Map<RemoteIdentity, AuthUser> ret = new HashMap<>();
+		for (final RemoteIdentity ri: ids) {
+			final AuthUser u = storage.getUser(ri);
+			if (u != null && !ret.containsValue(u)) {
+				ret.put(ri, u);
+			}
+		}
+		return ret;
+	}
+
+	public NewToken createUser(
+			final IncomingToken token,
+			final String provider,
+			final String remoteID,
+			final UserName userName,
+			final String fullName,
+			final String email,
+			final boolean sessionLogin,
+			final boolean privateNameEmail)
+			throws AuthStorageException, AuthenticationException,
+				UserExistsException {
+		//TODO NOW handle sessionLogin, privateNameEmail
+		
+		final Set<RemoteIdentity> ids = getTemporaryIdentities(token);
+		RemoteIdentity match = null;
+		for (final RemoteIdentity ri: ids) {
+			if (ri.getProvider().equals(provider) &&
+					ri.getId().equals(remoteID)) {
+				match = ri;
+			}
+		}
+		if (match == null) {
+			throw new AuthenticationException(ErrorType.AUTHENTICATION_FAILED,
+					"Not authorized to create account linked to provided identity");
+		}
+		storage.createUser(new AuthUser(userName, email, fullName,
+				new HashSet<>(Arrays.asList(match)), null, null));
+		final NewToken nt = new NewToken(tokens.getToken(), userName,
+				//TODO CONFIG make token lifetime configurable
+				new Date(14 * 24 * 60 * 60 * 1000));
+		storage.storeToken(nt.getHashedToken());
+		return nt;
 	}
 }

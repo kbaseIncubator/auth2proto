@@ -12,7 +12,7 @@ public class Fields {
 	public static final String USER_NAME = "user";
 	public static final String USER_FULL_NAME = "full";
 	public static final String USER_EMAIL = "email";
-	public static final String USER_ID_PROVIDERS = "idprov";
+	public static final String USER_IDENTITIES = "idents";
 	public static final String USER_LOCAL = "lcl";
 	public static final String USER_ROLES = "roles";
 	public static final String USER_CUSTOM_ROLES = "custrls";
@@ -42,12 +42,14 @@ public class Fields {
 	public static final String TEMP_TOKEN_ID = "id";
 	public static final String TEMP_TOKEN_CREATION = "create";
 	public static final String TEMP_TOKEN_IDENTITIES = "idents";
-	public static final String TEMP_TOKEN_IDENTITIES_PROVIDER = "prov";
-	public static final String TEMP_TOKEN_IDENTITIES_ID = "id";
-	public static final String TEMP_TOKEN_IDENTITIES_PRIME = "primary";
-	public static final String TEMP_TOKEN_IDENTITIES_USER = "uid";
-	public static final String TEMP_TOKEN_IDENTITIES_NAME = "fullname";
-	public static final String TEMP_TOKEN_IDENTITIES_EMAIL = "email";
+	
+	//identities fields
+	public static final String IDENTITIES_PROVIDER = "prov";
+	public static final String IDENTITIES_ID = "id";
+	public static final String IDENTITIES_PRIME = "primary";
+	public static final String IDENTITIES_USER = "uid";
+	public static final String IDENTITIES_NAME = "fullname";
+	public static final String IDENTITIES_EMAIL = "email";
 	
 	//Custom roles fields
 	public static final String ROLES_ID = "id";

@@ -1,58 +1,49 @@
 package us.kbase.auth2.lib;
 
 import java.util.Collections;
-import java.util.LinkedList;
-import java.util.List;
+import java.util.HashSet;
+import java.util.Set;
+
+import us.kbase.auth2.lib.identity.RemoteIdentity;
 
 public class AuthUser {
 
 	//TODO TEST unit test
 	//TODO JAVADOC
 	
+	//an local auth user can never have identities, a regular auth user must
+	// have at least one
 	private final String fullName;
 	private final String email;
 	private final UserName userName;
-	private final boolean isLocal;
-	private final List<Role> roles;
-	private final List<String> customRoles;
+	private final Set<Role> roles;
+	private final Set<String> customRoles;
+	private final Set<RemoteIdentity> identities;
 	
 	public AuthUser(
 			final UserName userName,
 			final String email,
 			final String fullName,
-			final boolean isLocal) {
+			Set<RemoteIdentity> identities,
+			Set<Role> roles,
+			Set<String> customRoles) {
 		super();
 		//TODO NOW check for nulls & empty strings - should email & fullName be allowed as empty strings?
 		this.fullName = fullName;
 		this.email = email;
 		this.userName = userName;
-		this.isLocal = isLocal;
-		this.roles = Collections.unmodifiableList(new LinkedList<Role>());
-		this.customRoles = Collections.unmodifiableList(
-				new LinkedList<String>());
-	}
-	
-	public AuthUser(
-			final UserName userName,
-			final String email,
-			final String fullName,
-			final boolean isLocal,
-			List<Role> roles,
-			List<String> customRoles) {
-		super();
-		//TODO NOW check for nulls & empty strings - should email & fullName be allowed as empty strings?
-		this.fullName = fullName;
-		this.email = email;
-		this.userName = userName;
-		this.isLocal = isLocal;
+		if (identities == null) {
+			identities = new HashSet<>();
+		}
+		this.identities = Collections.unmodifiableSet(identities);
 		if (roles == null) {
-			roles = new LinkedList<>();
+			roles = new HashSet<>();
 		}
-		this.roles = Collections.unmodifiableList(roles);
+		this.roles = Collections.unmodifiableSet(roles);
 		if (customRoles == null) {
-			customRoles = new LinkedList<>();
+			customRoles = new HashSet<>();
 		}
-		this.customRoles = Collections.unmodifiableList(customRoles);
+		this.customRoles = Collections.unmodifiableSet(customRoles);
 	}
 
 	public String getFullName() {
@@ -68,15 +59,19 @@ public class AuthUser {
 	}
 
 	public boolean isLocal() {
-		return isLocal;
+		return identities.isEmpty();
 	}
 
-	public List<Role> getRoles() {
+	public Set<Role> getRoles() {
 		return roles;
 	}
 
-	public List<String> getCustomRoles() {
+	public Set<String> getCustomRoles() {
 		return customRoles;
+	}
+	
+	public Set<RemoteIdentity> getIdentities() {
+		return identities;
 	}
 
 	@Override
@@ -86,7 +81,7 @@ public class AuthUser {
 		result = prime * result + ((customRoles == null) ? 0 : customRoles.hashCode());
 		result = prime * result + ((email == null) ? 0 : email.hashCode());
 		result = prime * result + ((fullName == null) ? 0 : fullName.hashCode());
-		result = prime * result + (isLocal ? 1231 : 1237);
+		result = prime * result + ((identities == null) ? 0 : identities.hashCode());
 		result = prime * result + ((roles == null) ? 0 : roles.hashCode());
 		result = prime * result + ((userName == null) ? 0 : userName.hashCode());
 		return result;
@@ -125,7 +120,11 @@ public class AuthUser {
 		} else if (!fullName.equals(other.fullName)) {
 			return false;
 		}
-		if (isLocal != other.isLocal) {
+		if (identities == null) {
+			if (other.identities != null) {
+				return false;
+			}
+		} else if (!identities.equals(other.identities)) {
 			return false;
 		}
 		if (roles == null) {

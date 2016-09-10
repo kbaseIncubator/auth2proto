@@ -1,23 +1,23 @@
 package us.kbase.auth2.lib.token;
 
 import java.util.Collections;
+import java.util.HashSet;
 import java.util.Iterator;
-import java.util.LinkedList;
-import java.util.List;
+import java.util.Set;
 
 
 public class TokenSet {
 
 	private final HashedToken currentToken;
-	private final List<HashedToken> tokens;
+	private final Set<HashedToken> tokens;
 	
 	public TokenSet(
 			final HashedToken current,
-			final List<HashedToken> tokens) {
+			final Set<HashedToken> tokens) {
 		if (current == null) {
 			throw new NullPointerException("current");
 		}
-		final List<HashedToken> nt = new LinkedList<>(tokens);
+		final Set<HashedToken> nt = new HashSet<>(tokens);
 		final Iterator<HashedToken> i = nt.iterator();
 		while (i.hasNext()) {
 			if (i.next().getId().equals(current.getId())) {
@@ -25,14 +25,14 @@ public class TokenSet {
 			}
 		}
 		this.currentToken = current;
-		this.tokens = Collections.unmodifiableList(nt);
+		this.tokens = Collections.unmodifiableSet(nt);
 	}
 
 	public HashedToken getCurrentToken() {
 		return currentToken;
 	}
 
-	public List<HashedToken> getTokens() {
+	public Set<HashedToken> getTokens() {
 		return tokens;
 	}
 }
