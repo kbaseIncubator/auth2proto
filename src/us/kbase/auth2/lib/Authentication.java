@@ -365,10 +365,7 @@ public class Authentication {
 			lr = new LoginToken(t);
 		}
 		return lr;
-		//TODO NOW find ids in database
-		//TODO NOW if primary id exists & no secondaries, login and provide token
-		//TODO NOW otherwise, provide choice to create kbase id for primary if not already, and provide choices to login as secondaries
-		//TODO NOW store ids & provide temp token if a choice must be made by the user
+		//TODO NOW provide choice to create kbase id for primary if not already, and provide choices to login as secondaries
 	}
 
 
@@ -421,7 +418,8 @@ public class Authentication {
 
 
 	private Map<RemoteIdentity, AuthUser> processSecondaries(
-			final Set<RemoteIdentity> ids) {
+			final Set<RemoteIdentity> ids)
+			throws AuthStorageException {
 		final Map<RemoteIdentity, AuthUser> ret = new HashMap<>();
 		for (final RemoteIdentity ri: ids) {
 			final AuthUser u = storage.getUser(ri);

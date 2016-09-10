@@ -129,6 +129,7 @@ public class Login {
 									//TODO TEST cookies work with nginx path rewriting
 									"/login", null),
 							//TODO CONFIG make secure cookie configurable
+							//TODO NOW set age to cookie age
 							"authtoken", NewCookie.DEFAULT_MAX_AGE, false))
 					.build();
 			//TODO NOW make image paths URIs
@@ -208,7 +209,6 @@ public class Login {
 				provider, remoteID, new UserName(userName), fullName, email,
 				sessionLogin, priv);
 		//TODO NOW use provided redirect, default to user profile
-		//TODO NOW why the hell is this POSTing?
 		return Response.seeOther(toURI("/tokens"))
 		//TODO NOW can't set keep me logged in here, so set in profile
 				.cookie(getCookie(newtoken, true)).build();

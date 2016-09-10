@@ -423,6 +423,10 @@ public class MongoStorage implements AuthStorage {
 	public AuthUser getUser(final UserName userName)
 			throws AuthStorageException, NoSuchUserException {
 		final Document user = getUserDoc(userName, false);
+		return toUser(user);
+	}
+
+	private AuthUser toUser(final Document user) {
 		@SuppressWarnings("unchecked")
 		final List<String> rolestr =
 				(List<String>) user.get(Fields.USER_ROLES);
@@ -438,7 +442,7 @@ public class MongoStorage implements AuthStorage {
 				new UserName(user.getString(Fields.USER_NAME)),
 				user.getString(Fields.USER_EMAIL),
 				user.getString(Fields.USER_FULL_NAME),
-				makeIdentities(ids),
+				toIdentities(ids),
 				new HashSet<>(roles),
 				new HashSet<>(croles));
 	}
@@ -560,10 +564,22 @@ public class MongoStorage implements AuthStorage {
 	}
 
 	@Override
-	public AuthUser getUser(final RemoteIdentity remoteID) {
-		// TODO Auto-generated method stub
+	public AuthUser getUser(final RemoteIdentity remoteID)
+			throws AuthStorageException {
+		final Document query = new Document(Fields.USER_IDENTITIES,
+				new Document("$elemMatch", new Document(
+						Fields.IDENTITIES_PROVIDER, remoteID.getProvider())
+						.append(Fields.IDENTITIES_ID, remoteID.getId())));
+		//note a user with identities should never have these fields, but
+		//doesn't hurt to be safe
+		final Document projection = new Document(Fields.USER_PWD_HSH, 0)
+				.append(Fields.USER_SALT, 0);
+		final Document u = findOne(COL_USERS, query, projection);
+		if (u == null) {
+			return null;
+		}
 		// TODO NOW update identity for user if name, email, uid are different
-		return null;
+		return toUser(u);
 	}
 	
 	@Override
@@ -629,11 +645,11 @@ public class MongoStorage implements AuthStorage {
 			throw new AuthStorageException(String.format(
 					"Temporary token %s has no associated IDs", tid));
 		}
-		final Set<RemoteIdentity> ret = makeIdentities(ids);
+		final Set<RemoteIdentity> ret = toIdentities(ids);
 		return ret;
 	}
 
-	private Set<RemoteIdentity> makeIdentities(final List<Document> ids) {
+	private Set<RemoteIdentity> toIdentities(final List<Document> ids) {
 		final Set<RemoteIdentity> ret = new HashSet<>();
 		if (ids == null) {
 			return ret;
