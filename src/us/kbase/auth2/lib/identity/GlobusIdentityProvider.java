@@ -187,7 +187,6 @@ public class GlobusIdentityProvider implements IdentityProvider {
 			final List<Map<String, String>> sids) {
 		final Set<RemoteIdentity> ret = new HashSet<>();
 		for (final Map<String, String> id: sids) {
-			//TODO NOW add equals and hashcode to remote identity
 			final String uid = (String) id.get("id");
 			final String username = (String) id.get("username");
 			final String name = (String) id.get("name");

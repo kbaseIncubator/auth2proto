@@ -61,7 +61,6 @@ public class Authentication {
 	//TODO USERPROFILE email & username change propagation
 	//TODO USERCONFIG set email & username privacy & respect
 	//TODO USERCONFIG set email & username
-	//TODO ADMIN option to allow all users to make dev token
 	//TODO NOW allow redirect url on login
 	
 	private final AuthStorage storage;
@@ -462,7 +461,7 @@ public class Authentication {
 				new HashSet<>(Arrays.asList(match)), null, null));
 		final NewToken nt = new NewToken(tokens.getToken(), userName,
 				//TODO CONFIG make token lifetime configurable
-				new Date(14 * 24 * 60 * 60 * 1000));
+				new Date(new Date().getTime() + (14 * 24 * 60 * 60 * 1000)));
 		storage.storeToken(nt.getHashedToken());
 		return nt;
 	}

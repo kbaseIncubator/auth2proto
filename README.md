@@ -3,6 +3,12 @@ useful code will be migrated (with unit tests & documentation) to kbase/auth2.
 
 Unit tests & documentation for code in this repo is not required.
 
+Admin notes
+-----------
+* It is expected that this server always runs behind a reverse proxy (such as
+  nginx) that enforces https / TLS and as such is configured to allow cookies
+  to be set over insecure connections.
+
 Requirements
 ------------
 MongoDB 2.4+ (https://www.mongodb.com/)  

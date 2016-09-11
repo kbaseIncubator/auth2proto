@@ -1,6 +1,7 @@
 package us.kbase.auth2.service.api;
 
-import static us.kbase.auth2.service.api.CookieUtils.getCookie;
+import static us.kbase.auth2.service.api.CookieUtils.getLoginCookie;
+import static us.kbase.auth2.service.api.CookieUtils.getMaxCookieAge;
 
 import java.net.URI;
 import java.net.URISyntaxException;
@@ -44,6 +45,7 @@ import us.kbase.auth2.lib.identity.IdentityProvider;
 import us.kbase.auth2.lib.storage.exceptions.AuthStorageException;
 import us.kbase.auth2.lib.token.IncomingToken;
 import us.kbase.auth2.lib.token.NewToken;
+import us.kbase.auth2.lib.token.TemporaryToken;
 
 @Path("/login")
 public class Login {
@@ -52,7 +54,7 @@ public class Login {
 	//TODO JAVADOC
 	//TODO NOW test entire api with nginx path changes (e.g. location /foo/bar mapped to / of this server
 	//TODO NOW add last login date
-	
+	//TODO NOW add account created date
 	@Inject
 	private Authentication auth;
 	
@@ -67,11 +69,8 @@ public class Login {
 					provider);
 			final String state = auth.getBareToken();
 			final URI target = toURI(idp.getLoginURL(state));
-			return Response.seeOther(target).cookie(new NewCookie(
-					//TODO TEST path works with nginx path rewriting
-					new Cookie("statevar", state, "/login/complete", null),
-							"loginstate", 30 * 60, false)).build();
-			//TODO NOW make secure cookie configurable
+			return Response.seeOther(target).cookie(getStateCookie(state))
+					.build();
 		} else {
 			final Map<String, Object> ret = new HashMap<>();
 			final List<Map<String, String>> provs = new LinkedList<>();
@@ -87,6 +86,19 @@ public class Login {
 			return Response.ok().entity(new Viewable("/loginstart", ret))
 					.build();
 		}
+	}
+
+	private NewCookie getStateCookie(final String state) {
+		return getStateCookie(state, false);
+	}
+	
+	private NewCookie getStateCookie(
+			final String state,
+			final boolean delete) {
+		return new NewCookie(
+				//TODO TEST path works with nginx path rewriting
+				new Cookie("statevar", state, "/login/complete", null),
+						"loginstate", delete ? 0 : 30 * 60, false);
 	}
 	
 	@GET
@@ -120,26 +132,28 @@ public class Login {
 		if (lr.isLoggedIn()) {
 			//TODO NOW use provided redirect, default to user profile
 			r = Response.seeOther(toURI("/tokens"))
-			//TODO NOW delete state cookie
 			//TODO NOW can't set keep me logged in here, so set in profile
-					.cookie(getCookie(lr.getToken(), true)).build();
+					.cookie(getLoginCookie(lr.getToken(), true))
+					.cookie(getStateCookie("no state", true)).build();
 		} else {
-			//TODO NOW delete state cookie
 			r = Response.seeOther(toURI("/login/complete")).cookie(
-					new NewCookie(new Cookie(
-									"in-process-login-token",
-									lr.getTemporaryToken().getToken(),
-									//TODO TEST cookies work with nginx path rewriting
-									"/login", null),
-							//TODO CONFIG make secure cookie configurable
-							//TODO NOW set age to cookie age
-							"authtoken", NewCookie.DEFAULT_MAX_AGE, false))
+					getLoginInProcessCookie(lr.getTemporaryToken()))
+					.cookie(getStateCookie("no state", true))
 					.build();
 			//TODO NOW make image paths URIs
 		}
 		return r;
 	}
-	
+
+	private NewCookie getLoginInProcessCookie(final TemporaryToken token) {
+		return new NewCookie(new Cookie("in-process-login-token",
+				token == null ? "no token" : token.getToken(),
+						//TODO TEST cookies work with nginx path rewriting
+				"/login", null),
+				"authtoken", token == null ? 0 : getMaxCookieAge(token, false),
+				false);
+	}
+
 	@GET
 	@Path("/complete")
 	@Template(name = "/loginchoice")
@@ -212,10 +226,10 @@ public class Login {
 				provider, remoteID, new UserName(userName), fullName, email,
 				sessionLogin, priv);
 		//TODO NOW use provided redirect, default to user profile
-		//TODO NOW delete temporary cookie
 		return Response.seeOther(toURI("/tokens"))
 		//TODO NOW can't set keep me logged in here, so set in profile
-				.cookie(getCookie(newtoken, true)).build();
+				.cookie(getLoginCookie(newtoken, true))
+				.cookie(getLoginInProcessCookie(null)).build();
 	}
 	
 	// assumes non-null, len > 0

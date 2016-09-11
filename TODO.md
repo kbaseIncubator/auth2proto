@@ -26,7 +26,7 @@ Auth service work
 -----------------
 * UI (significant time sink per Bill & Erik)
   * Probably means altering server endpoints in concert with UI development
-* ~200 TODOs in the codebase
+* 150-200 TODOs in the codebase on average
 * Tests
   * With mock services for globus and google
 * Documentation
@@ -39,6 +39,9 @@ Auth service work
   * Create admins role
   * View / modify server config
   * Disable account (revoke all tokens & prevent logins)
+  * Force pwd reset for local accounts (per user and all)
+  * Reset local account pwd
+  * Admin checking for all /admin functions
 * /me UI allows updating user record
 * API
   * Introspect token (e.g. not the legacy apis, provide complete info)

@@ -1,6 +1,6 @@
 package us.kbase.auth2.service.api;
 
-import static us.kbase.auth2.service.api.CookieUtils.getCookie;
+import static us.kbase.auth2.service.api.CookieUtils.getLoginCookie;
 
 import java.util.Map;
 
@@ -70,7 +70,7 @@ public class LocalAccounts {
 		return Response.ok(
 				new Viewable("/localloginresult",
 						ImmutableMap.of("user", userName)))
-				.cookie(getCookie(t, stayLoggedIn == null))
+				.cookie(getLoginCookie(t, stayLoggedIn == null))
 				.build();
 	}
 }
