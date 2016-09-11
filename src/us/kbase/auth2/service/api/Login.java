@@ -52,7 +52,7 @@ public class Login {
 
 	//TODO TEST
 	//TODO JAVADOC
-	//TODO NOW test entire api with nginx path changes (e.g. location /foo/bar mapped to / of this server
+	//TODO NOW test entire api with nginx path changes (e.g. location /foo/bar mapped to / of this server). Issues - cookies, urls passed into forms. Not issues: redirects.
 	//TODO NOW add last login date
 	//TODO NOW add account created date
 	@Inject
@@ -78,7 +78,8 @@ public class Login {
 			for (final IdentityProvider idp: auth.getIdentityProviders()) {
 				final Map<String, String> rep = new HashMap<>();
 				rep.put("name", idp.getProviderName());
-				rep.put("img", ".." + idp.getRelativeImageURL());
+				final URI i = idp.getImageURI();
+				rep.put("img", i.isAbsolute() ? i.toString() : ".." + i);
 				provs.add(rep);
 			}
 			ret.put("hasprov", !provs.isEmpty());
@@ -140,7 +141,6 @@ public class Login {
 					getLoginInProcessCookie(lr.getTemporaryToken()))
 					.cookie(getStateCookie("no state", true))
 					.build();
-			//TODO NOW make image paths URIs
 		}
 		return r;
 	}

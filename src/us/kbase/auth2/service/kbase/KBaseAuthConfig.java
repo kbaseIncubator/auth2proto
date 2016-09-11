@@ -3,6 +3,8 @@ package us.kbase.auth2.service.kbase;
 import java.io.File;
 import java.io.IOException;
 import java.net.MalformedURLException;
+import java.net.URI;
+import java.net.URISyntaxException;
 import java.net.URL;
 import java.util.Collections;
 import java.util.HashSet;
@@ -35,7 +37,7 @@ public class KBaseAuthConfig implements AuthConfig {
 	private static final String KEY_MONGO_PWD = "mongo-pwd";
 	private static final String KEY_ID_PROV = "identity-providers";
 	private static final String KEY_PREFIX_ID_PROVS = "identity-provider-";
-	private static final String KEY_SUFFIX_ID_PROVS_IMG = "-image-url";
+	private static final String KEY_SUFFIX_ID_PROVS_IMG = "-image-uri";
 	private static final String KEY_SUFFIX_ID_PROVS_URL = "-base-url";
 	private static final String KEY_SUFFIX_ID_PROVS_CLIENT_ID = "-client-id";
 	private static final String KEY_SUFFIX_ID_PROVS_CLIENT_SEC =
@@ -94,8 +96,8 @@ public class KBaseAuthConfig implements AuthConfig {
 				continue;
 			}
 			final String pre = KEY_PREFIX_ID_PROVS + p;
-			final String imgURL = getString( // relative url
-					pre + KEY_SUFFIX_ID_PROVS_IMG, cfg, true);
+			final URI imgURL = getURI( // relative url
+					pre + KEY_SUFFIX_ID_PROVS_IMG, cfg);
 			final String cliid = getString(
 					pre + KEY_SUFFIX_ID_PROVS_CLIENT_ID, cfg, true);
 			final String clisec = getString(
@@ -103,9 +105,15 @@ public class KBaseAuthConfig implements AuthConfig {
 			final URL redirect = getURL(pre + KEY_SUFFIX_ID_PROVS_REDIRECT,
 					cfg);
 			final URL base = getURL(pre + KEY_SUFFIX_ID_PROVS_URL, cfg);
-
-			ips.add(new IdentityProviderConfig(
-					p, base, cliid, clisec, imgURL, redirect));
+			try {
+				ips.add(new IdentityProviderConfig(
+						p, base, cliid, clisec, imgURL, redirect));
+			} catch (IllegalArgumentException e) {
+				throw new AuthConfigurationException(String.format(
+						"Error building configuration for provider %s in " +
+						"section %s or config file %s: %s",
+						p, CFG_LOC, cfg.get(TEMP_KEY_CFG_FILE)));
+			}
 		}
 		return Collections.unmodifiableSet(ips);
 	}
@@ -119,6 +127,19 @@ public class KBaseAuthConfig implements AuthConfig {
 			throw new AuthConfigurationException(String.format(
 					"Value %s of parameter %s in section %s of config " +
 					"file %s is not a valid URL",
+					url, key, CFG_LOC, cfg.get(TEMP_KEY_CFG_FILE)));
+		}
+	}
+	
+	private URI getURI(final String key, final Map<String, String> cfg)
+			throws AuthConfigurationException {
+		final String url = getString(key, cfg, true);
+		try {
+			return new URI(url);
+		} catch (URISyntaxException e) {
+			throw new AuthConfigurationException(String.format(
+					"Value %s of parameter %s in section %s of config " +
+					"file %s is not a valid URI",
 					url, key, CFG_LOC, cfg.get(TEMP_KEY_CFG_FILE)));
 		}
 	}

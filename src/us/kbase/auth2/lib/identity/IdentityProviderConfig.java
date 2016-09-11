@@ -1,5 +1,6 @@
 package us.kbase.auth2.lib.identity;
 
+import java.net.URI;
 import java.net.URISyntaxException;
 import java.net.URL;
 
@@ -11,7 +12,7 @@ public class IdentityProviderConfig {
 	private final String identityProviderName;
 	private final String clientID;
 	private final String clientSecrect;
-	private final String relativeImageURL;
+	private final URI imageURI;
 	private final URL redirectURL;
 	private final URL baseURL;
 	
@@ -20,18 +21,14 @@ public class IdentityProviderConfig {
 			final URL baseURL,
 			final String clientID,
 			final String clientSecrect,
-			final String relativeImageURL,
+			final URI imgURI,
 			final URL redirectURL) {
 		super();
 		//TODO NOW check for nulls & empty strings
 		this.identityProviderName = identityProviderName;
 		this.clientID = clientID;
 		this.clientSecrect = clientSecrect;
-		if (!relativeImageURL.trim().startsWith("/")) {
-			this.relativeImageURL = "/" + relativeImageURL.trim();
-		} else {
-			this.relativeImageURL = relativeImageURL.trim();
-		}
+		this.imageURI = imgURI;
 		this.redirectURL = redirectURL;
 		this.baseURL = baseURL;
 		checkValidURI(this.redirectURL, "Redirect url");
@@ -64,8 +61,8 @@ public class IdentityProviderConfig {
 		return clientSecrect;
 	}
 
-	public String getRelativeImageURL() {
-		return relativeImageURL;
+	public URI getImageURI() {
+		return imageURI;
 	}
 
 	public URL getRedirectURL() {

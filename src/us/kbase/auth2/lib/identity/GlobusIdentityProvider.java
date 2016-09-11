@@ -60,8 +60,8 @@ public class GlobusIdentityProvider implements IdentityProvider {
 	}
 	
 	@Override
-	public String getRelativeImageURL() {
-		return cfg.getRelativeImageURL();
+	public URI getImageURI() {
+		return cfg.getImageURI();
 	}
 
 	// state will be url encoded.
