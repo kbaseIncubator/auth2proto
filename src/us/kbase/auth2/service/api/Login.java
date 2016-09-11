@@ -51,6 +51,7 @@ public class Login {
 	//TODO TEST
 	//TODO JAVADOC
 	//TODO NOW test entire api with nginx path changes (e.g. location /foo/bar mapped to / of this server
+	//TODO NOW add last login date
 	
 	@Inject
 	private Authentication auth;
@@ -119,9 +120,11 @@ public class Login {
 		if (lr.isLoggedIn()) {
 			//TODO NOW use provided redirect, default to user profile
 			r = Response.seeOther(toURI("/tokens"))
+			//TODO NOW delete state cookie
 			//TODO NOW can't set keep me logged in here, so set in profile
 					.cookie(getCookie(lr.getToken(), true)).build();
 		} else {
+			//TODO NOW delete state cookie
 			r = Response.seeOther(toURI("/login/complete")).cookie(
 					new NewCookie(new Cookie(
 									"in-process-login-token",
@@ -209,6 +212,7 @@ public class Login {
 				provider, remoteID, new UserName(userName), fullName, email,
 				sessionLogin, priv);
 		//TODO NOW use provided redirect, default to user profile
+		//TODO NOW delete temporary cookie
 		return Response.seeOther(toURI("/tokens"))
 		//TODO NOW can't set keep me logged in here, so set in profile
 				.cookie(getCookie(newtoken, true)).build();

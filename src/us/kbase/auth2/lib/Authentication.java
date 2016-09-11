@@ -344,8 +344,12 @@ public class Authentication {
 		}
 		final IdentitySet ids = idp.getIdentities(authcode);
 		final AuthUser primary = storage.getUser(ids.getPrimary());
-		final Set<RemoteIdentity> filteredIDs = ids.getSecondaries().stream()
-				.filter(id -> storage.hasUser(id)).collect(Collectors.toSet());
+		final Set<RemoteIdentity> filteredIDs = new HashSet<>();
+		for (final RemoteIdentity id: ids.getSecondaries()) {
+			if (storage.getUser(id) != null) {
+				filteredIDs.add(id);
+			}
+		}
 		final LoginToken lr;
 		if (primary == null || !filteredIDs.isEmpty()) {
 			final int expmin = primary == null ? 30 : 10;
@@ -356,7 +360,6 @@ public class Authentication {
 					tt.getHashedToken(), filteredIDs);
 			lr = new LoginToken(tt);
 		} else {
-			//TODO NOW if reset required, make reset token
 			final NewToken t = new NewToken(tokens.getToken(),
 					primary.getUserName(),
 					//TODO CONFIG make token lifetime configurable

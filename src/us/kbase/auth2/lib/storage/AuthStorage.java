@@ -41,9 +41,6 @@ public interface AuthStorage {
 	// updates identity info if different from db (other than provider & id)
 	AuthUser getUser(RemoteIdentity remoteID) throws AuthStorageException;
 
-	// updates identity info if different from db (other than provider & id)
-	boolean hasUser(RemoteIdentity id);
-
 	LocalUser getLocalUser(UserName userName)
 			throws AuthStorageException, NoSuchUserException;
 	
