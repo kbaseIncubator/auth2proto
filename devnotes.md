@@ -29,6 +29,9 @@ View user and modify user roles.
 /admin/customroles  
 View and add custom roles.
 
+/login  
+login to a provider based account. Stores a cookie with a token.
+
 /localaccount/login  
 login to a local account. Stores a cookie with a token.
 

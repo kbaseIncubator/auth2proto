@@ -8,8 +8,8 @@ import us.kbase.auth2.lib.identity.RemoteIdentity;
 
 public class LoginIdentities {
 	
-	//TODO NOW TEST
-	//TODO NOW JAVADOC
+	//TODO TEST
+	//TODO JAVADOC
 	//TODO NOW check only one primary, check secondaries are secondary
 	//TODO NOW here and in Authentication check no duplicate IDs
 

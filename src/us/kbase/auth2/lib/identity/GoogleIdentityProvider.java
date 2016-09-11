@@ -1,5 +1,6 @@
 package us.kbase.auth2.lib.identity;
 
+import java.net.URI;
 import java.net.URL;
 
 public class GoogleIdentityProvider implements IdentityProvider {
@@ -29,8 +30,8 @@ public class GoogleIdentityProvider implements IdentityProvider {
 	}
 	
 	@Override
-	public String getRelativeImageURL() {
-		return cfg.getRelativeImageURL();
+	public URI getImageURI() {
+		return cfg.getImageURI();
 	}
 
 	@Override

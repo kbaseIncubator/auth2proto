@@ -1,6 +1,7 @@
 package us.kbase.auth2.lib.token;
 
 import static us.kbase.auth2.lib.Utils.checkString;
+import static us.kbase.auth2.lib.Utils.addLong;
 
 import java.util.Date;
 import java.util.UUID;
@@ -11,17 +12,18 @@ public class TemporaryToken {
 	//TODO JAVADOC
 	
 	private final String token;
-	private final Date created = new Date();
-	private final Date expiry;
+	private final Date creationDate = new Date();
+	private final Date expirationDate;
 	private final UUID id = UUID.randomUUID();
 
-	public TemporaryToken(final String token, final Date expiry) {
+	public TemporaryToken(final String token, final long lifetimeInms) {
 		checkString(token, "token", true);
-		if (expiry == null) {
-			throw new NullPointerException("expiry");
+		if (lifetimeInms < 0) {
+			throw new IllegalArgumentException("lifetime must be >= 0");
 		}
-		this.expiry = expiry;
 		this.token = token;
+		this.expirationDate = new Date(
+				addLong(creationDate.getTime(), lifetimeInms));
 	}
 
 	public String getToken() {
@@ -29,11 +31,11 @@ public class TemporaryToken {
 	}
 	
 	public Date getCreationDate() {
-		return created;
+		return creationDate;
 	}
 
 	public Date getExpirationDate() {
-		return expiry;
+		return expirationDate;
 	}
 
 	public UUID getId() {
@@ -42,6 +44,6 @@ public class TemporaryToken {
 
 	public TemporaryHashedToken getHashedToken() {
 		return new TemporaryHashedToken(
-				HashedToken.hash(token), id, created, expiry);
+				HashedToken.hash(token), id, creationDate, expirationDate);
 	}
 }

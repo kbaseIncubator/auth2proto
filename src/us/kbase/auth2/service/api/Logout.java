@@ -1,5 +1,7 @@
 package us.kbase.auth2.service.api;
 
+import static us.kbase.auth2.service.api.CookieUtils.getLoginCookie;
+
 import java.util.Map;
 
 import javax.inject.Inject;
@@ -7,8 +9,6 @@ import javax.ws.rs.CookieParam;
 import javax.ws.rs.GET;
 import javax.ws.rs.POST;
 import javax.ws.rs.Path;
-import javax.ws.rs.core.Cookie;
-import javax.ws.rs.core.NewCookie;
 import javax.ws.rs.core.Response;
 
 import org.glassfish.jersey.server.mvc.Template;
@@ -52,9 +52,7 @@ public class Logout {
 				new Viewable("/logoutresult",
 						ImmutableMap.of("user", ht == null ? null :
 							ht.getUserName().getName())))
-				.cookie(new NewCookie(
-						new Cookie("token", "logout", "/", null),
-						"authtoken", 0, false))
+				.cookie(getLoginCookie(null))
 				.build();
 	}
 	

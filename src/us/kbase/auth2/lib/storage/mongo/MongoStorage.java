@@ -5,6 +5,7 @@ import java.util.Arrays;
 import java.util.Base64;
 import java.util.HashMap;
 import java.util.HashSet;
+import java.util.Iterator;
 import java.util.LinkedList;
 import java.util.List;
 import java.util.Map;
@@ -25,6 +26,7 @@ import com.mongodb.client.model.Filters;
 import com.mongodb.client.model.IndexOptions;
 import com.mongodb.client.model.UpdateOptions;
 import com.mongodb.client.result.DeleteResult;
+import com.mongodb.client.result.UpdateResult;
 
 import us.kbase.auth2.lib.AuthUser;
 import us.kbase.auth2.lib.CustomRole;
@@ -492,10 +494,11 @@ public class MongoStorage implements AuthStorage {
 			final String field)
 			throws NoSuchUserException, AuthStorageException {
 		try {
-			final Document ret = db.getCollection(COL_USERS).findOneAndUpdate(
+			final UpdateResult ret = db.getCollection(COL_USERS).updateOne(
 					new Document(Fields.USER_NAME, userName.getName()),
 					new Document("$set", new Document(field, roles)));
-			if (ret == null) {
+			// might not modify the roles if they're the same as input
+			if (ret.getMatchedCount() != 1) {
 				throw new NoSuchUserException(userName.getName());
 			}
 		} catch (MongoException e) {
@@ -566,10 +569,7 @@ public class MongoStorage implements AuthStorage {
 	@Override
 	public AuthUser getUser(final RemoteIdentity remoteID)
 			throws AuthStorageException {
-		final Document query = new Document(Fields.USER_IDENTITIES,
-				new Document("$elemMatch", new Document(
-						Fields.IDENTITIES_PROVIDER, remoteID.getProvider())
-						.append(Fields.IDENTITIES_ID, remoteID.getId())));
+		final Document query = makeUserQuery(remoteID);
 		//note a user with identities should never have these fields, but
 		//doesn't hurt to be safe
 		final Document projection = new Document(Fields.USER_PWD_HSH, 0)
@@ -578,15 +578,60 @@ public class MongoStorage implements AuthStorage {
 		if (u == null) {
 			return null;
 		}
-		// TODO NOW update identity for user if name, email, uid are different
-		return toUser(u);
+		AuthUser user = toUser(u);
+		/* could do a findAndModify to set the fields on the first query, but
+		 * 99% of the time a set won't be necessary, so don't write lock the
+		 * DB/collection (depending on mongo version) unless necessary 
+		 */
+		final Iterator<RemoteIdentity> iter = user.getIdentities().iterator();
+		RemoteIdentity update = null;;
+		while (iter.hasNext()) {
+			final RemoteIdentity ri = iter.next();
+			if (ri.getProvider().equals(remoteID.getProvider()) &&
+					ri.getId().equals(remoteID.getId()) &&
+					!ri.equals(remoteID)) {
+				update = ri;
+			}
+		}
+		if (update != null) {
+			final Set<RemoteIdentity> newIDs = new HashSet<>(
+					user.getIdentities());
+			newIDs.remove(update);
+			newIDs.add(remoteID);
+			user = new AuthUser(user.getUserName(), user.getEmail(),
+					user.getFullName(), newIDs, user.getRoles(),
+					user.getCustomRoles());
+			updateIdentity(remoteID);
+		}
+		return user;
+	}
+
+	private Document makeUserQuery(final RemoteIdentity remoteID) {
+		final Document query = new Document(Fields.USER_IDENTITIES,
+				new Document("$elemMatch", new Document(
+						Fields.IDENTITIES_PROVIDER, remoteID.getProvider())
+						.append(Fields.IDENTITIES_ID, remoteID.getId())));
+		return query;
 	}
 	
-	@Override
-	public boolean hasUser(final RemoteIdentity remoteID) {
-		// TODO Auto-generated method stub
-		// TODO NOW update identity for user if name, email, uid are different
-		return false;
+	//TODO TEST exercise this function with tests
+	private void updateIdentity(final RemoteIdentity remoteID)
+			throws AuthStorageException {
+		final Document query = makeUserQuery(remoteID);
+		
+		final String pre = Fields.USER_IDENTITIES + ".$.";
+		final Document update = new Document("$set", new Document(
+				pre + Fields.IDENTITIES_USER, remoteID.getUsername())
+				.append(pre + Fields.IDENTITIES_EMAIL, remoteID.getEmail())
+				.append(pre + Fields.IDENTITIES_NAME, remoteID.getFullname())
+				.append(pre + Fields.IDENTITIES_PRIME, remoteID.isPrimary()));
+		try {
+			// id might have been unlinked, so we just assume
+			// the update worked.
+			db.getCollection(COL_USERS).updateOne(query, update);
+		} catch (MongoException e) {
+			throw new AuthStorageException("Connection to database failed", e);
+		}
 	}
 
 	@Override

@@ -28,4 +28,15 @@ public class Utils {
 		}
 		return (long) Math.floor(date.getTime() / 1000.0);
 	}
+
+	// prevents overflows by returning max long if a + b > maxlong
+	public static long addLong(final long a, final long b) {
+		final long c;
+		if (Long.MAX_VALUE - a < b) {
+			c = Long.MAX_VALUE;
+		} else {
+			c = a + b;
+		}
+		return c;
+	}
 }

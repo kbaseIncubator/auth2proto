@@ -1,5 +1,7 @@
 package us.kbase.auth2.service.api;
 
+import static us.kbase.auth2.service.api.CookieUtils.getLoginCookie;
+
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -17,9 +19,7 @@ import javax.ws.rs.POST;
 import javax.ws.rs.Path;
 import javax.ws.rs.PathParam;
 import javax.ws.rs.Produces;
-import javax.ws.rs.core.Cookie;
 import javax.ws.rs.core.MediaType;
-import javax.ws.rs.core.NewCookie;
 import javax.ws.rs.core.Response;
 
 import org.glassfish.jersey.server.mvc.Template;
@@ -135,11 +135,7 @@ public class Tokens {
 			InvalidTokenException {
 		checkToken(cookieToken);
 		auth.revokeTokens(new IncomingToken(cookieToken));
-		return Response.ok().cookie(new NewCookie(
-				new Cookie("token", "logout", "/", null),
-				"authtoken", 0, false)).build();
-		//TODO CONFIG make secure cookie configurable
-		//TODO NOW Have a standard cookie builder?
+		return Response.ok().cookie(getLoginCookie(null)).build();
 	}
 	
 	@DELETE

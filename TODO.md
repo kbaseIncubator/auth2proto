@@ -11,7 +11,7 @@ accounts and tests if any, allow setting auth service url
 * Shock & Awe - Rich
 * Perl auth & server stubs - Keith
 * Handle service & manager - Keith
-* Narrative (Lua) - Bill
+* Narrative (Lua) - Bill R. (external to auth team)
 * kb_sdk
   * Tests support token vs uid/pwd & setting auth url
   * Recompile & test all SDK modules
@@ -21,12 +21,15 @@ accounts and tests if any, allow setting auth service url
 * Service wizard
 * Narrative Method Store
 * Data Import Export
+* Search
 
 Auth service work
 -----------------
 * UI (significant time sink per Bill & Erik)
   * Probably means altering server endpoints in concert with UI development
-* ~200 TODOs in the codebase
+* 150-200 TODOs in the codebase on average
+* Read through all prototype code and convert to production worthy
+* A code review by Steve Chan wouldn't be a bad idea
 * Tests
   * With mock services for globus and google
 * Documentation
@@ -38,6 +41,10 @@ Auth service work
   * Bootstrap root user
   * Create admins role
   * View / modify server config
+  * Disable account (revoke all tokens & prevent logins)
+  * Force pwd reset for local accounts (per user and all)
+  * Reset local account pwd
+  * Admin checking for all /admin functions
 * /me UI allows updating user record
 * API
   * Introspect token (e.g. not the legacy apis, provide complete info)
@@ -48,15 +55,16 @@ Auth service work
   * test apis for user creation & admin
   * auto configure server for ease of use
 * User import - import current Globus users
+* Deploy
+  * Dockerization
+
+### Potential work
+* Support user lookup by identity provider & id for bulk upload (permitted role)
 
 External dependencies
 ---------------------
 * JGI updates kbase<->JGI account linking
 * JGI stops using uid/pwd to login for jgidm account
-
-Possible work
--------------
-* Support user lookup by identity provider & id for bulk upload (permitted role)
 
 Future work
 -----------
