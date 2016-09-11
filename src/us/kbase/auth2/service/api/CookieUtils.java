@@ -10,16 +10,18 @@ import us.kbase.auth2.lib.token.TemporaryToken;
 
 public class CookieUtils {
 
-	public static NewCookie getLoginCookie(
-			final NewToken t,
-			final boolean session) {
-		return new NewCookie(new Cookie("token", t.getToken(), "/", null),
-				"authtoken", getMaxCookieAge(t, session), false);
+	public static NewCookie getLoginCookie(final NewToken token) {
+		return getLoginCookie(token, false);
 	}
 	
-	public static NewCookie getLogoutCookie() {
-		return new NewCookie(new Cookie("token", "no token", "/", null),
-				"authtoken", 0, false);
+	public static NewCookie getLoginCookie(
+			final NewToken token,
+			final boolean session) {
+		return new NewCookie(new Cookie("token",
+				token == null ? "no token" :token.getToken(), "/", null),
+				"authtoken",
+				token == null ? 0 :getMaxCookieAge(token, session),
+				APIConstants.SECURE_COOKIES);
 	}
 	
 	public static int getMaxCookieAge(

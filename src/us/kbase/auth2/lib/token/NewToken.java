@@ -1,6 +1,7 @@
 package us.kbase.auth2.lib.token;
 
 import static us.kbase.auth2.lib.Utils.checkString;
+import static us.kbase.auth2.lib.Utils.addLong;
 
 import java.util.Date;
 import java.util.UUID;
@@ -22,37 +23,39 @@ public class NewToken {
 	public NewToken(
 			final String token,
 			final UserName userName,
-			final Date expirationDate) {
+			final long lifetimeInms) {
 		checkString(token, "token", true);
 		if (userName == null) {
 			throw new NullPointerException("userName");
 		}
-		if (expirationDate == null) {
-			throw new NullPointerException("expirationDate");
+		if (lifetimeInms < 0) {
+			throw new IllegalArgumentException("lifetime must be >= 0");
 		}
 		this.tokenName = null;
 		this.token = token;
 		this.userName = userName;
-		this.expirationDate = expirationDate;
+		this.expirationDate = new Date(
+				addLong(creationDate.getTime(), lifetimeInms));
 	}
 	
 	public NewToken(
 			final String tokenName,
 			final String token,
 			final UserName userName,
-			final Date expirationDate) {
+			final long lifetimeInms) {
 		checkString(token, "token", true);
 		checkString(tokenName, "tokenName", true);
 		if (userName == null) {
 			throw new NullPointerException("userName");
 		}
-		if (expirationDate == null) {
-			throw new NullPointerException("expirationDate");
+		if (lifetimeInms < 0) {
+			throw new IllegalArgumentException("lifetime must be >= 0");
 		}
 		this.tokenName = tokenName;
 		this.token = token;
 		this.userName = userName;
-		this.expirationDate = expirationDate;
+		this.expirationDate = new Date(
+				addLong(creationDate.getTime(), lifetimeInms));
 	}
 
 	public String getTokenName() {

@@ -1,6 +1,6 @@
 package us.kbase.auth2.service.api;
 
-import static us.kbase.auth2.service.api.CookieUtils.getLogoutCookie;
+import static us.kbase.auth2.service.api.CookieUtils.getLoginCookie;
 
 import java.util.Map;
 
@@ -52,7 +52,7 @@ public class Logout {
 				new Viewable("/logoutresult",
 						ImmutableMap.of("user", ht == null ? null :
 							ht.getUserName().getName())))
-				.cookie(getLogoutCookie())
+				.cookie(getLoginCookie(null))
 				.build();
 	}
 	

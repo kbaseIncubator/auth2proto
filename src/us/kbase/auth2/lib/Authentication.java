@@ -6,7 +6,6 @@ import java.security.NoSuchAlgorithmException;
 import java.security.NoSuchProviderException;
 import java.util.Arrays;
 import java.util.Collections;
-import java.util.Date;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.LinkedList;
@@ -62,6 +61,7 @@ public class Authentication {
 	//TODO USERCONFIG set email & username privacy & respect
 	//TODO USERCONFIG set email & username
 	//TODO NOW allow redirect url on login
+	//TODO NOW move jars into kbase/jars
 	
 	private final AuthStorage storage;
 	private final Map<String, IdentityProvider> idprov;
@@ -133,7 +133,7 @@ public class Authentication {
 		//TODO NOW if reset required, make reset token
 		final NewToken t = new NewToken(tokens.getToken(), userName,
 				//TODO CONFIG make token lifetime configurable
-				new Date(new Date().getTime() + (14 * 24 * 60 * 60 * 1000)));
+				14 * 24 * 60 * 60 * 1000);
 		storage.storeToken(t.getHashedToken());
 		return t;
 	}
@@ -177,15 +177,8 @@ public class Authentication {
 		} else {
 			life = 90L * 24L * 60L * 60L * 1000L;
 		}
-		final long now = new Date().getTime();
-		final long exp;
-		if (Long.MAX_VALUE - life < now) {
-			exp = Long.MAX_VALUE;
-		} else {
-			exp = now + life;
-		}
 		final NewToken t = new NewToken(tokenName, tokens.getToken(),
-				au.getUserName(), new Date(exp));
+				au.getUserName(), life);
 		storage.storeToken(t.getHashedToken());
 		return t;
 	}
@@ -353,16 +346,15 @@ public class Authentication {
 		if (primary == null || !filteredIDs.isEmpty()) {
 			final int expmin = primary == null ? 30 : 10;
 			final TemporaryToken tt = new TemporaryToken(tokens.getToken(),
-					new Date(new Date().getTime() + (expmin * 60 * 1000)));
+					expmin * 60 * 1000);
 			filteredIDs.add(ids.getPrimary());
 			storage.storeIdentitiesTemporarily(
 					tt.getHashedToken(), filteredIDs);
 			lr = new LoginToken(tt);
 		} else {
 			final NewToken t = new NewToken(tokens.getToken(),
-					primary.getUserName(),
 					//TODO CONFIG make token lifetime configurable
-					new Date(new Date().getTime() + (14 * 24 * 60 * 60 * 1000)));
+					primary.getUserName(), 14 * 24 * 60 * 60 * 1000);
 			storage.storeToken(t.getHashedToken());
 			lr = new LoginToken(t);
 		}
@@ -461,7 +453,7 @@ public class Authentication {
 				new HashSet<>(Arrays.asList(match)), null, null));
 		final NewToken nt = new NewToken(tokens.getToken(), userName,
 				//TODO CONFIG make token lifetime configurable
-				new Date(new Date().getTime() + (14 * 24 * 60 * 60 * 1000)));
+				14 * 24 * 60 * 60 * 1000);
 		storage.storeToken(nt.getHashedToken());
 		return nt;
 	}

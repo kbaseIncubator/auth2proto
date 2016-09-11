@@ -1,6 +1,6 @@
 package us.kbase.auth2.service.api;
 
-import static us.kbase.auth2.service.api.CookieUtils.getLogoutCookie;
+import static us.kbase.auth2.service.api.CookieUtils.getLoginCookie;
 
 import java.util.HashMap;
 import java.util.List;
@@ -135,7 +135,7 @@ public class Tokens {
 			InvalidTokenException {
 		checkToken(cookieToken);
 		auth.revokeTokens(new IncomingToken(cookieToken));
-		return Response.ok().cookie(getLogoutCookie()).build();
+		return Response.ok().cookie(getLoginCookie(null)).build();
 	}
 	
 	@DELETE

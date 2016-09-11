@@ -90,16 +90,12 @@ public class Login {
 	}
 
 	private NewCookie getStateCookie(final String state) {
-		return getStateCookie(state, false);
-	}
-	
-	private NewCookie getStateCookie(
-			final String state,
-			final boolean delete) {
-		return new NewCookie(
-				//TODO TEST path works with nginx path rewriting
-				new Cookie("statevar", state, "/login/complete", null),
-						"loginstate", delete ? 0 : 30 * 60, false);
+		//TODO TEST path works with nginx path rewriting
+		return new NewCookie(new Cookie(
+				"statevar", state == null ? "no state" : state,
+						"/login/complete", null),
+				"loginstate", state == null ? 0 : 30 * 60,
+						APIConstants.SECURE_COOKIES);
 	}
 	
 	@GET
@@ -135,11 +131,11 @@ public class Login {
 			r = Response.seeOther(toURI("/tokens"))
 			//TODO NOW can't set keep me logged in here, so set in profile
 					.cookie(getLoginCookie(lr.getToken(), true))
-					.cookie(getStateCookie("no state", true)).build();
+					.cookie(getStateCookie(null)).build();
 		} else {
 			r = Response.seeOther(toURI("/login/complete")).cookie(
 					getLoginInProcessCookie(lr.getTemporaryToken()))
-					.cookie(getStateCookie("no state", true))
+					.cookie(getStateCookie(null))
 					.build();
 		}
 		return r;
@@ -151,7 +147,7 @@ public class Login {
 						//TODO TEST cookies work with nginx path rewriting
 				"/login", null),
 				"authtoken", token == null ? 0 : getMaxCookieAge(token, false),
-				false);
+				APIConstants.SECURE_COOKIES);
 	}
 
 	@GET
