@@ -615,7 +615,6 @@ public class MongoStorage implements AuthStorage {
 	}
 	
 	//TODO TEST exercise this function with tests
-	//assumes user exists and there's a db problem if the user isn't found
 	private void updateIdentity(final RemoteIdentity remoteID)
 			throws AuthStorageException {
 		final Document query = makeUserQuery(remoteID);
@@ -627,14 +626,9 @@ public class MongoStorage implements AuthStorage {
 				.append(pre + Fields.IDENTITIES_NAME, remoteID.getFullname())
 				.append(pre + Fields.IDENTITIES_PRIME, remoteID.isPrimary()));
 		try {
-			final UpdateResult up = db.getCollection(COL_USERS)
-					.updateOne(query, update);
-			//theoretically possible that another modification could interleave
-			//such that this is a noop
-			if (up.getMatchedCount() != 1) {
-				throw new AuthStorageException(
-						"Failed to modify user document");
-			}
+			// id might have been unlinked, so we just assume
+			// the update worked.
+			db.getCollection(COL_USERS).updateOne(query, update);
 		} catch (MongoException e) {
 			throw new AuthStorageException("Connection to database failed", e);
 		}
