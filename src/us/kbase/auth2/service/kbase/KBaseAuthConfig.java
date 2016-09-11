@@ -109,6 +109,7 @@ public class KBaseAuthConfig implements AuthConfig {
 				ips.add(new IdentityProviderConfig(
 						p, base, cliid, clisec, imgURL, redirect));
 			} catch (IllegalArgumentException e) {
+				//TODO TEST ^ is ok in a url, but not in a URI
 				throw new AuthConfigurationException(String.format(
 						"Error building configuration for provider %s in " +
 						"section %s or config file %s: %s",

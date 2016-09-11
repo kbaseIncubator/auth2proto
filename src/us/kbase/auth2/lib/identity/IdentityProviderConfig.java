@@ -36,6 +36,7 @@ public class IdentityProviderConfig {
 		
 	}
 	private void checkValidURI(final URL url, final String name) {
+		//TODO TEST ^ is ok in a url, but not in a URI
 		try {
 			url.toURI();
 		} catch (URISyntaxException e) {

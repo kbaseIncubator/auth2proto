@@ -21,12 +21,15 @@ accounts and tests if any, allow setting auth service url
 * Service wizard
 * Narrative Method Store
 * Data Import Export
+* Search
 
 Auth service work
 -----------------
 * UI (significant time sink per Bill & Erik)
   * Probably means altering server endpoints in concert with UI development
 * 150-200 TODOs in the codebase on average
+* Read through all prototype code and convert to production worthy
+* A code review by Steve Chan wouldn't be a bad idea
 * Tests
   * With mock services for globus and google
 * Documentation
@@ -55,8 +58,7 @@ Auth service work
 * Deploy
   * Dockerization
 
-Potential work
--------------
+### Potential work
 * Support user lookup by identity provider & id for bulk upload (permitted role)
 
 External dependencies

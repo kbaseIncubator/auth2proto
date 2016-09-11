@@ -8,6 +8,8 @@ Admin notes
 * It is expected that this server always runs behind a reverse proxy (such as
   nginx) that enforces https / TLS and as such is configured to allow cookies
   to be set over insecure connections.
+* Instructions for getting Globus OAuth2 creds are [here](https://docs.google.com/document/d/1Uidv5yhJysez7yBkZAzUHiGtD2RTzTr2VndKArGLOic/edit)
+  * Note that based on one datapoint, lead time is 1 week +.
 
 Requirements
 ------------
