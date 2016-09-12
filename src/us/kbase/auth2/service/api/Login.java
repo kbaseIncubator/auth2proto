@@ -1,12 +1,12 @@
 package us.kbase.auth2.service.api;
 
-import static us.kbase.auth2.service.api.CookieUtils.getLoginCookie;
-import static us.kbase.auth2.service.api.CookieUtils.getMaxCookieAge;
+import static us.kbase.auth2.service.api.APIUtils.relativize;
+import static us.kbase.auth2.service.api.APIUtils.getLoginCookie;
+import static us.kbase.auth2.service.api.APIUtils.getMaxCookieAge;
 
 import java.net.URI;
 import java.net.URISyntaxException;
 import java.net.URL;
-import java.nio.file.Paths;
 import java.security.NoSuchProviderException;
 import java.util.HashMap;
 import java.util.LinkedList;
@@ -94,34 +94,8 @@ public class Login {
 					.build();
 		}
 	}
-	
-	//target should be path from root of application
-	//target should not be absolute
-	private String relativize(
-			final UriInfo current,
-			final URI target) {
-		return relativize(current, target.toString());
-	}
-	
-	// attempts to deal with the mess of returning a relative path to the
-	// target from the current location that makes Jersey happy.
-	private String relativize(
-			final UriInfo current,
-			final String target) {
-		// jfc what a mess
-		java.nio.file.Path c = Paths.get("/" + current.getPath()).normalize();
-		if (!current.getPath().endsWith("/")) {
-			c = c.getParent();
-		}
-		if (c == null) {
-			c = Paths.get("/");
-		}
-		final java.nio.file.Path t = Paths.get(target);
-		return c.relativize(t).toString();
-	}
 
 	private NewCookie getStateCookie(final String state) {
-		//TODO TEST path works with nginx path rewriting
 		return new NewCookie(new Cookie(
 				"statevar", state == null ? "no state" : state,
 						"/login/complete", null),
@@ -174,9 +148,7 @@ public class Login {
 
 	private NewCookie getLoginInProcessCookie(final TemporaryToken token) {
 		return new NewCookie(new Cookie("in-process-login-token",
-				token == null ? "no token" : token.getToken(),
-						//TODO TEST cookies work with nginx path rewriting
-				"/login", null),
+				token == null ? "no token" : token.getToken(), "/login", null),
 				"authtoken", token == null ? 0 : getMaxCookieAge(token, false),
 				APIConstants.SECURE_COOKIES);
 	}

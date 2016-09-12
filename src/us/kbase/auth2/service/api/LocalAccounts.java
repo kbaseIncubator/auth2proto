@@ -1,6 +1,6 @@
 package us.kbase.auth2.service.api;
 
-import static us.kbase.auth2.service.api.CookieUtils.getLoginCookie;
+import static us.kbase.auth2.service.api.APIUtils.getLoginCookie;
 
 import java.util.Map;
 
