@@ -68,12 +68,13 @@ public class GoogleIdentityProvider implements IdentityProvider {
 
 	// state will be url encoded
 	@Override
-	public URL getLoginURL(final String state) {
+	public URL getLoginURL(final String state, final boolean link) {
 		final URI target = UriBuilder.fromUri(toURI(cfg.getLoginURL()))
 				.path(LOGIN_PATH)
 				.queryParam("scope", SCOPE)
 				.queryParam("state", state)
-				.queryParam("redirect_uri", cfg.getLoginRedirectURL())
+				.queryParam("redirect_uri", link ? cfg.getLinkRedirectURL() :
+					cfg.getLoginRedirectURL())
 				.queryParam("response_type", "code")
 				.queryParam("client_id", cfg.getClientID())
 				.queryParam("prompt", "select_account")

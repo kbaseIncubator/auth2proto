@@ -73,7 +73,7 @@ public class Login {
 			final IdentityProvider idp = auth.getIdentityProvider(
 					provider);
 			final String state = auth.getBareToken();
-			final URI target = toURI(idp.getLoginURL(state));
+			final URI target = toURI(idp.getLoginURL(state, false));
 			return Response.seeOther(target).cookie(getStateCookie(state))
 					.build();
 		} else {

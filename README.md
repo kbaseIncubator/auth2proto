@@ -9,11 +9,12 @@ Admin notes
   nginx) that enforces https / TLS and as such the auth server is configured to
   allow cookies to be set over insecure connections.
   * If the reverse proxy rewrites paths for the auth server, cookie path
-    rewriting must be enabled for the /login path. Nginx example:
+    rewriting must be enabled for the /login and /link paths. Nginx example:
 
 		location /auth/ {
 			proxy_pass http://localhost:20002/;
 			proxy_cookie_path /login /auth/login;
+			proxy_cookie_path /link /auth/link;
 		}
 
 * Instructions for getting Globus OAuth2 creds are [here](https://docs.google.com/document/d/1Uidv5yhJysez7yBkZAzUHiGtD2RTzTr2VndKArGLOic/edit)
