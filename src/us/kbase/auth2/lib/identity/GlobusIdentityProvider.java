@@ -121,7 +121,7 @@ public class GlobusIdentityProvider implements IdentityProvider {
 		/* Note authcode only works once. After that globus returns
 		 * {error=invalid_grant}
 		 */
-		
+		//TODO NOW will need to handle link vs. login case
 		final String accessToken = getAccessToken(authCode);
 		final Idents idents = getPrimaryIdentity(accessToken);
 		final Set<RemoteIdentity> secondaries = getSecondaryIdentities(
@@ -227,7 +227,8 @@ public class GlobusIdentityProvider implements IdentityProvider {
 		final MultivaluedMap<String, String> formParameters =
 				new MultivaluedHashMap<>();
 		formParameters.add("code", authcode);
-		formParameters.add("redirect_uri", cfg.getLoginRedirectURL().toString());
+		formParameters.add("redirect_uri",
+				cfg.getLoginRedirectURL().toString());
 		formParameters.add("grant_type", "authorization_code");
 		
 		final URI target = UriBuilder.fromUri(toURI(cfg.getApiURL()))

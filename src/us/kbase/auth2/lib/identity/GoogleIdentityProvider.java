@@ -4,9 +4,16 @@ import java.net.MalformedURLException;
 import java.net.URI;
 import java.net.URISyntaxException;
 import java.net.URL;
+import java.util.Map;
 
 import javax.ws.rs.client.Client;
 import javax.ws.rs.client.ClientBuilder;
+import javax.ws.rs.client.Entity;
+import javax.ws.rs.client.WebTarget;
+import javax.ws.rs.core.MediaType;
+import javax.ws.rs.core.MultivaluedHashMap;
+import javax.ws.rs.core.MultivaluedMap;
+import javax.ws.rs.core.Response;
 import javax.ws.rs.core.UriBuilder;
 
 public class GoogleIdentityProvider implements IdentityProvider {
@@ -29,6 +36,7 @@ public class GoogleIdentityProvider implements IdentityProvider {
 	private static final String SCOPE =
 			"https://www.googleapis.com/auth/plus.me profile";
 	private static final String LOGIN_PATH = "/o/oauth2/v2/auth";
+	private static final String TOKEN_PATH = "/oauth2/v4/token";
 	private static final String AUTH_CODE_PARAM = "code";
 	
 	//thread safe
@@ -97,8 +105,55 @@ public class GoogleIdentityProvider implements IdentityProvider {
 
 	@Override
 	public IdentitySet getIdentities(final String authcode) {
+		//TODO NOW will need to handle link vs. login case
+		final String accessToken = getAccessToken(authcode);
+		final RemoteIdentity ri = getIdentity(accessToken);
+		return new IdentitySet(ri, null);
+	}
+
+	private RemoteIdentity getIdentity(final String accessToken) {
+		
 		// TODO Auto-generated method stub
 		return null;
+	}
+
+	private String getAccessToken(final String authcode) {
+		final MultivaluedMap<String, String> formParameters =
+				new MultivaluedHashMap<>();
+		formParameters.add("code", authcode);
+		formParameters.add("redirect_uri",
+				cfg.getLoginRedirectURL().toString());
+		formParameters.add("grant_type", "authorization_code");
+		formParameters.add("client_id", cfg.getClientID());
+		formParameters.add("client_secret", cfg.getClientSecrect());
+		
+		final URI target = UriBuilder.fromUri(toURI(cfg.getApiURL()))
+				.path(TOKEN_PATH).build();
+		
+		final Map<String, Object> m = googlePostRequest(
+				formParameters, target);
+		System.out.println(m);
+		return (String) m.get("access_token");
+	}
+
+	private Map<String, Object> googlePostRequest(
+			final MultivaluedMap<String, String> formParameters,
+			final URI target) {
+		final WebTarget wt = CLI.target(target);
+		Response r = null;
+		try {
+			r = wt.request(MediaType.APPLICATION_JSON_TYPE)
+					.post(Entity.form(formParameters));
+			@SuppressWarnings("unchecked")
+			//TODO TEST with 500s with HTML
+			final Map<String, Object> mtemp = r.readEntity(Map.class);
+			//TODO NOW handle {error=?} in object and check response code
+			return mtemp;
+		} finally {
+			if (r != null) {
+				r.close();
+			}
+		}
 	}
 
 }
