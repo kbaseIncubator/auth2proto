@@ -12,6 +12,7 @@ import java.util.HashMap;
 import java.util.LinkedList;
 import java.util.List;
 import java.util.Map;
+import java.util.Map.Entry;
 
 import javax.inject.Inject;
 import javax.ws.rs.CookieParam;
@@ -31,6 +32,7 @@ import javax.ws.rs.core.UriInfo;
 import org.glassfish.jersey.server.mvc.Template;
 import org.glassfish.jersey.server.mvc.Viewable;
 
+import us.kbase.auth2.lib.AuthUser;
 import us.kbase.auth2.lib.Authentication;
 import us.kbase.auth2.lib.LoginIdentities;
 import us.kbase.auth2.lib.LoginToken;
@@ -43,6 +45,7 @@ import us.kbase.auth2.lib.exceptions.NoSuchIdentityProviderException;
 import us.kbase.auth2.lib.exceptions.NoTokenProvidedException;
 import us.kbase.auth2.lib.exceptions.UserExistsException;
 import us.kbase.auth2.lib.identity.IdentityProvider;
+import us.kbase.auth2.lib.identity.RemoteIdentity;
 import us.kbase.auth2.lib.storage.exceptions.AuthStorageException;
 import us.kbase.auth2.lib.token.IncomingToken;
 import us.kbase.auth2.lib.token.NewToken;
@@ -169,26 +172,55 @@ public class Login {
 				new IncomingToken(token.trim()));
 		
 		final Map<String, Object> ret = new HashMap<>();
+		ret.put("provider", ids.getPrimary().getProvider());
+		final List<Map<String, String>> secs = new LinkedList<>();
+		ret.put("secs", secs);
+		for (final Entry<RemoteIdentity, AuthUser> e:
+				ids.getSecondaries().entrySet()) {
+			final Map<String, String> s = new HashMap<>();
+			s.put("prov_id", e.getKey().getId());
+			s.put("prov_username", e.getKey().getUsername());
+			s.put("username", e.getValue().getUserName().getName());
+			secs.add(s);
+		}
 		if (ids.getPrimaryUser() == null) {
 			ret.put("create", true);
-			ret.put("provider", ids.getPrimary().getProvider());
-			ret.put("id", ids.getPrimary().getId());
+			ret.put("prov_id", ids.getPrimary().getId());
 			//TODO NOW get safe username from db
 			ret.put("usernamesugg", ids.getPrimary().getUsername()
 					.split("@")[0]);
-			ret.put("username", ids.getPrimary().getUsername());
-			ret.put("fullname", ids.getPrimary().getFullname());
-			ret.put("email", ids.getPrimary().getEmail());
+			ret.put("prov_username", ids.getPrimary().getUsername());
+			ret.put("prov_fullname", ids.getPrimary().getFullname());
+			ret.put("prov_email", ids.getPrimary().getEmail());
 			ret.put("createurl",
 					relativize(uriInfo, "/login/create"));
-			//TODO NOW handle secondaries
 			
 		} else {
-			//TODO NOW handle secondaries
-			//TODO NOW handle primary with authuser
+			// if here we know there's at least one secondary, otherwise
+			// the user would've been logged in at /complete/{provider}
+			// possibility of a race condition, but worst case is the user has
+			// to click the primary user with no other choices, so meh
+			final Map<String, String> p = new HashMap<>();
+			p.put("prov_id", ids.getPrimary().getId());
+			p.put("prov_username", ids.getPrimary().getUsername());
+			p.put("username", ids.getPrimaryUser().getUserName().getName());
+			secs.add(p);
 		}
-		
+		if (!secs.isEmpty()) {
+			ret.put("hassecs", true);
+			ret.put("pickurl", relativize(uriInfo, "/login/pick"));
+		}
 		return ret;
+	}
+	
+	@POST
+	@Path("/pick")
+	public Response pickAccount(
+			@CookieParam("in-process-login-token") final String token,
+			@FormParam("provider") final String provider,
+			@FormParam("id") final String remoteID) {
+		
+		return Response.ok().entity(provider + " " + remoteID + " ").build();
 	}
 	
 	@POST

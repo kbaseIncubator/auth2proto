@@ -58,10 +58,11 @@ public class Authentication {
 	//TODO ADMIN force user pwd reset
 	//TODO NOW tokens - redirect to standard login if not logged in (other pages as well)
 	//TODO USERPROFILE email & username change propagation
-	//TODO USERCONFIG set email & username privacy & respect
+	//TODO USERCONFIG set email & username privacy & respect (in both legacy apis)
 	//TODO USERCONFIG set email & username
 	//TODO NOW allow redirect url on login
 	//TODO NOW move jars into kbase/jars
+	//TODO DEPLOY jetty should start app immediately & fail if app fails
 	
 	private final AuthStorage storage;
 	private final Map<String, IdentityProvider> idprov;
