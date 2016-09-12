@@ -13,28 +13,37 @@ public class IdentityProviderConfig {
 	private final String clientID;
 	private final String clientSecrect;
 	private final URI imageURI;
-	private final URL redirectURL;
-	private final URL baseURL;
+	private final URL loginURL;
+	private final URL apiURL;
+	private final URL loginRedirectURL;
+	private final URL linkRedirectURL;
 	
 	public IdentityProviderConfig(
 			final String identityProviderName,
-			final URL baseURL,
+			final URL loginURL,
+			final URL apiURL,
 			final String clientID,
 			final String clientSecrect,
 			final URI imgURI,
-			final URL redirectURL) {
+			final URL loginRedirectURL,
+			final URL linkRedirectURL) {
 		super();
 		//TODO NOW check for nulls & empty strings
-		this.identityProviderName = identityProviderName;
-		this.clientID = clientID;
-		this.clientSecrect = clientSecrect;
+		this.identityProviderName = identityProviderName.trim();
+		this.clientID = clientID.trim();
+		this.clientSecrect = clientSecrect.trim();
 		this.imageURI = imgURI;
-		this.redirectURL = redirectURL;
-		this.baseURL = baseURL;
-		checkValidURI(this.redirectURL, "Redirect url");
-		checkValidURI(this.baseURL, "Base url");
-		
+		this.loginURL = loginURL;
+		this.apiURL = apiURL;
+		this.loginRedirectURL = loginRedirectURL;
+		this.linkRedirectURL = linkRedirectURL;
+
+		checkValidURI(this.loginURL, "Login url");
+		checkValidURI(this.apiURL, "API url");
+		checkValidURI(this.loginRedirectURL, "Login redirect url");
+		checkValidURI(this.linkRedirectURL, "Link redirect url");
 	}
+
 	private void checkValidURI(final URL url, final String name) {
 		//TODO TEST ^ is ok in a url, but not in a URI
 		try {
@@ -50,8 +59,12 @@ public class IdentityProviderConfig {
 		return identityProviderName;
 	}
 
-	public URL getBaseURL() {
-		return baseURL;
+	public URL getLoginURL() {
+		return loginURL;
+	}
+	
+	public URL getApiURL() {
+		return apiURL;
 	}
 
 	public String getClientID() {
@@ -66,7 +79,11 @@ public class IdentityProviderConfig {
 		return imageURI;
 	}
 
-	public URL getRedirectURL() {
-		return redirectURL;
+	public URL getLoginRedirectURL() {
+		return loginRedirectURL;
+	}
+	
+	public URL getLinkRedirectURL() {
+		return linkRedirectURL;
 	}
 }

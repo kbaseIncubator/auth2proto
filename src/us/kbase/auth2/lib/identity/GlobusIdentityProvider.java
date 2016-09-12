@@ -28,6 +28,9 @@ public class GlobusIdentityProvider implements IdentityProvider {
 	//TODO TEST
 	//TODO JAVADOC
 	
+	/* Docs: https://docs.globus.org/api/auth/ 
+	 */
+	
 	public static final String NAME = "Globus";
 	private static final String SCOPE =
 			"urn:globus:auth:scope:auth.globus.org:view_identities " + 
@@ -39,7 +42,7 @@ public class GlobusIdentityProvider implements IdentityProvider {
 	private static final String AUTH_CODE_PARAM = "code";
 	
 	//thread safe
-	private static final Client cli = ClientBuilder.newClient();
+	private static final Client CLI = ClientBuilder.newClient();
 	
 	private final IdentityProviderConfig cfg;
 	
@@ -67,11 +70,11 @@ public class GlobusIdentityProvider implements IdentityProvider {
 	// state will be url encoded.
 	@Override
 	public URL getLoginURL(final String state) {
-		final URI target = UriBuilder.fromUri(toURI(cfg.getBaseURL()))
+		final URI target = UriBuilder.fromUri(toURI(cfg.getLoginURL()))
 				.path(LOGIN_PATH)
 				.queryParam("scope", SCOPE)
 				.queryParam("state", state)
-				.queryParam("redirect_uri", cfg.getRedirectURL())
+				.queryParam("redirect_uri", cfg.getLoginRedirectURL())
 				.queryParam("response_type", "code")
 				.queryParam("client_id", cfg.getClientID())
 				.build();
@@ -133,7 +136,7 @@ public class GlobusIdentityProvider implements IdentityProvider {
 		if (secondaryIDs.isEmpty()) {
 			return new HashSet<>();
 		}
-		final URI idtarget = UriBuilder.fromUri(toURI(cfg.getBaseURL()))
+		final URI idtarget = UriBuilder.fromUri(toURI(cfg.getApiURL()))
 				.path(IDENTITIES_PATH)
 				.queryParam("ids", String.join(",", secondaryIDs))
 				.build();
@@ -151,7 +154,7 @@ public class GlobusIdentityProvider implements IdentityProvider {
 	private Idents getPrimaryIdentity(final String accessToken)
 			throws IdentityRetrievalException {
 		
-		final URI target = UriBuilder.fromUri(toURI(cfg.getBaseURL()))
+		final URI target = UriBuilder.fromUri(toURI(cfg.getApiURL()))
 				.path(INTROSPECT_PATH).build();
 		
 		final MultivaluedMap<String, String> formParameters =
@@ -201,7 +204,7 @@ public class GlobusIdentityProvider implements IdentityProvider {
 	private Map<String, Object> globusGetRequest(
 			final String accessToken,
 			final URI idtarget) {
-		final WebTarget wt = cli.target(idtarget);
+		final WebTarget wt = CLI.target(idtarget);
 		Response r = null;
 		try {
 			r = wt.request(MediaType.APPLICATION_JSON_TYPE)
@@ -224,10 +227,10 @@ public class GlobusIdentityProvider implements IdentityProvider {
 		final MultivaluedMap<String, String> formParameters =
 				new MultivaluedHashMap<>();
 		formParameters.add("code", authcode);
-		formParameters.add("redirect_uri", cfg.getRedirectURL().toString());
+		formParameters.add("redirect_uri", cfg.getLoginRedirectURL().toString());
 		formParameters.add("grant_type", "authorization_code");
 		
-		final URI target = UriBuilder.fromUri(toURI(cfg.getBaseURL()))
+		final URI target = UriBuilder.fromUri(toURI(cfg.getApiURL()))
 				.path(TOKEN_PATH).build();
 		
 		final Map<String, Object> m = globusPostRequest(
@@ -240,7 +243,7 @@ public class GlobusIdentityProvider implements IdentityProvider {
 			final URI target) {
 		final String bauth = "Basic " + Base64.getEncoder().encodeToString(
 				(cfg.getClientID() + ":" + cfg.getClientSecrect()).getBytes());
-		final WebTarget wt = cli.target(target);
+		final WebTarget wt = CLI.target(target);
 		Response r = null;
 		try {
 			r = wt.request(MediaType.APPLICATION_JSON_TYPE)
