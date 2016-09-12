@@ -11,10 +11,10 @@ Admin notes
   * If the reverse proxy rewrites paths for the auth server, cookie path
     rewriting must be enabled for the /login path. Nginx example:
 
-	location /auth/ {
-		proxy_pass http://localhost:20002/;
-		proxy_cookie_path /login /auth/login;
-	}
+		location /auth/ {
+			proxy_pass http://localhost:20002/;
+			proxy_cookie_path /login /auth/login;
+		}
 
 * Instructions for getting Globus OAuth2 creds are [here](https://docs.google.com/document/d/1Uidv5yhJysez7yBkZAzUHiGtD2RTzTr2VndKArGLOic/edit)
   * Note that based on one datapoint, lead time is 1 week +.
