@@ -38,11 +38,15 @@ public class KBaseAuthConfig implements AuthConfig {
 	private static final String KEY_ID_PROV = "identity-providers";
 	private static final String KEY_PREFIX_ID_PROVS = "identity-provider-";
 	private static final String KEY_SUFFIX_ID_PROVS_IMG = "-image-uri";
-	private static final String KEY_SUFFIX_ID_PROVS_URL = "-base-url";
+	private static final String KEY_SUFFIX_ID_PROVS_LOGIN_URL = "-login-url";
+	private static final String KEY_SUFFIX_ID_PROVS_API_URL = "-api-url";
 	private static final String KEY_SUFFIX_ID_PROVS_CLIENT_ID = "-client-id";
 	private static final String KEY_SUFFIX_ID_PROVS_CLIENT_SEC =
 			"-client-secret";
-	private static final String KEY_SUFFIX_ID_PROVS_REDIRECT = "-redirect-url";
+	private static final String KEY_SUFFIX_ID_PROVS_LOGIN_REDIRECT =
+			"-login-redirect-url";
+	private static final String KEY_SUFFIX_ID_PROVS_LINK_REDIRECT =
+			"-link-redirect-url";
 	
 	private final SLF4JAutoLogger logger;
 	private final String mongoHost;
@@ -102,12 +106,15 @@ public class KBaseAuthConfig implements AuthConfig {
 					pre + KEY_SUFFIX_ID_PROVS_CLIENT_ID, cfg, true);
 			final String clisec = getString(
 					pre + KEY_SUFFIX_ID_PROVS_CLIENT_SEC, cfg, true);
-			final URL redirect = getURL(pre + KEY_SUFFIX_ID_PROVS_REDIRECT,
-					cfg);
-			final URL base = getURL(pre + KEY_SUFFIX_ID_PROVS_URL, cfg);
+			final URL login = getURL(pre + KEY_SUFFIX_ID_PROVS_LOGIN_URL, cfg);
+			final URL api = getURL(pre + KEY_SUFFIX_ID_PROVS_API_URL, cfg);
+			final URL loginRedirect = getURL(
+					pre + KEY_SUFFIX_ID_PROVS_LOGIN_REDIRECT, cfg);
+			final URL linkRedirect = getURL(
+					pre + KEY_SUFFIX_ID_PROVS_LINK_REDIRECT, cfg);
 			try {
-				ips.add(new IdentityProviderConfig(
-						p, base, cliid, clisec, imgURL, redirect));
+				ips.add(new IdentityProviderConfig(p, login, api,
+						cliid, clisec, imgURL, loginRedirect, linkRedirect));
 			} catch (IllegalArgumentException e) {
 				//TODO TEST ^ is ok in a url, but not in a URI
 				throw new AuthConfigurationException(String.format(

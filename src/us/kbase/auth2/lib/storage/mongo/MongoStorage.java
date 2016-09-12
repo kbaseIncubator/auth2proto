@@ -106,9 +106,9 @@ public class MongoStorage implements AuthStorage {
 		//find user by provider and ensure providers are 1:1 with users
 		users.put(Arrays.asList(
 				Fields.USER_IDENTITIES + Fields.FIELD_SEP +
-					Fields.PROVIDER_FULL_NAME,
+					Fields.IDENTITIES_PROVIDER,
 				Fields.USER_IDENTITIES + Fields.FIELD_SEP +
-					Fields.PROVIDER_USER_ID),
+					Fields.IDENTITIES_ID),
 				IDX_UNIQ_SPARSE);
 		INDEXES.put(COL_USERS, users);
 		

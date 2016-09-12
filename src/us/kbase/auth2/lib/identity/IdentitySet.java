@@ -1,6 +1,7 @@
 package us.kbase.auth2.lib.identity;
 
 import java.util.Collections;
+import java.util.HashSet;
 import java.util.Set;
 
 public class IdentitySet {
@@ -13,10 +14,13 @@ public class IdentitySet {
 	
 	public IdentitySet(
 			final RemoteIdentity primary,
-			final Set<RemoteIdentity> secondaries) {
+			Set<RemoteIdentity> secondaries) {
 		super();
 		//TODO NOW check for nulls
 		this.primary = primary;
+		if (secondaries == null) {
+			secondaries = new HashSet<>();
+		}
 		this.secondaries = Collections.unmodifiableSet(secondaries);
 	}
 

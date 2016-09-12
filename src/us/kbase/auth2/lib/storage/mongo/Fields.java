@@ -21,13 +21,14 @@ public class Fields {
 	public static final String USER_SALT = "salt";
 	public static final String USER_RESET_PWD = "rstpwd";
 	
-	//user - id provider fields
-	public static final String PROVIDER_NAME = "prov";
-	public static final String PROVIDER_USER_NAME = "uname";
-	public static final String PROVIDER_USER_ID = "uid";
-	public static final String PROVIDER_USER_EMAIL = "uemail";
-	public static final String PROVIDER_FULL_NAME = "ufull";
-
+	//identities fields
+	public static final String IDENTITIES_PROVIDER = "prov";
+	public static final String IDENTITIES_ID = "id";
+	public static final String IDENTITIES_PRIME = "primary";
+	public static final String IDENTITIES_USER = "uid";
+	public static final String IDENTITIES_NAME = "fullname";
+	public static final String IDENTITIES_EMAIL = "email";
+	
 	//token fields
 	public static final String TOKEN_USER_NAME = "user";
 	public static final String TOKEN_TOKEN = "token";
@@ -42,14 +43,6 @@ public class Fields {
 	public static final String TEMP_TOKEN_ID = "id";
 	public static final String TEMP_TOKEN_CREATION = "create";
 	public static final String TEMP_TOKEN_IDENTITIES = "idents";
-	
-	//identities fields
-	public static final String IDENTITIES_PROVIDER = "prov";
-	public static final String IDENTITIES_ID = "id";
-	public static final String IDENTITIES_PRIME = "primary";
-	public static final String IDENTITIES_USER = "uid";
-	public static final String IDENTITIES_NAME = "fullname";
-	public static final String IDENTITIES_EMAIL = "email";
 	
 	//Custom roles fields
 	public static final String ROLES_ID = "id";
