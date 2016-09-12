@@ -6,6 +6,7 @@ import static us.kbase.auth2.service.api.CookieUtils.getMaxCookieAge;
 import java.net.URI;
 import java.net.URISyntaxException;
 import java.net.URL;
+import java.nio.file.Paths;
 import java.security.NoSuchProviderException;
 import java.util.HashMap;
 import java.util.LinkedList;
@@ -60,7 +61,8 @@ public class Login {
 	
 	@GET
 	public Response loginStart(
-			@QueryParam("provider") final String provider)
+			@QueryParam("provider") final String provider,
+			@Context UriInfo uriInfo)
 					throws NoSuchIdentityProviderException {
 		//TODO CONFIG allow enable & disable of id providers.
 		//TODO NOW redirect url
@@ -79,7 +81,11 @@ public class Login {
 				final Map<String, String> rep = new HashMap<>();
 				rep.put("name", idp.getProviderName());
 				final URI i = idp.getImageURI();
-				rep.put("img", i.isAbsolute() ? i.toString() : ".." + i);
+				if (i.isAbsolute()) {
+					rep.put("img", i.toString());
+				} else {
+					rep.put("img", relativize(uriInfo, i));
+				}
 				provs.add(rep);
 			}
 			ret.put("hasprov", !provs.isEmpty());
@@ -87,6 +93,31 @@ public class Login {
 			return Response.ok().entity(new Viewable("/loginstart", ret))
 					.build();
 		}
+	}
+	
+	//target should be path from root of application
+	//target should not be absolute
+	private String relativize(
+			final UriInfo current,
+			final URI target) {
+		return relativize(current, target.toString());
+	}
+	
+	// attempts to deal with the mess of returning a relative path to the
+	// target from the current location that makes Jersey happy.
+	private String relativize(
+			final UriInfo current,
+			final String target) {
+		// jfc what a mess
+		java.nio.file.Path c = Paths.get("/" + current.getPath()).normalize();
+		if (!current.getPath().endsWith("/")) {
+			c = c.getParent();
+		}
+		if (c == null) {
+			c = Paths.get("/");
+		}
+		final java.nio.file.Path t = Paths.get(target);
+		return c.relativize(t).toString();
 	}
 
 	private NewCookie getStateCookie(final String state) {
@@ -176,13 +207,8 @@ public class Login {
 			ret.put("username", ids.getPrimary().getUsername());
 			ret.put("fullname", ids.getPrimary().getFullname());
 			ret.put("email", ids.getPrimary().getEmail());
-			final String createurl;
-			if (uriInfo.getAbsolutePath().toString().endsWith("/")) {
-				createurl = "../create";
-			} else {
-				createurl = "./create";
-			}
-			ret.put("createurl", createurl);
+			ret.put("createurl",
+					relativize(uriInfo, "/login/create"));
 			//TODO NOW handle secondaries
 			
 		} else {

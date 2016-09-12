@@ -73,7 +73,7 @@ public class Tokens {
 	@POST
 	@Path("/create")
 	@Produces(MediaType.TEXT_HTML)
-	@Template(name = "/createtoken")
+	@Template(name = "/tokencreate")
 	public APINewToken createTokenHTML(
 			@CookieParam("token") final String userToken,
 			@FormParam("tokenname") final String tokenName,
