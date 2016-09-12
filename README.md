@@ -18,6 +18,8 @@ Admin notes
 
 * Instructions for getting Globus OAuth2 creds are [here](https://docs.google.com/document/d/1Uidv5yhJysez7yBkZAzUHiGtD2RTzTr2VndKArGLOic/edit)
   * Note that based on one datapoint, lead time is 1 week +.
+* Get Google OAuth2 creds [here](https://console.developers.google.com/apis)
+  * Note that the Google+ API must be enabled.
 
 Requirements
 ------------

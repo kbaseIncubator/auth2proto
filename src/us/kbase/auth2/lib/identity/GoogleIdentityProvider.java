@@ -4,6 +4,7 @@ import java.net.MalformedURLException;
 import java.net.URI;
 import java.net.URISyntaxException;
 import java.net.URL;
+import java.util.List;
 import java.util.Map;
 
 import javax.ws.rs.client.Client;
@@ -20,12 +21,11 @@ public class GoogleIdentityProvider implements IdentityProvider {
 
 	//TODO TEST
 	//TODO JAVADOC
-	//TODO NOW look for common methods between Google and Globus
-	
 	
 	/* Get creds: https://console.developers.google.com/apis
-	 * ( need to enable google+)?
+	 * Google+ API must be enabled
 	 * Docs:
+	 * https://developers.google.com/identity/protocols/OAuth2
 	 * https://developers.google.com/identity/protocols/OAuth2WebServer
 	 * https://developers.google.com/+/web/api/rest/oauth#login-scopes
 	 * https://developers.google.com/+/web/api/rest/latest/people/get
@@ -34,9 +34,10 @@ public class GoogleIdentityProvider implements IdentityProvider {
 	
 	public static final String NAME = "Google";
 	private static final String SCOPE =
-			"https://www.googleapis.com/auth/plus.me profile";
+			"https://www.googleapis.com/auth/plus.me profile email";
 	private static final String LOGIN_PATH = "/o/oauth2/v2/auth";
 	private static final String TOKEN_PATH = "/oauth2/v4/token";
+	private static final String IDENTITY_PATH = "/plus/v1/people/me";
 	private static final String AUTH_CODE_PARAM = "code";
 	
 	//thread safe
@@ -112,9 +113,42 @@ public class GoogleIdentityProvider implements IdentityProvider {
 	}
 
 	private RemoteIdentity getIdentity(final String accessToken) {
-		
-		// TODO Auto-generated method stub
-		return null;
+		final URI target = UriBuilder.fromUri(toURI(cfg.getApiURL()))
+				.path(IDENTITY_PATH).build();
+		final Map<String, Object> id = googleGetRequest(
+				accessToken, target);
+		@SuppressWarnings("unchecked")
+		final List<Map<String, String>> emails =
+				(List<Map<String, String>>) id.get("emails");
+		final String email = emails.get(0).get("value");
+		return new RemoteIdentity(
+				NAME,
+				(String) id.get("id"),
+				email, // use email for user id
+				(String) id.get("displayName"),
+				email,
+				true);
+	}
+
+	private Map<String, Object> googleGetRequest(
+			final String accessToken,
+			final URI target) {
+		final WebTarget wt = CLI.target(target);
+		Response r = null;
+		try {
+			r = wt.request(MediaType.APPLICATION_JSON_TYPE)
+					.header("Authorization", "Bearer " + accessToken)
+					.get();
+			//TODO TEST with 500s with HTML
+			@SuppressWarnings("unchecked")
+			final Map<String, Object> mtemp = r.readEntity(Map.class);
+			//TODO NOW handle {error=?} in object and check response code
+			return mtemp;
+		} finally {
+			if (r != null) {
+				r.close();
+			}
+		}
 	}
 
 	private String getAccessToken(final String authcode) {
@@ -132,7 +166,6 @@ public class GoogleIdentityProvider implements IdentityProvider {
 		
 		final Map<String, Object> m = googlePostRequest(
 				formParameters, target);
-		System.out.println(m);
 		return (String) m.get("access_token");
 	}
 
