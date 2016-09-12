@@ -218,9 +218,21 @@ public class Login {
 	public Response pickAccount(
 			@CookieParam("in-process-login-token") final String token,
 			@FormParam("provider") final String provider,
-			@FormParam("id") final String remoteID) {
+			@FormParam("id") final String remoteID)
+			throws NoTokenProvidedException, AuthenticationException,
+			AuthStorageException {
 		
-		return Response.ok().entity(provider + " " + remoteID + " ").build();
+		if (token == null || token.trim().isEmpty()) {
+			throw new NoTokenProvidedException(
+					"Missing in-process-login-token");
+		}
+		final NewToken newtoken = auth.login(
+				new IncomingToken(token), provider, remoteID);
+		//TODO NOW use provided redirect, default to user profile
+		return Response.seeOther(toURI("/tokens"))
+				//TODO NOW can't set keep me logged in here, so set in profile
+				.cookie(getLoginCookie(newtoken, true))
+				.cookie(getLoginInProcessCookie(null)).build();
 	}
 	
 	@POST

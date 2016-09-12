@@ -39,7 +39,11 @@ public class APIUtils {
 			c = Paths.get("");
 		}
 		final Path t = Paths.get(target);
-		return c.relativize(t).toString();
+		String rel = c.relativize(t).toString();
+		if (target.endsWith("/") && !rel.isEmpty()) { // Path strips trailing slashes
+			rel = rel + "/";
+		}
+		return rel;
 	}
 
 	public static NewCookie getLoginCookie(final NewToken token) {
