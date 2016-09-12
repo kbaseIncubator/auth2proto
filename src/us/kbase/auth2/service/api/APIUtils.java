@@ -39,7 +39,11 @@ public class APIUtils {
 			c = Paths.get("");
 		}
 		final Path t = Paths.get(target);
-		return c.relativize(t).toString();
+		String rel = c.relativize(t).toString();
+		if (target.endsWith("/") && !rel.isEmpty()) { // Path strips trailing slashes
+			rel = rel + "/";
+		}
+		return rel;
 	}
 
 	public static NewCookie getLoginCookie(final NewToken token) {
@@ -52,7 +56,7 @@ public class APIUtils {
 		return new NewCookie(new Cookie("token",
 				token == null ? "no token" :token.getToken(), "/", null),
 				"authtoken",
-				token == null ? 0 :APIUtils.getMaxCookieAge(token, session),
+				token == null ? 0 : getMaxCookieAge(token, session),
 				APIConstants.SECURE_COOKIES);
 	}
 

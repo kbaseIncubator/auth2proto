@@ -58,10 +58,11 @@ public class Authentication {
 	//TODO ADMIN force user pwd reset
 	//TODO NOW tokens - redirect to standard login if not logged in (other pages as well)
 	//TODO USERPROFILE email & username change propagation
-	//TODO USERCONFIG set email & username privacy & respect
+	//TODO USERCONFIG set email & username privacy & respect (in both legacy apis)
 	//TODO USERCONFIG set email & username
 	//TODO NOW allow redirect url on login
 	//TODO NOW move jars into kbase/jars
+	//TODO DEPLOY jetty should start app immediately & fail if app fails
 	
 	private final AuthStorage storage;
 	private final Map<String, IdentityProvider> idprov;
@@ -437,6 +438,43 @@ public class Authentication {
 				UserExistsException {
 		//TODO NOW handle sessionLogin, privateNameEmail
 		
+		final RemoteIdentity match = getIdentity(token, provider, remoteID);
+		storage.createUser(new AuthUser(userName, email, fullName,
+				new HashSet<>(Arrays.asList(match)), null, null));
+		final NewToken nt = new NewToken(tokens.getToken(), userName,
+				//TODO CONFIG make token lifetime configurable
+				14 * 24 * 60 * 60 * 1000);
+		storage.storeToken(nt.getHashedToken());
+		return nt;
+	}
+
+
+	public NewToken login(
+			final IncomingToken token,
+			final String provider,
+			final String remoteID)
+			throws AuthenticationException, AuthStorageException {
+		final RemoteIdentity ri = getIdentity(token, provider, remoteID);
+		final AuthUser u = storage.getUser(ri);
+		if (u == null) {
+			// someone's trying to login to an account they haven't created yet
+			// The UI shouldn't allow this, but they can always curl
+			throw new AuthenticationException(ErrorType.AUTHENTICATION_FAILED,
+					"There is no account linked to the provided identity");
+		}
+		
+		final NewToken nt = new NewToken(tokens.getToken(), u.getUserName(),
+				//TODO CONFIG make token lifetime configurable
+				14 * 24 * 60 * 60 * 1000);
+		storage.storeToken(nt.getHashedToken());
+		return nt;
+	}
+	
+	public RemoteIdentity getIdentity(
+			final IncomingToken token,
+			final String provider,
+			final String remoteID)
+			throws AuthStorageException, AuthenticationException {
 		final Set<RemoteIdentity> ids = getTemporaryIdentities(token);
 		RemoteIdentity match = null;
 		for (final RemoteIdentity ri: ids) {
@@ -447,14 +485,8 @@ public class Authentication {
 		}
 		if (match == null) {
 			throw new AuthenticationException(ErrorType.AUTHENTICATION_FAILED,
-					"Not authorized to create account linked to provided identity");
+					"Not authorized to manage account linked to provided identity");
 		}
-		storage.createUser(new AuthUser(userName, email, fullName,
-				new HashSet<>(Arrays.asList(match)), null, null));
-		final NewToken nt = new NewToken(tokens.getToken(), userName,
-				//TODO CONFIG make token lifetime configurable
-				14 * 24 * 60 * 60 * 1000);
-		storage.storeToken(nt.getHashedToken());
-		return nt;
+		return match;
 	}
 }
