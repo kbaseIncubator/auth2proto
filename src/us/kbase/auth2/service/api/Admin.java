@@ -1,5 +1,7 @@
 package us.kbase.auth2.service.api;
 
+import static us.kbase.auth2.service.api.APIUtils.relativize;
+
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.LinkedList;
@@ -17,8 +19,10 @@ import javax.ws.rs.Path;
 import javax.ws.rs.PathParam;
 import javax.ws.rs.Produces;
 import javax.ws.rs.QueryParam;
+import javax.ws.rs.core.Context;
 import javax.ws.rs.core.MediaType;
 import javax.ws.rs.core.MultivaluedMap;
+import javax.ws.rs.core.UriInfo;
 
 import org.glassfish.jersey.server.mvc.Template;
 
@@ -58,10 +62,12 @@ public class Admin {
 	@Template(name = "/adminlocalaccount")
 	@Produces(MediaType.TEXT_HTML)
 	public Map<String, String> createLocalAccountStart(
-			@QueryParam("admin") final String adminName) {
+			@QueryParam("admin") final String adminName,
+			@Context final UriInfo uriInfo) {
 		//TODO ADMIN get adminName from token
 		return ImmutableMap.of("name", adminName,
-				"targeturl", "/admin/localaccount/create");
+				"targeturl",
+					relativize(uriInfo, "/admin/localaccount/create"));
 	}
 	
 	@POST
@@ -97,7 +103,8 @@ public class Admin {
 	@Template(name = "/adminuser")
 	@Produces(MediaType.TEXT_HTML)
 	public Map<String, Object> userDisplay(
-			@PathParam("user") final String user)
+			@PathParam("user") final String user,
+			@Context final UriInfo uriInfo)
 		throws AuthStorageException, NoSuchUserException {
 		//TODO ADMIN get adminname from token & check
 		final IncomingToken adminToken = new IncomingToken("fake");
@@ -106,7 +113,8 @@ public class Admin {
 		final Set<CustomRole> roles = auth.getCustomRoles(adminToken);
 		final Map<String, Object> ret = new HashMap<>();
 		ret.put("custom", setUpCustomRoles(roles, au.getCustomRoles()));
-		ret.put("roleurl", "/admin/user/" + user + "/roles");
+		ret.put("roleurl", relativize(uriInfo,
+				"/admin/user/" + user + "/roles"));
 		ret.put("user", au.getUserName().getName());
 		ret.put("full", au.getFullName());
 		ret.put("email", au.getEmail());
@@ -181,11 +189,13 @@ public class Admin {
 	@GET
 	@Path("/customroles")
 	@Template(name = "/admincustomroles")
-	public Map<String, Object> customRoles() throws AuthStorageException {
+	public Map<String, Object> customRoles(@Context final UriInfo uriInfo)
+			throws AuthStorageException {
 		//TODO ADMIN check is admin
 		final Set<CustomRole> roles = auth.getCustomRoles(
 				new IncomingToken("fake"));
-		return ImmutableMap.of("custroleurl", "/admin/customroles/set",
+		return ImmutableMap.of(
+				"custroleurl", relativize(uriInfo, "/admin/customroles/set"),
 				"roles", roles);
 	}
 	

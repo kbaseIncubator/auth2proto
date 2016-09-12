@@ -1,7 +1,8 @@
 package us.kbase.auth2.service.api;
 
-import static us.kbase.auth2.service.api.CookieUtils.getLoginCookie;
-import static us.kbase.auth2.service.api.CookieUtils.getMaxCookieAge;
+import static us.kbase.auth2.service.api.APIUtils.relativize;
+import static us.kbase.auth2.service.api.APIUtils.getLoginCookie;
+import static us.kbase.auth2.service.api.APIUtils.getMaxCookieAge;
 
 import java.net.URI;
 import java.net.URISyntaxException;
@@ -60,7 +61,8 @@ public class Login {
 	
 	@GET
 	public Response loginStart(
-			@QueryParam("provider") final String provider)
+			@QueryParam("provider") final String provider,
+			@Context UriInfo uriInfo)
 					throws NoSuchIdentityProviderException {
 		//TODO CONFIG allow enable & disable of id providers.
 		//TODO NOW redirect url
@@ -79,7 +81,11 @@ public class Login {
 				final Map<String, String> rep = new HashMap<>();
 				rep.put("name", idp.getProviderName());
 				final URI i = idp.getImageURI();
-				rep.put("img", i.isAbsolute() ? i.toString() : ".." + i);
+				if (i.isAbsolute()) {
+					rep.put("img", i.toString());
+				} else {
+					rep.put("img", relativize(uriInfo, i));
+				}
 				provs.add(rep);
 			}
 			ret.put("hasprov", !provs.isEmpty());
@@ -90,7 +96,6 @@ public class Login {
 	}
 
 	private NewCookie getStateCookie(final String state) {
-		//TODO TEST path works with nginx path rewriting
 		return new NewCookie(new Cookie(
 				"statevar", state == null ? "no state" : state,
 						"/login/complete", null),
@@ -143,9 +148,7 @@ public class Login {
 
 	private NewCookie getLoginInProcessCookie(final TemporaryToken token) {
 		return new NewCookie(new Cookie("in-process-login-token",
-				token == null ? "no token" : token.getToken(),
-						//TODO TEST cookies work with nginx path rewriting
-				"/login", null),
+				token == null ? "no token" : token.getToken(), "/login", null),
 				"authtoken", token == null ? 0 : getMaxCookieAge(token, false),
 				APIConstants.SECURE_COOKIES);
 	}
@@ -176,13 +179,8 @@ public class Login {
 			ret.put("username", ids.getPrimary().getUsername());
 			ret.put("fullname", ids.getPrimary().getFullname());
 			ret.put("email", ids.getPrimary().getEmail());
-			final String createurl;
-			if (uriInfo.getAbsolutePath().toString().endsWith("/")) {
-				createurl = "../create";
-			} else {
-				createurl = "./create";
-			}
-			ret.put("createurl", createurl);
+			ret.put("createurl",
+					relativize(uriInfo, "/login/create"));
 			//TODO NOW handle secondaries
 			
 		} else {

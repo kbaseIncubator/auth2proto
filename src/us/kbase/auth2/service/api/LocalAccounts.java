@@ -1,6 +1,7 @@
 package us.kbase.auth2.service.api;
 
-import static us.kbase.auth2.service.api.CookieUtils.getLoginCookie;
+import static us.kbase.auth2.service.api.APIUtils.getLoginCookie;
+import static us.kbase.auth2.service.api.APIUtils.relativize;
 
 import java.util.Map;
 
@@ -11,8 +12,10 @@ import javax.ws.rs.GET;
 import javax.ws.rs.POST;
 import javax.ws.rs.Path;
 import javax.ws.rs.Produces;
+import javax.ws.rs.core.Context;
 import javax.ws.rs.core.MediaType;
 import javax.ws.rs.core.Response;
+import javax.ws.rs.core.UriInfo;
 
 import org.glassfish.jersey.server.mvc.Template;
 import org.glassfish.jersey.server.mvc.Viewable;
@@ -42,8 +45,9 @@ public class LocalAccounts {
 	@Path("/login")
 	@Template(name = "/locallogin")
 	@Produces(MediaType.TEXT_HTML)
-	public Map<String, String> login() {
-		return ImmutableMap.of("targeturl", "/localaccount/login/result");
+	public Map<String, String> login(@Context final UriInfo uriInfo) {
+		return ImmutableMap.of("targeturl",
+				relativize(uriInfo, "/localaccount/login/result"));
 	}
 	
 	@POST

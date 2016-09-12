@@ -1,6 +1,7 @@
 package us.kbase.auth2.service.api;
 
-import static us.kbase.auth2.service.api.CookieUtils.getLoginCookie;
+import static us.kbase.auth2.service.api.APIUtils.getLoginCookie;
+import static us.kbase.auth2.service.api.APIUtils.relativize;
 
 import java.util.HashMap;
 import java.util.List;
@@ -19,8 +20,10 @@ import javax.ws.rs.POST;
 import javax.ws.rs.Path;
 import javax.ws.rs.PathParam;
 import javax.ws.rs.Produces;
+import javax.ws.rs.core.Context;
 import javax.ws.rs.core.MediaType;
 import javax.ws.rs.core.Response;
+import javax.ws.rs.core.UriInfo;
 
 import org.glassfish.jersey.server.mvc.Template;
 
@@ -49,14 +52,15 @@ public class Tokens {
 	@Produces(MediaType.TEXT_HTML)
 	@Template(name = "/tokens")
 	public Map<String, Object> getTokensHTML(
-			@CookieParam("token") final String token)
+			@CookieParam("token") final String token,
+			@Context final UriInfo uriInfo)
 			throws AuthStorageException, InvalidTokenException,
 			NoTokenProvidedException {
 		final Map<String, Object> t = getTokens(token);
 		t.put("user", ((APIToken) t.get("current")).getUser());
-		t.put("targeturl", "/tokens/create");
-		t.put("tokenurl", "/tokens");
-		t.put("revokeallurl", "/tokens/revokeall");
+		t.put("targeturl", relativize(uriInfo, "/tokens/create"));
+		t.put("tokenurl", relativize(uriInfo, "/tokens/"));
+		t.put("revokeallurl", relativize(uriInfo, "/tokens/revokeall"));
 		return t;
 	}
 	
@@ -73,7 +77,7 @@ public class Tokens {
 	@POST
 	@Path("/create")
 	@Produces(MediaType.TEXT_HTML)
-	@Template(name = "/createtoken")
+	@Template(name = "/tokencreate")
 	public APINewToken createTokenHTML(
 			@CookieParam("token") final String userToken,
 			@FormParam("tokenname") final String tokenName,
