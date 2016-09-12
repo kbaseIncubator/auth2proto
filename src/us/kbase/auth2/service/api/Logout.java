@@ -1,6 +1,7 @@
 package us.kbase.auth2.service.api;
 
 import static us.kbase.auth2.service.api.APIUtils.getLoginCookie;
+import static us.kbase.auth2.service.api.APIUtils.relativize;
 
 import java.util.Map;
 
@@ -9,7 +10,9 @@ import javax.ws.rs.CookieParam;
 import javax.ws.rs.GET;
 import javax.ws.rs.POST;
 import javax.ws.rs.Path;
+import javax.ws.rs.core.Context;
 import javax.ws.rs.core.Response;
+import javax.ws.rs.core.UriInfo;
 
 import org.glassfish.jersey.server.mvc.Template;
 import org.glassfish.jersey.server.mvc.Viewable;
@@ -32,13 +35,14 @@ public class Logout {
 	@GET
 	@Template(name = "/logout")
 	public Map<String, String> logout(
-			@CookieParam("token") final String token)
+			@CookieParam("token") final String token,
+			@Context final UriInfo uriInfo)
 			throws AuthStorageException, NoTokenProvidedException,
 			InvalidTokenException {
 		checkToken(token);
 		final HashedToken ht = auth.getToken(new IncomingToken(token));
 		return ImmutableMap.of("user", ht.getUserName().getName(),
-				"logouturl", "/logout/result");
+				"logouturl", relativize(uriInfo, "/logout/result"));
 	}
 	
 	@POST
