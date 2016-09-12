@@ -11,7 +11,7 @@ accounts and tests if any, allow setting auth service url
 * Shock & Awe - Rich
 * Perl auth & server stubs - Keith
 * Handle service & manager - Keith
-* Narrative (Lua) - Bill R. (external to auth team)
+* Narrative (Login UI and Lua) - Bill R. (external to auth team)
 * kb_sdk
   * Tests support token vs uid/pwd & setting auth url
   * Recompile & test all SDK modules

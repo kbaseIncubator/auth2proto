@@ -59,7 +59,7 @@ public class Tokens {
 		final Map<String, Object> t = getTokens(token);
 		t.put("user", ((APIToken) t.get("current")).getUser());
 		t.put("targeturl", relativize(uriInfo, "/tokens/create"));
-		t.put("tokenurl", relativize(uriInfo, "/tokens"));
+		t.put("tokenurl", relativize(uriInfo, "/tokens/"));
 		t.put("revokeallurl", relativize(uriInfo, "/tokens/revokeall"));
 		return t;
 	}

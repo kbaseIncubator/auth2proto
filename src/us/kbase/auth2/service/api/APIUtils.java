@@ -36,7 +36,7 @@ public class APIUtils {
 			c = c.getParent();
 		}
 		if (c == null) {
-			c = Paths.get("/");
+			c = Paths.get("");
 		}
 		final Path t = Paths.get(target);
 		return c.relativize(t).toString();
