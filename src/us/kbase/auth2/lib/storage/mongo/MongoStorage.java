@@ -32,6 +32,7 @@ import us.kbase.auth2.lib.CustomRole;
 import us.kbase.auth2.lib.LocalUser;
 import us.kbase.auth2.lib.Role;
 import us.kbase.auth2.lib.UserName;
+import us.kbase.auth2.lib.UserUpdate;
 import us.kbase.auth2.lib.exceptions.LinkFailedException;
 import us.kbase.auth2.lib.exceptions.MissingParameterException;
 import us.kbase.auth2.lib.exceptions.NoSuchTokenException;
@@ -804,5 +805,32 @@ public class MongoStorage implements AuthStorage {
 	private Set<Document> toDocument(final Set<RemoteIdentity> rids) {
 		return rids.stream().map(ri -> toDocument(ri))
 				.collect(Collectors.toSet());
+	}
+
+	@Override
+	public void updateUser(final UserName userName, final UserUpdate update)
+			throws NoSuchUserException, AuthStorageException{
+		final Document q = new Document(Fields.USER_NAME, userName.getName());
+		if (!update.hasUpdates()) {
+			return; //noop
+		}
+		final Document d = new Document();
+		if (update.getFullname() != null) {
+			d.append(Fields.USER_FULL_NAME, update.getFullname());
+		}
+		if (update.getEmail() != null) {
+			d.append(Fields.USER_EMAIL, update.getEmail());
+		}
+		final Document a = new Document("$set", d);
+		try {
+			final UpdateResult r = db.getCollection(COL_USERS).updateOne(q, a);
+			if (r.getMatchedCount() != 1) {
+				throw new NoSuchUserException(userName.getName());
+			}
+			// if it wasn't modified no problem.
+		} catch (MongoException me) {
+			throw new AuthStorageException(
+					"Connection to database failed", me);
+		}
 	}
 }

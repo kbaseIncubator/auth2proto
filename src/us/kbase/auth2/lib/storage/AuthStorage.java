@@ -8,6 +8,7 @@ import us.kbase.auth2.lib.CustomRole;
 import us.kbase.auth2.lib.LocalUser;
 import us.kbase.auth2.lib.Role;
 import us.kbase.auth2.lib.UserName;
+import us.kbase.auth2.lib.UserUpdate;
 import us.kbase.auth2.lib.exceptions.LinkFailedException;
 import us.kbase.auth2.lib.exceptions.NoSuchTokenException;
 import us.kbase.auth2.lib.exceptions.NoSuchUserException;
@@ -92,4 +93,7 @@ public interface AuthStorage {
 
 	void unlink(UserName userName, String provider, String id)
 			throws AuthStorageException, UnLinkFailedException;
+
+	void updateUser(UserName userName, UserUpdate update)
+			throws NoSuchUserException, AuthStorageException;
 }

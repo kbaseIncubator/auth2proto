@@ -571,13 +571,13 @@ public class Authentication {
 			final String remoteID)
 			throws AuthStorageException, AuthenticationException,
 			LinkFailedException {
-		final AuthUser u = getUser(token);
+		final HashedToken ht = getToken(token);
 		final RemoteIdentity ri = getIdentity(linktoken, provider, remoteID);
 		try {
-			storage.link(u.getUserName(), ri);
+			storage.link(ht.getUserName(), ri);
 		} catch (NoSuchUserException e) {
-			throw new AuthStorageException(
-					"User unexpectedly disappeared from the database", e);
+			throw new AuthStorageException("Token without a user: " +
+					ht.getId());
 		}
 	}
 
@@ -589,8 +589,25 @@ public class Authentication {
 			throws InvalidTokenException, AuthStorageException,
 			UnLinkFailedException {
 		//TODO NOW use own identity ID
-		final AuthUser u = getUser(token);
-		storage.unlink(u.getUserName(), provider, id);
+		final HashedToken ht = getToken(token);
+		storage.unlink(ht.getUserName(), provider, id);
 		
+	}
+
+
+	public void updateUser(
+			final IncomingToken token,
+			final UserUpdate update)
+			throws InvalidTokenException, AuthStorageException {
+		if (!update.hasUpdates()) {
+			return; //noop
+		}
+		final HashedToken ht = getToken(token);
+		try {
+			storage.updateUser(ht.getUserName(), update);
+		} catch (NoSuchUserException e) {
+			throw new AuthStorageException("Token without a user: " +
+					ht.getId());
+		}
 	}
 }

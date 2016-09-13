@@ -10,6 +10,7 @@ import java.util.stream.Collectors;
 
 import javax.inject.Inject;
 import javax.ws.rs.CookieParam;
+import javax.ws.rs.FormParam;
 import javax.ws.rs.GET;
 import javax.ws.rs.POST;
 import javax.ws.rs.Path;
@@ -21,6 +22,7 @@ import org.glassfish.jersey.server.mvc.Template;
 
 import us.kbase.auth2.lib.AuthUser;
 import us.kbase.auth2.lib.Authentication;
+import us.kbase.auth2.lib.UserUpdate;
 import us.kbase.auth2.lib.exceptions.InvalidTokenException;
 import us.kbase.auth2.lib.exceptions.NoTokenProvidedException;
 import us.kbase.auth2.lib.exceptions.UnLinkFailedException;
@@ -71,6 +73,23 @@ public class Me {
 			idents.add(i);
 		}
 		return ret;
+	}
+	
+	@POST
+	public void update(
+			@CookieParam("token") final String token,
+			@FormParam("fullname") final String fullname,
+			@FormParam("email") final String email)
+			throws NoTokenProvidedException, InvalidTokenException,
+			AuthStorageException {
+		//TODO NOW check inputs
+		//TODO NOW handle keep logged in, private
+		if (token == null || token.trim().isEmpty()) {
+			throw new NoTokenProvidedException();
+		}
+		final UserUpdate uu = new UserUpdate().withEmail(email)
+				.withFullName(fullname);
+		auth.updateUser(new IncomingToken(token), uu);
 	}
 	
 	@POST
