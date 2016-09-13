@@ -33,6 +33,7 @@ Auth service work
 * Tests
   * With mock services for globus and google
 * Documentation
+  * Code documentation
   * User documentation and education (probably need doc team help here)
   * Login & signup very different
 * Admin functionality

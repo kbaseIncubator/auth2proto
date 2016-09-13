@@ -148,8 +148,7 @@ public class Link {
 		// note nginx will rewrite the redirect appropriately so absolute
 		// redirects are ok
 		if (lt.isLinked()) {
-			//TODO NOW redirect to user profile
-			r = Response.seeOther(toURI("/tokens"))
+			r = Response.seeOther(toURI("/me"))
 					.cookie(getStateCookie(null)).build();
 		} else {
 			r = Response.seeOther(toURI("/link/complete")).cookie(
@@ -229,8 +228,7 @@ public class Link {
 		}
 		auth.link(new IncomingToken(token), new IncomingToken(linktoken),
 				provider, remoteID);
-		//TODO NOW redirect to user profile
-		return Response.seeOther(toURI("/tokens"))
+		return Response.seeOther(toURI("/me"))
 				.cookie(getLinkInProcessCookie(null)).build();
 	}
 	

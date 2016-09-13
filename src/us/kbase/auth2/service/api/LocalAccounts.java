@@ -72,8 +72,7 @@ public class LocalAccounts {
 		//TODO NOW log
 		pwd = null; // try to get pwd GC'd as quickly as possible
 		//TODO NOW if reset required, do reset
-		//TODO NOW redirect to user profile
-		return Response.seeOther(toURI("/tokens"))
+		return Response.seeOther(toURI("/me"))
 				.cookie(getLoginCookie(t, stayLoggedIn == null))
 				.build();
 	}

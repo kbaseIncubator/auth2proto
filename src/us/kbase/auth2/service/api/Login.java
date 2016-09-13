@@ -57,7 +57,6 @@ public class Login {
 
 	//TODO TEST
 	//TODO JAVADOC
-	//TODO NOW test entire api with nginx path changes (e.g. location /foo/bar mapped to / of this server). Issues - cookies, urls passed into forms. Not issues: redirects.
 	//TODO NOW add last login date
 	//TODO NOW add account created date
 	@Inject
@@ -69,7 +68,7 @@ public class Login {
 			@Context UriInfo uriInfo)
 					throws NoSuchIdentityProviderException {
 		//TODO CONFIG allow enable & disable of id providers.
-		//TODO NOW redirect url
+		//TODO REDIRECT accept redirect url
 		if (provider != null && !provider.trim().isEmpty()) {
 			final IdentityProvider idp = auth.getIdentityProvider(
 					provider);
@@ -137,7 +136,7 @@ public class Login {
 		// note nginx will rewrite the redirect appropriately so absolute
 		// redirects are ok
 		if (lr.isLoggedIn()) {
-			//TODO NOW use provided redirect, default to user profile
+			//TODO REDIRECT use provided redirect, default to /me
 			r = Response.seeOther(toURI("/tokens"))
 			//TODO NOW can't set keep me logged in here, so set in profile
 					.cookie(getLoginCookie(lr.getToken(), true))
@@ -231,7 +230,7 @@ public class Login {
 		}
 		final NewToken newtoken = auth.login(
 				new IncomingToken(token), provider, remoteID);
-		//TODO NOW use provided redirect, default to user profile
+		//TODO REDIRECT use provided redirect, default to /me
 		return Response.seeOther(toURI("/tokens"))
 				//TODO NOW can't set keep me logged in here, so set in profile
 				.cookie(getLoginCookie(newtoken, true))
@@ -266,7 +265,7 @@ public class Login {
 		final NewToken newtoken = auth.createUser(new IncomingToken(token),
 				provider, remoteID, new UserName(userName), fullName, email,
 				sessionLogin, priv);
-		//TODO NOW use provided redirect, default to user profile
+		//TODO REDIRECT use provided redirect, default to /me
 		return Response.seeOther(toURI("/tokens"))
 		//TODO NOW can't set keep me logged in here, so set in profile
 				.cookie(getLoginCookie(newtoken, true))
