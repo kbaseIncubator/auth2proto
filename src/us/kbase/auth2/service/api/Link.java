@@ -15,7 +15,9 @@ import java.util.Map;
 
 import javax.inject.Inject;
 import javax.ws.rs.CookieParam;
+import javax.ws.rs.FormParam;
 import javax.ws.rs.GET;
+import javax.ws.rs.POST;
 import javax.ws.rs.Path;
 import javax.ws.rs.PathParam;
 import javax.ws.rs.QueryParam;
@@ -176,7 +178,7 @@ public class Link {
 			InvalidTokenException, LinkFailedException {
 		if (linktoken == null || linktoken.trim().isEmpty()) {
 			throw new NoTokenProvidedException(
-					"Missing in-process-login-token");
+					"Missing in-process-link-token");
 		}
 		if (token == null || token.trim().isEmpty()) {
 			throw new NoTokenProvidedException(
@@ -205,6 +207,31 @@ public class Link {
 		}
 		ret.put("pickurl", relativize(uriInfo, "/link/pick"));
 		return ret;
+	}
+	
+	@POST
+	@Path("/pick")
+	public Response pickAccount(
+			@CookieParam("in-process-link-token") final String linktoken,
+			@CookieParam("token") final String token,
+			@FormParam("provider") final String provider,
+			@FormParam("id") final String remoteID)
+			throws NoTokenProvidedException, AuthenticationException,
+			AuthStorageException, LinkFailedException {
+		
+		if (linktoken == null || linktoken.trim().isEmpty()) {
+			throw new NoTokenProvidedException(
+					"Missing in-process-link-token");
+		}
+		if (token == null || token.trim().isEmpty()) {
+			throw new NoTokenProvidedException(
+					"Missing user token");
+		}
+		auth.link(new IncomingToken(token), new IncomingToken(linktoken),
+				provider, remoteID);
+		//TODO NOW redirect to user profile
+		return Response.seeOther(toURI("/tokens"))
+				.cookie(getLinkInProcessCookie(null)).build();
 	}
 	
 	//Assumes valid URI in URL form

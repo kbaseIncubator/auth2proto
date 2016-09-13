@@ -492,7 +492,10 @@ public class Authentication {
 		return match;
 	}
 
-
+	// split from getlinkstate since the user may need to make a choice
+	// we assume that this is via a html page and therefore a redirect should
+	// occur before said choice to hide the authcode, hence the temporary
+	// token instead of returning the choices directly
 	public LinkToken link(
 			final IncomingToken token,
 			final String provider,
@@ -500,16 +503,10 @@ public class Authentication {
 			throws InvalidTokenException, AuthStorageException,
 			NoSuchProviderException, MissingParameterException,
 			IdentityRetrievalException, LinkFailedException {
-		final HashedToken ht = getToken(token);
-		try {
-			final AuthUser u = storage.getUser(ht.getUserName());
-			if (u.isLocal()) {
-				throw new LinkFailedException(
-						"Cannot link identities to local accounts");
-			}
-		} catch (NoSuchUserException e) {
-			throw new AuthStorageException("Valid token but no user: " +
-					ht.getId(), e);
+		final AuthUser u = getUser(token);
+		if (u.isLocal()) {
+			throw new LinkFailedException(
+					"Cannot link identities to local accounts");
 		}
 		final IdentityProvider idp = idprov.get(provider);
 		if (idp == null) {
@@ -525,10 +522,10 @@ public class Authentication {
 		final LinkToken lt;
 		if (rids.size() == 1) {
 			try {
-				storage.link(ht.getUserName(), rids.iterator().next());
+				storage.link(u.getUserName(), rids.iterator().next());
 			} catch (NoSuchUserException e) {
-				throw new AuthStorageException("Token without a user: " +
-						ht.getId(), e);
+				throw new AuthStorageException(
+						"User unexpectedly disappeared from the database", e);
 			}
 			lt = new LinkToken();
 		} else {
@@ -563,5 +560,23 @@ public class Authentication {
 		final Set<RemoteIdentity> ids = getTemporaryIdentities(linktoken);
 		filterLinkCandidates(ids);
 		return new LinkIdentities(u, ids);
+	}
+
+
+	public void link(
+			final IncomingToken token,
+			final IncomingToken linktoken,
+			final String provider,
+			final String remoteID)
+			throws AuthStorageException, AuthenticationException,
+			LinkFailedException {
+		final AuthUser u = getUser(token);
+		final RemoteIdentity ri = getIdentity(linktoken, provider, remoteID);
+		try {
+			storage.link(u.getUserName(), ri);
+		} catch (NoSuchUserException e) {
+			throw new AuthStorageException(
+					"User unexpectedly disappeared from the database", e);
+		}
 	}
 }
