@@ -75,8 +75,6 @@ public class Link {
 			final URI target = toURI(idp.getLoginURL(state, true));
 			return Response.seeOther(target)
 					.cookie(getStateCookie(state))
-					//TODO NOW remove when globus finally provides creds
-					.cookie(new NewCookie(new Cookie("temp-link", "true", "/", null), "temporary cookie", 30 * 60, false))
 					.build();
 		} else {
 			final AuthUser u = auth.getUser(new IncomingToken(token));
