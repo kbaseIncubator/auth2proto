@@ -11,7 +11,9 @@ import java.util.stream.Collectors;
 import javax.inject.Inject;
 import javax.ws.rs.CookieParam;
 import javax.ws.rs.GET;
+import javax.ws.rs.POST;
 import javax.ws.rs.Path;
+import javax.ws.rs.PathParam;
 import javax.ws.rs.core.Context;
 import javax.ws.rs.core.UriInfo;
 
@@ -21,6 +23,7 @@ import us.kbase.auth2.lib.AuthUser;
 import us.kbase.auth2.lib.Authentication;
 import us.kbase.auth2.lib.exceptions.InvalidTokenException;
 import us.kbase.auth2.lib.exceptions.NoTokenProvidedException;
+import us.kbase.auth2.lib.exceptions.UnLinkFailedException;
 import us.kbase.auth2.lib.identity.RemoteIdentity;
 import us.kbase.auth2.lib.storage.exceptions.AuthStorageException;
 import us.kbase.auth2.lib.token.IncomingToken;
@@ -68,5 +71,21 @@ public class Me {
 			idents.add(i);
 		}
 		return ret;
+	}
+	
+	@POST
+	@Path("{provider}/{id}")
+	public void unlink(
+			@CookieParam("token") final String token,
+			@PathParam("provider") final String provider,
+			@PathParam("id") final String id)
+			throws NoTokenProvidedException, InvalidTokenException,
+			AuthStorageException, UnLinkFailedException {
+		//TODO NOW make a get token method that returns an incomingtoken
+		if (token == null || token.trim().isEmpty()) {
+			throw new NoTokenProvidedException();
+		}
+		// provider and id can't be null or empty
+		auth.unlink(new IncomingToken(token), provider, id);
 	}
 }

@@ -28,6 +28,7 @@ import us.kbase.auth2.lib.exceptions.MissingParameterException;
 import us.kbase.auth2.lib.exceptions.NoSuchIdentityProviderException;
 import us.kbase.auth2.lib.exceptions.NoSuchTokenException;
 import us.kbase.auth2.lib.exceptions.NoSuchUserException;
+import us.kbase.auth2.lib.exceptions.UnLinkFailedException;
 import us.kbase.auth2.lib.exceptions.UnauthorizedException;
 import us.kbase.auth2.lib.exceptions.UserExistsException;
 import us.kbase.auth2.lib.identity.IdentityProvider;
@@ -578,5 +579,18 @@ public class Authentication {
 			throw new AuthStorageException(
 					"User unexpectedly disappeared from the database", e);
 		}
+	}
+
+
+	public void unlink(
+			final IncomingToken token,
+			final String provider,
+			final String id)
+			throws InvalidTokenException, AuthStorageException,
+			UnLinkFailedException {
+		//TODO NOW use own identity ID
+		final AuthUser u = getUser(token);
+		storage.unlink(u.getUserName(), provider, id);
+		
 	}
 }

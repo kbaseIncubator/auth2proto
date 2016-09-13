@@ -23,9 +23,11 @@ Local account<br/>
 {{#idents}}
 Provider: {{provider}}<br/>
 User id: {{username}}<br/>
+{{#unlink}}
 <form action="{{unlinkprefixurl}}{{provider}}/{{id}}" method="post">
 	<input type="submit" value="Unlink"/>
 </form>
+{{/unlink}}
 {{/idents}}
 
 </html>

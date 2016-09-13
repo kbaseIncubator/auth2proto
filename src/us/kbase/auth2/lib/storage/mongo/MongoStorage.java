@@ -36,6 +36,7 @@ import us.kbase.auth2.lib.exceptions.LinkFailedException;
 import us.kbase.auth2.lib.exceptions.MissingParameterException;
 import us.kbase.auth2.lib.exceptions.NoSuchTokenException;
 import us.kbase.auth2.lib.exceptions.NoSuchUserException;
+import us.kbase.auth2.lib.exceptions.UnLinkFailedException;
 import us.kbase.auth2.lib.exceptions.UserExistsException;
 import us.kbase.auth2.lib.identity.RemoteIdentity;
 import us.kbase.auth2.lib.storage.AuthStorage;
@@ -61,13 +62,8 @@ public class MongoStorage implements AuthStorage {
 	 * Unique indexes don't ensure that the contents of arrays are unique, just that no two documents have the same array elements
 	 * Splitting the user doc from the provider docs has a whole host of other issues, mostly wrt deletion
 	 * 
-	 * To remove provider:
-	 * 1) pull the document
-	 * 2) Remove the provider from the array
-	 * 		If it's already gone no-op
-	 * 3) update the document with $pull, querying on the contents of the updated array with $elemMatch to be sure at least one provider still exists
-	 * 4) If fail fail permanently
-	 *
+	 * Only remove identities from users with at least two identities
+	 * (see unlink fn)
 	 *	This ensures that all accounts always have one provider
 	 * 
 	 * 
@@ -768,6 +764,41 @@ public class MongoStorage implements AuthStorage {
 			throw new AuthStorageException(
 					"Connection to database failed", me);
 		}
+	}
+	
+	@Override
+	public void unlink(
+			final UserName username,
+			final String provider,
+			final String id)
+			throws AuthStorageException, UnLinkFailedException {
+		final Document q = new Document(Fields.USER_NAME, username.getName())
+				/* this a neat trick to ensure that there's at least 2
+				 * identities for the user. See
+				 * http://stackoverflow.com/a/15224544/643675
+				 */
+				.append(Fields.USER_IDENTITIES + ".1",
+						new Document("$exists", true));
+		final Document a = new Document("$pull", new Document(
+				Fields.USER_IDENTITIES, new Document(
+						Fields.IDENTITIES_PROVIDER, provider)
+						.append(Fields.IDENTITIES_ID, id)));
+		try {
+			final UpdateResult r = db.getCollection(COL_USERS).updateOne(q, a);
+			if (r.getMatchedCount() != 1) {
+				// could pull the user here to ensure it exists, but meh
+				throw new UnLinkFailedException("Either the user doesn't " +
+						"exist or only has one associated identity");
+			}
+			if (r.getModifiedCount() != 1) {
+				throw new UnLinkFailedException("The user is not linked to " +
+						"the provided identity");
+			}
+		} catch (MongoException me) {
+			throw new AuthStorageException(
+					"Connection to database failed", me);
+		}
+		
 	}
 
 	private Set<Document> toDocument(final Set<RemoteIdentity> rids) {

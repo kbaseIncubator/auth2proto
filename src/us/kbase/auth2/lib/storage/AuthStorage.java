@@ -11,6 +11,7 @@ import us.kbase.auth2.lib.UserName;
 import us.kbase.auth2.lib.exceptions.LinkFailedException;
 import us.kbase.auth2.lib.exceptions.NoSuchTokenException;
 import us.kbase.auth2.lib.exceptions.NoSuchUserException;
+import us.kbase.auth2.lib.exceptions.UnLinkFailedException;
 import us.kbase.auth2.lib.exceptions.UserExistsException;
 import us.kbase.auth2.lib.identity.RemoteIdentity;
 import us.kbase.auth2.lib.storage.exceptions.AuthStorageException;
@@ -88,4 +89,7 @@ public interface AuthStorage {
 	void link(UserName userName, RemoteIdentity remoteID)
 			throws NoSuchUserException, AuthStorageException,
 			LinkFailedException;
+
+	void unlink(UserName userName, String provider, String id)
+			throws AuthStorageException, UnLinkFailedException;
 }
