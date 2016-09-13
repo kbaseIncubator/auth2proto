@@ -368,9 +368,6 @@ public class Authentication {
 
 	public LoginIdentities getLoginState(final IncomingToken token)
 			throws AuthStorageException, InvalidTokenException {
-		if (token == null) {
-			throw new NullPointerException("token");
-		}
 		final Set<RemoteIdentity> ids = getTemporaryIdentities(token);
 		RemoteIdentity primary = null;
 		String provider = null;
@@ -403,6 +400,9 @@ public class Authentication {
 	private Set<RemoteIdentity> getTemporaryIdentities(
 			final IncomingToken token)
 			throws AuthStorageException, InvalidTokenException {
+		if (token == null) {
+			throw new NullPointerException("token");
+		}
 		final Set<RemoteIdentity> ids;
 		try {
 			ids = storage.getTemporaryIdentities(
@@ -521,16 +521,7 @@ public class Authentication {
 		final IdentitySet ids = idp.getIdentities(authcode, true);
 		final Set<RemoteIdentity> rids = new HashSet<>(ids.getSecondaries());
 		rids.add(ids.getPrimary());
-		final Iterator<RemoteIdentity> iter = rids.iterator();
-		while (iter.hasNext()) {
-			if (storage.getUser(iter.next()) != null) {
-				iter.remove();
-			}
-		}
-		if (rids.isEmpty()) {
-			throw new LinkFailedException(
-					"All provided identities are already linked");
-		}
+		filterLinkCandidates(rids);
 		final LinkToken lt;
 		if (rids.size() == 1) {
 			try {
@@ -547,5 +538,30 @@ public class Authentication {
 			lt = new LinkToken(tt);
 		}
 		return lt;
+	}
+
+	private void filterLinkCandidates(final Set<RemoteIdentity> rids)
+			throws AuthStorageException, LinkFailedException {
+		final Iterator<RemoteIdentity> iter = rids.iterator();
+		while (iter.hasNext()) {
+			if (storage.getUser(iter.next()) != null) {
+				iter.remove();
+			}
+		}
+		if (rids.isEmpty()) {
+			throw new LinkFailedException(
+					"All provided identities are already linked");
+		}
+	}
+
+	public LinkIdentities getLinkState(
+			final IncomingToken token,
+			final IncomingToken linktoken)
+			throws InvalidTokenException, AuthStorageException,
+			LinkFailedException {
+		final AuthUser u = getUser(token);
+		final Set<RemoteIdentity> ids = getTemporaryIdentities(linktoken);
+		filterLinkCandidates(ids);
+		return new LinkIdentities(u, ids);
 	}
 }

@@ -17,8 +17,10 @@ Admin notes
 			proxy_cookie_path /link /auth/link;
 		}
 
-* Instructions for getting Globus OAuth2 creds are [here](https://docs.google.com/document/d/1Uidv5yhJysez7yBkZAzUHiGtD2RTzTr2VndKArGLOic/edit)
-  * Note that based on one datapoint, lead time is 1 week +.
+* Get Globus creds [here](https://developers.globus.org)
+  * Required scopes are:
+    * urn:globus:auth:scope:auth.globus.org:view_identities 
+    * email
 * Get Google OAuth2 creds [here](https://console.developers.google.com/apis)
   * Note that the Google+ API must be enabled.
 

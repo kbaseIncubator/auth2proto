@@ -26,10 +26,12 @@ import javax.ws.rs.core.NewCookie;
 import javax.ws.rs.core.Response;
 import javax.ws.rs.core.UriInfo;
 
+import org.glassfish.jersey.server.mvc.Template;
 import org.glassfish.jersey.server.mvc.Viewable;
 
 import us.kbase.auth2.lib.AuthUser;
 import us.kbase.auth2.lib.Authentication;
+import us.kbase.auth2.lib.LinkIdentities;
 import us.kbase.auth2.lib.LinkToken;
 import us.kbase.auth2.lib.exceptions.AuthenticationException;
 import us.kbase.auth2.lib.exceptions.ErrorType;
@@ -39,6 +41,7 @@ import us.kbase.auth2.lib.exceptions.MissingParameterException;
 import us.kbase.auth2.lib.exceptions.NoSuchIdentityProviderException;
 import us.kbase.auth2.lib.exceptions.NoTokenProvidedException;
 import us.kbase.auth2.lib.identity.IdentityProvider;
+import us.kbase.auth2.lib.identity.RemoteIdentity;
 import us.kbase.auth2.lib.storage.exceptions.AuthStorageException;
 import us.kbase.auth2.lib.token.IncomingToken;
 import us.kbase.auth2.lib.token.TemporaryToken;
@@ -162,6 +165,48 @@ public class Link {
 				token == null ? "no token" : token.getToken(), "/link", null),
 				"linktoken", token == null ? 0 : getMaxCookieAge(token, false),
 				APIConstants.SECURE_COOKIES);
+	}
+	
+	@GET
+	@Path("/complete")
+	@Template(name = "/linkchoice")
+	public Map<String, Object> linkComplete(
+			@CookieParam("in-process-link-token") final String linktoken,
+			@CookieParam("token") final String token,
+			@Context final UriInfo uriInfo)
+			throws NoTokenProvidedException, AuthStorageException,
+			InvalidTokenException, LinkFailedException {
+		if (linktoken == null || linktoken.trim().isEmpty()) {
+			throw new NoTokenProvidedException(
+					"Missing in-process-login-token");
+		}
+		if (token == null || token.trim().isEmpty()) {
+			throw new NoTokenProvidedException(
+					"Missing user token");
+		}
+		final LinkIdentities ids = auth.getLinkState(
+				new IncomingToken(token.trim()),
+				new IncomingToken(linktoken.trim()));
+		/* there's a possibility here that between the redirects the number
+		 * of identities that aren't already linked was reduced 1. The
+		 * probability is so low that it's not worth special casing it,
+		 * especially since the effect is simply that the user only has one
+		 * choice for link targets.
+		 */ 
+		final Map<String, Object> ret = new HashMap<>();
+		ret.put("user", ids.getUser().getUserName().getName());
+		ret.put("provider", ids.getIdentities()
+				.iterator().next().getProvider());
+		final List<Map<String, String>> ris = new LinkedList<>();
+		ret.put("ids", ris);
+		for (final RemoteIdentity ri: ids.getIdentities()) {
+			final Map<String, String> s = new HashMap<>();
+			s.put("prov_id", ri.getId());
+			s.put("prov_username", ri.getUsername());
+			ris.add(s);
+		}
+		ret.put("pickurl", relativize(uriInfo, "/link/pick"));
+		return ret;
 	}
 	
 	//Assumes valid URI in URL form
