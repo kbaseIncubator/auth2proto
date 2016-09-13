@@ -8,8 +8,11 @@ import us.kbase.auth2.lib.CustomRole;
 import us.kbase.auth2.lib.LocalUser;
 import us.kbase.auth2.lib.Role;
 import us.kbase.auth2.lib.UserName;
+import us.kbase.auth2.lib.UserUpdate;
+import us.kbase.auth2.lib.exceptions.LinkFailedException;
 import us.kbase.auth2.lib.exceptions.NoSuchTokenException;
 import us.kbase.auth2.lib.exceptions.NoSuchUserException;
+import us.kbase.auth2.lib.exceptions.UnLinkFailedException;
 import us.kbase.auth2.lib.exceptions.UserExistsException;
 import us.kbase.auth2.lib.identity.RemoteIdentity;
 import us.kbase.auth2.lib.storage.exceptions.AuthStorageException;
@@ -83,4 +86,14 @@ public interface AuthStorage {
 	Set<RemoteIdentity> getTemporaryIdentities(
 			IncomingHashedToken token)
 			throws AuthStorageException, NoSuchTokenException;
+
+	void link(UserName userName, RemoteIdentity remoteID)
+			throws NoSuchUserException, AuthStorageException,
+			LinkFailedException;
+
+	void unlink(UserName userName, String provider, String id)
+			throws AuthStorageException, UnLinkFailedException;
+
+	void updateUser(UserName userName, UserUpdate update)
+			throws NoSuchUserException, AuthStorageException;
 }

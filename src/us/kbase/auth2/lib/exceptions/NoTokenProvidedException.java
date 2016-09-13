@@ -6,6 +6,10 @@ package us.kbase.auth2.lib.exceptions;
 @SuppressWarnings("serial")
 public class NoTokenProvidedException extends AuthException {
 	
+	public NoTokenProvidedException() {
+		super(ErrorType.NO_TOKEN, null);
+	}
+	
 	public NoTokenProvidedException(final String message) {
 		super(ErrorType.NO_TOKEN, message);
 	}

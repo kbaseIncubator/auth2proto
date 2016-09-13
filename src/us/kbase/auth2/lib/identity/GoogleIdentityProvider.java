@@ -68,12 +68,13 @@ public class GoogleIdentityProvider implements IdentityProvider {
 
 	// state will be url encoded
 	@Override
-	public URL getLoginURL(final String state) {
+	public URL getLoginURL(final String state, final boolean link) {
 		final URI target = UriBuilder.fromUri(toURI(cfg.getLoginURL()))
 				.path(LOGIN_PATH)
 				.queryParam("scope", SCOPE)
 				.queryParam("state", state)
-				.queryParam("redirect_uri", cfg.getLoginRedirectURL())
+				.queryParam("redirect_uri", link ? cfg.getLinkRedirectURL() :
+					cfg.getLoginRedirectURL())
 				.queryParam("response_type", "code")
 				.queryParam("client_id", cfg.getClientID())
 				.queryParam("prompt", "select_account")
@@ -105,9 +106,10 @@ public class GoogleIdentityProvider implements IdentityProvider {
 	}
 
 	@Override
-	public IdentitySet getIdentities(final String authcode) {
-		//TODO NOW will need to handle link vs. login case
-		final String accessToken = getAccessToken(authcode);
+	public IdentitySet getIdentities(
+			final String authcode,
+			final boolean link) {
+		final String accessToken = getAccessToken(authcode, link);
 		final RemoteIdentity ri = getIdentity(accessToken);
 		return new IdentitySet(ri, null);
 	}
@@ -151,11 +153,12 @@ public class GoogleIdentityProvider implements IdentityProvider {
 		}
 	}
 
-	private String getAccessToken(final String authcode) {
+	private String getAccessToken(final String authcode, final boolean link) {
 		final MultivaluedMap<String, String> formParameters =
 				new MultivaluedHashMap<>();
 		formParameters.add("code", authcode);
-		formParameters.add("redirect_uri",
+		formParameters.add("redirect_uri", link ?
+				cfg.getLinkRedirectURL().toString() :
 				cfg.getLoginRedirectURL().toString());
 		formParameters.add("grant_type", "authorization_code");
 		formParameters.add("client_id", cfg.getClientID());

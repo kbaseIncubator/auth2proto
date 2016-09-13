@@ -91,4 +91,13 @@ public class APIUtils {
 		return (int) exp;
 	}
 	
+	// assumes non-null, len > 0
+	public static String upperCase(final String provider) {
+		final String first = new String(Character.toChars(
+				Character.toUpperCase(provider.codePointAt(0))));
+		if (provider.length() == first.length()) {
+			return first;
+		}
+		return first + provider.substring(first.length());
+	}
 }

@@ -12,9 +12,9 @@ public interface IdentityProvider {
 	String getProviderName();
 	URI getImageURI();
 	//note state will be url encoded.
-	URL getLoginURL(String state);
+	URL getLoginURL(String state, boolean link);
 	String getAuthCodeQueryParamName();
-	IdentitySet getIdentities(String authcode)
+	IdentitySet getIdentities(String authcode, boolean link)
 			throws IdentityRetrievalException;
 	
 }

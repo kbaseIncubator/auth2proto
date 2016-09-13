@@ -5,7 +5,6 @@ import java.util.Arrays;
 import java.util.Base64;
 import java.util.HashMap;
 import java.util.HashSet;
-import java.util.Iterator;
 import java.util.LinkedList;
 import java.util.List;
 import java.util.Map;
@@ -33,9 +32,12 @@ import us.kbase.auth2.lib.CustomRole;
 import us.kbase.auth2.lib.LocalUser;
 import us.kbase.auth2.lib.Role;
 import us.kbase.auth2.lib.UserName;
+import us.kbase.auth2.lib.UserUpdate;
+import us.kbase.auth2.lib.exceptions.LinkFailedException;
 import us.kbase.auth2.lib.exceptions.MissingParameterException;
 import us.kbase.auth2.lib.exceptions.NoSuchTokenException;
 import us.kbase.auth2.lib.exceptions.NoSuchUserException;
+import us.kbase.auth2.lib.exceptions.UnLinkFailedException;
 import us.kbase.auth2.lib.exceptions.UserExistsException;
 import us.kbase.auth2.lib.identity.RemoteIdentity;
 import us.kbase.auth2.lib.storage.AuthStorage;
@@ -61,13 +63,8 @@ public class MongoStorage implements AuthStorage {
 	 * Unique indexes don't ensure that the contents of arrays are unique, just that no two documents have the same array elements
 	 * Splitting the user doc from the provider docs has a whole host of other issues, mostly wrt deletion
 	 * 
-	 * To remove provider:
-	 * 1) pull the document
-	 * 2) Remove the provider from the array
-	 * 		If it's already gone no-op
-	 * 3) update the document with $pull, querying on the contents of the updated array with $elemMatch to be sure at least one provider still exists
-	 * 4) If fail fail permanently
-	 *
+	 * Only remove identities from users with at least two identities
+	 * (see unlink fn)
 	 *	This ensures that all accounts always have one provider
 	 * 
 	 * 
@@ -289,7 +286,7 @@ public class MongoStorage implements AuthStorage {
 					"user can only have one identity");
 		}
 		final RemoteIdentity ri = user.getIdentities().iterator().next();
-		final Document id = identityToDocument(ri);
+		final Document id = toDocument(ri);
 				
 		final Document u = new Document(
 				Fields.USER_NAME, user.getUserName().getName())
@@ -583,10 +580,8 @@ public class MongoStorage implements AuthStorage {
 		 * 99% of the time a set won't be necessary, so don't write lock the
 		 * DB/collection (depending on mongo version) unless necessary 
 		 */
-		final Iterator<RemoteIdentity> iter = user.getIdentities().iterator();
-		RemoteIdentity update = null;;
-		while (iter.hasNext()) {
-			final RemoteIdentity ri = iter.next();
+		RemoteIdentity update = null;
+		for (final RemoteIdentity ri: user.getIdentities()) {
 			if (ri.getProvider().equals(remoteID.getProvider()) &&
 					ri.getId().equals(remoteID.getId()) &&
 					!ri.equals(remoteID)) {
@@ -641,7 +636,7 @@ public class MongoStorage implements AuthStorage {
 			throws AuthStorageException {
 		final List<Document> ids = new LinkedList<>();
 		for (final RemoteIdentity id: identitySet) {
-			ids.add(identityToDocument(id));
+			ids.add(toDocument(id));
 		}
 		
 		final Document td = new Document(
@@ -663,7 +658,7 @@ public class MongoStorage implements AuthStorage {
 		
 	}
 
-	private Document identityToDocument(final RemoteIdentity id) {
+	private Document toDocument(final RemoteIdentity id) {
 		return new Document(
 				Fields.IDENTITIES_PROVIDER, id.getProvider())
 				.append(Fields.IDENTITIES_ID, id.getId())
@@ -709,5 +704,133 @@ public class MongoStorage implements AuthStorage {
 					i.getBoolean(Fields.IDENTITIES_PRIME)));
 		}
 		return ret;
+	}
+	
+	@Override
+	public void link(final UserName user, final RemoteIdentity remoteID)
+			throws NoSuchUserException, AuthStorageException,
+			LinkFailedException {
+		boolean complete = false;
+		while (!complete) {
+			complete = addIdentity(user, remoteID);
+		} //TODO NOW have a max loop limit to protect against bugs
+	}
+	
+	private boolean addIdentity(
+			final UserName user,
+			final RemoteIdentity remoteID)
+			throws NoSuchUserException, AuthStorageException,
+			LinkFailedException {
+		//TODO NOW document this thoroughly
+		final AuthUser u = getUser(user);
+		if (u.isLocal()) {
+			throw new LinkFailedException(
+					"Cannot link accounts to a local user");
+		}
+		for (final RemoteIdentity ri: u.getIdentities()) {
+			if (ri.getProvider().equals(remoteID.getProvider()) &&
+					ri.getId().equals(remoteID.getId())) {
+				if (ri.equals(remoteID)) {
+					return true; //nothing to do
+				} else {
+					updateIdentity(remoteID);
+					return true;
+				}
+			}
+		}
+		final Set<Document> olddoc = toDocument(u.getIdentities());
+		final Set<Document> newdoc = new HashSet<>(olddoc);
+		newdoc.add(toDocument(remoteID));
+		final List<Document> arrayQuery = olddoc.stream().map(
+				d -> new Document("$elemMatch", d))
+				.collect(Collectors.toList());
+		final Document q = new Document(
+				Fields.USER_NAME, u.getUserName().getName())
+				.append(Fields.USER_IDENTITIES, new Document(
+						"$all", arrayQuery));
+		
+		try {
+			final UpdateResult r = db.getCollection(COL_USERS).updateOne(
+					q, new Document("$set",
+					new Document(Fields.USER_IDENTITIES, newdoc)));
+			return r.getModifiedCount() == 1;
+		} catch (MongoWriteException mwe) {
+			if (isDuplicateKeyException(mwe)) {
+				throw new LinkFailedException(
+						"Provider identity is already linked");
+			} else {
+				throw new AuthStorageException("Database write failed", mwe);
+			}
+		} catch (MongoException me) {
+			throw new AuthStorageException(
+					"Connection to database failed", me);
+		}
+	}
+	
+	@Override
+	public void unlink(
+			final UserName username,
+			final String provider,
+			final String id)
+			throws AuthStorageException, UnLinkFailedException {
+		final Document q = new Document(Fields.USER_NAME, username.getName())
+				/* this a neat trick to ensure that there's at least 2
+				 * identities for the user. See
+				 * http://stackoverflow.com/a/15224544/643675
+				 */
+				.append(Fields.USER_IDENTITIES + ".1",
+						new Document("$exists", true));
+		final Document a = new Document("$pull", new Document(
+				Fields.USER_IDENTITIES, new Document(
+						Fields.IDENTITIES_PROVIDER, provider)
+						.append(Fields.IDENTITIES_ID, id)));
+		try {
+			final UpdateResult r = db.getCollection(COL_USERS).updateOne(q, a);
+			if (r.getMatchedCount() != 1) {
+				// could pull the user here to ensure it exists, but meh
+				throw new UnLinkFailedException("Either the user doesn't " +
+						"exist or only has one associated identity");
+			}
+			if (r.getModifiedCount() != 1) {
+				throw new UnLinkFailedException("The user is not linked to " +
+						"the provided identity");
+			}
+		} catch (MongoException me) {
+			throw new AuthStorageException(
+					"Connection to database failed", me);
+		}
+		
+	}
+
+	private Set<Document> toDocument(final Set<RemoteIdentity> rids) {
+		return rids.stream().map(ri -> toDocument(ri))
+				.collect(Collectors.toSet());
+	}
+
+	@Override
+	public void updateUser(final UserName userName, final UserUpdate update)
+			throws NoSuchUserException, AuthStorageException{
+		final Document q = new Document(Fields.USER_NAME, userName.getName());
+		if (!update.hasUpdates()) {
+			return; //noop
+		}
+		final Document d = new Document();
+		if (update.getFullname() != null) {
+			d.append(Fields.USER_FULL_NAME, update.getFullname());
+		}
+		if (update.getEmail() != null) {
+			d.append(Fields.USER_EMAIL, update.getEmail());
+		}
+		final Document a = new Document("$set", d);
+		try {
+			final UpdateResult r = db.getCollection(COL_USERS).updateOne(q, a);
+			if (r.getMatchedCount() != 1) {
+				throw new NoSuchUserException(userName.getName());
+			}
+			// if it wasn't modified no problem.
+		} catch (MongoException me) {
+			throw new AuthStorageException(
+					"Connection to database failed", me);
+		}
 	}
 }

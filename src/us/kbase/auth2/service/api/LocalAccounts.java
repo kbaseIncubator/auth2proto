@@ -3,6 +3,8 @@ package us.kbase.auth2.service.api;
 import static us.kbase.auth2.service.api.APIUtils.getLoginCookie;
 import static us.kbase.auth2.service.api.APIUtils.relativize;
 
+import java.net.URI;
+import java.net.URISyntaxException;
 import java.util.Map;
 
 import javax.inject.Inject;
@@ -18,7 +20,6 @@ import javax.ws.rs.core.Response;
 import javax.ws.rs.core.UriInfo;
 
 import org.glassfish.jersey.server.mvc.Template;
-import org.glassfish.jersey.server.mvc.Viewable;
 
 import com.google.common.collect.ImmutableMap;
 
@@ -71,10 +72,17 @@ public class LocalAccounts {
 		//TODO NOW log
 		pwd = null; // try to get pwd GC'd as quickly as possible
 		//TODO NOW if reset required, do reset
-		return Response.ok(
-				new Viewable("/localloginresult",
-						ImmutableMap.of("user", userName)))
+		return Response.seeOther(toURI("/me"))
 				.cookie(getLoginCookie(t, stayLoggedIn == null))
 				.build();
+	}
+	
+	//Assumes valid URI in String form
+	private URI toURI(final String uri) {
+		try {
+			return new URI(uri);
+		} catch (URISyntaxException e) {
+			throw new RuntimeException("This should be impossible", e);
+		}
 	}
 }
