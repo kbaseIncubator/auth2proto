@@ -3,6 +3,42 @@ useful code will be migrated (with unit tests & documentation) to kbase/auth2.
 
 Unit tests & documentation for code in this repo is not required.
 
+Current endpoints
+-----------------
+
+/admin/localaccount?admin=&lt;some name&gt;  
+create a local account. The admin param is a temporary placeholder.
+
+/admin/user/&lt;user name&gt;  
+View user and modify user roles.
+
+/admin/customroles  
+View and add custom roles.
+
+/link  
+Link accounts.
+
+/login  
+login to a provider based account. Stores a cookie with a token.
+
+/localaccount/login  
+login to a local account. Stores a cookie with a token.
+
+/logout  
+Self explanatory.
+
+/me  
+User page.
+
+/tokens  
+list and create tokens
+
+/api/legacy/KBase/Sessions/Login  
+the legacy KBase API
+
+/api/legacy/globus  
+the legacy globus API. Endpoints are /goauth/token and /users.
+
 Admin notes
 -----------
 * It is expected that this server always runs behind a reverse proxy (such as
@@ -26,7 +62,7 @@ Admin notes
 
 Requirements
 ------------
-Java 8 (OpenJDK OK)
+Java 8 (OpenJDK OK)  
 MongoDB 2.4+ (https://www.mongodb.com/)  
 Jetty 9.3+ (http://www.eclipse.org/jetty/download.html)
     (see jetty-config.md for version used for testing)  
