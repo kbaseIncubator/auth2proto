@@ -3,6 +3,7 @@ package us.kbase.auth2.service.api;
 import static us.kbase.auth2.service.api.APIUtils.relativize;
 import static us.kbase.auth2.service.api.APIUtils.getLoginCookie;
 import static us.kbase.auth2.service.api.APIUtils.getMaxCookieAge;
+import static us.kbase.auth2.service.api.APIUtils.upperCase;
 
 import java.net.URI;
 import java.net.URISyntaxException;
@@ -153,7 +154,8 @@ public class Login {
 	private NewCookie getLoginInProcessCookie(final TemporaryToken token) {
 		return new NewCookie(new Cookie("in-process-login-token",
 				token == null ? "no token" : token.getToken(), "/login", null),
-				"authtoken", token == null ? 0 : getMaxCookieAge(token, false),
+				"logintoken",
+				token == null ? 0 : getMaxCookieAge(token, false),
 				APIConstants.SECURE_COOKIES);
 	}
 
@@ -271,16 +273,6 @@ public class Login {
 				.cookie(getLoginInProcessCookie(null)).build();
 	}
 	
-	// assumes non-null, len > 0
-	private String upperCase(final String provider) {
-		final String first = new String(Character.toChars(
-				Character.toUpperCase(provider.codePointAt(0))));
-		if (provider.length() == first.length()) {
-			return first;
-		}
-		return first + provider.substring(first.length());
-	}
-
 	//Assumes valid URI in URL form
 	private URI toURI(final URL loginURL) {
 		try {

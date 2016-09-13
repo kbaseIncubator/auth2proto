@@ -1,9 +1,22 @@
 <html>
 <body>
-Hi {{user}}!<br/>
+<h3>Link account</h3>
 
+{{#local}}
+Sorry, the {{user}} account is a local account and does not allow account
+linking.
+{{/local}}
+
+{{^local}}
 {{#hasprov}}
-You can link an account to your KBase account with:<br/>
+<p> You can link a new identity provider account to your currently logged-in
+KBase account, <strong>{{user}}</strong>, here. Note that some providers will
+automatically redirect you back
+to KBase if you are already logged in to that provider. If the logged-in
+provider account is not the account you wish to link, you must visit the
+provider and logout <strong>before</strong> starting the linking process.
+
+<p>Identity providers:<p>
 {{/hasprov}}
 
 {{#providers}}
@@ -20,6 +33,8 @@ You will have 30 minutes to complete the identity provider's login process.
 {{^hasprov}}
 Sorry, linking accounts is currently disabled.
 {{/hasprov}}
+
+{{/local}}
 
 </body>
 </html>

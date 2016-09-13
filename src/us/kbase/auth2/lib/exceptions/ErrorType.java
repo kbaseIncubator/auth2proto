@@ -15,7 +15,8 @@ public enum ErrorType {
 	NO_SUCH_USER			(30002, "No such user"),
 	NO_SUCH_TOKEN			(30003, "No such token"),
 	NO_SUCH_IDENT_PROV		(30004, "No such identity provider"),
-	UNSUPPORTED_OP			(40001, "Unsupported opertation");
+	LINK_FAILED				(40000, "Account linkage failed"),
+	UNSUPPORTED_OP			(50000, "Unsupported opertation");
 	
 	private final int errcode;
 	private final String error;

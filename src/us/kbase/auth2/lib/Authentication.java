@@ -8,6 +8,7 @@ import java.util.Arrays;
 import java.util.Collections;
 import java.util.HashMap;
 import java.util.HashSet;
+import java.util.Iterator;
 import java.util.LinkedList;
 import java.util.List;
 import java.util.Map;
@@ -22,6 +23,7 @@ import us.kbase.auth2.lib.exceptions.ErrorType;
 import us.kbase.auth2.lib.exceptions.IdentityRetrievalException;
 import us.kbase.auth2.lib.exceptions.AuthenticationException;
 import us.kbase.auth2.lib.exceptions.InvalidTokenException;
+import us.kbase.auth2.lib.exceptions.LinkFailedException;
 import us.kbase.auth2.lib.exceptions.MissingParameterException;
 import us.kbase.auth2.lib.exceptions.NoSuchIdentityProviderException;
 import us.kbase.auth2.lib.exceptions.NoSuchTokenException;
@@ -335,7 +337,7 @@ public class Authentication {
 		if (authcode == null || authcode.trim().isEmpty()) {
 			throw new MissingParameterException("authorization code");
 		}
-		final IdentitySet ids = idp.getIdentities(authcode);
+		final IdentitySet ids = idp.getIdentities(authcode, false);
 		final AuthUser primary = storage.getUser(ids.getPrimary());
 		final Set<RemoteIdentity> filteredIDs = new HashSet<>();
 		for (final RemoteIdentity id: ids.getSecondaries()) {
@@ -470,7 +472,7 @@ public class Authentication {
 		return nt;
 	}
 	
-	public RemoteIdentity getIdentity(
+	private RemoteIdentity getIdentity(
 			final IncomingToken token,
 			final String provider,
 			final String remoteID)
@@ -488,5 +490,62 @@ public class Authentication {
 					"Not authorized to manage account linked to provided identity");
 		}
 		return match;
+	}
+
+
+	public LinkToken link(
+			final IncomingToken token,
+			final String provider,
+			final String authcode)
+			throws InvalidTokenException, AuthStorageException,
+			NoSuchProviderException, MissingParameterException,
+			IdentityRetrievalException, LinkFailedException {
+		final HashedToken ht = getToken(token);
+		try {
+			final AuthUser u = storage.getUser(ht.getUserName());
+			if (u.isLocal()) {
+				throw new LinkFailedException(
+						"Cannot link identities to local accounts");
+			}
+		} catch (NoSuchUserException e) {
+			throw new AuthStorageException("Valid token but no user: " +
+					ht.getId(), e);
+		}
+		final IdentityProvider idp = idprov.get(provider);
+		if (idp == null) {
+			throw new NoSuchProviderException(provider);
+		}
+		if (authcode == null || authcode.trim().isEmpty()) {
+			throw new MissingParameterException("authorization code");
+		}
+		final IdentitySet ids = idp.getIdentities(authcode, true);
+		final Set<RemoteIdentity> rids = new HashSet<>(ids.getSecondaries());
+		rids.add(ids.getPrimary());
+		final Iterator<RemoteIdentity> iter = rids.iterator();
+		while (iter.hasNext()) {
+			if (storage.getUser(iter.next()) != null) {
+				iter.remove();
+			}
+		}
+		if (rids.isEmpty()) {
+			throw new LinkFailedException(
+					"All provided identities are already linked");
+		}
+		final LinkToken lt;
+		if (rids.size() == 1) {
+			try {
+				storage.link(ht.getUserName(), rids.iterator().next());
+			} catch (NoSuchUserException e) {
+				throw new AuthStorageException("Token without a user: " +
+						ht.getId(), e);
+			}
+			lt = new LinkToken();
+		} else {
+			final TemporaryToken tt = new TemporaryToken(tokens.getToken(),
+					10 * 60 * 1000);
+			storage.storeIdentitiesTemporarily(tt.getHashedToken(), rids);
+			lt = new LinkToken(tt);
+		}
+		return lt;
 	}
 }
