@@ -2,6 +2,9 @@ package us.kbase.auth2.lib;
 
 public class UserUpdate {
 	
+	//TODO TEST
+	//TODO JAVADOC
+	
 	private String fullname;
 	private String email;
 	

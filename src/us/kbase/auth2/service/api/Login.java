@@ -28,6 +28,7 @@ import javax.ws.rs.core.Cookie;
 import javax.ws.rs.core.MultivaluedMap;
 import javax.ws.rs.core.NewCookie;
 import javax.ws.rs.core.Response;
+import javax.ws.rs.core.Response.ResponseBuilder;
 import javax.ws.rs.core.UriInfo;
 
 import org.glassfish.jersey.server.mvc.Template;
@@ -65,17 +66,23 @@ public class Login {
 	@GET
 	public Response loginStart(
 			@QueryParam("provider") final String provider,
+			@QueryParam("redirect") final String redirect,
 			@Context UriInfo uriInfo)
 					throws NoSuchIdentityProviderException {
+		//TODO REDIRECT check redirect url matches allowed config & is valid URL
 		//TODO CONFIG allow enable & disable of id providers.
-		//TODO REDIRECT accept redirect url
 		if (provider != null && !provider.trim().isEmpty()) {
 			final IdentityProvider idp = auth.getIdentityProvider(
 					provider);
 			final String state = auth.getBareToken();
 			final URI target = toURI(idp.getLoginURL(state, false));
-			return Response.seeOther(target).cookie(getStateCookie(state))
-					.build();
+			
+			final ResponseBuilder r = Response.seeOther(target)
+					.cookie(getStateCookie(state));
+			if (redirect != null && !redirect.trim().isEmpty()) {
+					r.cookie(getRedirectCookie(redirect));
+			}
+			return r.build();
 		} else {
 			final Map<String, Object> ret = new HashMap<>();
 			final List<Map<String, String>> provs = new LinkedList<>();
@@ -93,9 +100,20 @@ public class Login {
 			}
 			ret.put("hasprov", !provs.isEmpty());
 			ret.put("urlpre", "?provider=");
+			if (redirect != null && !redirect.trim().isEmpty()) {
+				ret.put("redirect", redirect);
+			}
 			return Response.ok().entity(new Viewable("/loginstart", ret))
 					.build();
 		}
+	}
+
+	private NewCookie getRedirectCookie(final String redirect) {
+		return new NewCookie(new Cookie(
+				"redirect", redirect == null ? "no redirect" : redirect,
+						"/login", null),
+				"redirect url", redirect == null ? 0 : 30 * 60,
+						APIConstants.SECURE_COOKIES);
 	}
 
 	private NewCookie getStateCookie(final String state) {
@@ -111,6 +129,7 @@ public class Login {
 	public Response login(
 			@PathParam("provider") String provider,
 			@CookieParam("statevar") final String state,
+			@CookieParam("redirect") final String redirect,
 			@Context final UriInfo uriInfo)
 			throws MissingParameterException, AuthenticationException,
 			NoSuchProviderException, AuthStorageException {
@@ -136,11 +155,11 @@ public class Login {
 		// note nginx will rewrite the redirect appropriately so absolute
 		// redirects are ok
 		if (lr.isLoggedIn()) {
-			//TODO REDIRECT use provided redirect, default to /me
-			r = Response.seeOther(toURI("/tokens"))
+			r = Response.seeOther(getRedirectURI(redirect, "/me"))
 			//TODO NOW can't set keep me logged in here, so set in profile
 					.cookie(getLoginCookie(lr.getToken(), true))
-					.cookie(getStateCookie(null)).build();
+					.cookie(getStateCookie(null))
+					.cookie(getRedirectCookie(null)).build();
 		} else {
 			r = Response.seeOther(toURI("/login/complete")).cookie(
 					getLoginInProcessCookie(lr.getTemporaryToken()))
@@ -148,6 +167,14 @@ public class Login {
 					.build();
 		}
 		return r;
+	}
+	
+	private URI getRedirectURI(final String redirect, final String deflt) {
+		//TODO REDIRECT check redirect url matches allowed config & is valid URL
+		if (redirect != null && !redirect.trim().isEmpty()) {
+			return toURI(redirect);
+		}
+		return toURI(deflt);
 	}
 
 	private NewCookie getLoginInProcessCookie(final TemporaryToken token) {
@@ -219,6 +246,7 @@ public class Login {
 	@Path("/pick")
 	public Response pickAccount(
 			@CookieParam("in-process-login-token") final String token,
+			@CookieParam("redirect") final String redirect,
 			@FormParam("provider") final String provider,
 			@FormParam("id") final String remoteID)
 			throws NoTokenProvidedException, AuthenticationException,
@@ -230,17 +258,18 @@ public class Login {
 		}
 		final NewToken newtoken = auth.login(
 				new IncomingToken(token), provider, remoteID);
-		//TODO REDIRECT use provided redirect, default to /me
-		return Response.seeOther(toURI("/tokens"))
+		return Response.seeOther(getRedirectURI(redirect, "/me"))
 				//TODO NOW can't set keep me logged in here, so set in profile
 				.cookie(getLoginCookie(newtoken, true))
-				.cookie(getLoginInProcessCookie(null)).build();
+				.cookie(getLoginInProcessCookie(null))
+				.cookie(getRedirectCookie(null)).build();
 	}
 	
 	@POST
 	@Path("/create")
 	public Response createUser(
 			@CookieParam("in-process-login-token") final String token,
+			@CookieParam("redirect") final String redirect,
 			@FormParam("provider") final String provider,
 			@FormParam("id") final String remoteID,
 			@FormParam("user") final String userName,
@@ -265,11 +294,11 @@ public class Login {
 		final NewToken newtoken = auth.createUser(new IncomingToken(token),
 				provider, remoteID, new UserName(userName), fullName, email,
 				sessionLogin, priv);
-		//TODO REDIRECT use provided redirect, default to /me
-		return Response.seeOther(toURI("/tokens"))
+		return Response.seeOther(getRedirectURI(redirect, "/me"))
 		//TODO NOW can't set keep me logged in here, so set in profile
 				.cookie(getLoginCookie(newtoken, true))
-				.cookie(getLoginInProcessCookie(null)).build();
+				.cookie(getLoginInProcessCookie(null))
+				.cookie(getRedirectCookie(null)).build();
 	}
 	
 	//Assumes valid URI in URL form
