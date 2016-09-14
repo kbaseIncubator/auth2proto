@@ -46,7 +46,6 @@ Auth service work
   * Force pwd reset for local accounts (per user and all)
   * Reset local account pwd
   * Admin checking for all /admin functions
-* /me UI allows updating user record
 * API
   * Introspect token (e.g. not the legacy apis, provide complete info)
   * /user/<name> - get user details

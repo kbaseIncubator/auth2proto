@@ -6,7 +6,9 @@
 {{/hasprov}}
 
 {{#providers}}
-<p><a href="{{urlpre}}{{name}}"><img src="{{img}}" alt="{{name}}"/></a></p> 
+<p><a href="{{urlpre}}{{name}}{{#redirect}}&redirect={{.}}{{/redirect}}">
+	<img src="{{img}}" alt="{{name}}"/></a>
+</p> 
 {{/providers}}
 
 {{#hasprov}}
