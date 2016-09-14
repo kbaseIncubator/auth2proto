@@ -207,14 +207,14 @@ public class Login {
 		for (final Entry<RemoteIdentity, AuthUser> e:
 				ids.getSecondaries().entrySet()) {
 			final Map<String, String> s = new HashMap<>();
-			s.put("prov_id", e.getKey().getId());
+			s.put("prov_id", e.getKey().getProviderID());
 			s.put("prov_username", e.getKey().getUsername());
 			s.put("username", e.getValue().getUserName().getName());
 			secs.add(s);
 		}
 		if (ids.getPrimaryUser() == null) {
 			ret.put("create", true);
-			ret.put("prov_id", ids.getPrimary().getId());
+			ret.put("prov_id", ids.getPrimary().getProviderID());
 			//TODO NOW get safe username from db
 			ret.put("usernamesugg", ids.getPrimary().getUsername()
 					.split("@")[0]);
@@ -230,7 +230,7 @@ public class Login {
 			// possibility of a race condition, but worst case is the user has
 			// to click the primary user with no other choices, so meh
 			final Map<String, String> p = new HashMap<>();
-			p.put("prov_id", ids.getPrimary().getId());
+			p.put("prov_id", ids.getPrimary().getProviderID());
 			p.put("prov_username", ids.getPrimary().getUsername());
 			p.put("username", ids.getPrimaryUser().getUserName().getName());
 			secs.add(p);

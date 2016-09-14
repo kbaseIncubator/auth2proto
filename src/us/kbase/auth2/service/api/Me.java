@@ -69,7 +69,7 @@ public class Me {
 			final Map<String, String> i = new HashMap<>();
 			i.put("provider", ri.getProvider());
 			i.put("username", ri.getUsername());
-			i.put("id", ri.getId());
+			i.put("id", ri.getProviderID());
 			idents.add(i);
 		}
 		return ret;

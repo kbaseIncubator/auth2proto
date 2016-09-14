@@ -6,7 +6,7 @@ public class RemoteIdentity {
 	//TODO TEST
 	
 	private final String provider;
-	private final String id;
+	private final String providerID;
 	private final String username;
 	private final String fullname;
 	private final String email;
@@ -14,7 +14,7 @@ public class RemoteIdentity {
 	
 	public RemoteIdentity(
 			final String provider,
-			final String id,
+			final String providerID,
 			final String username,
 			final String fullname,
 			final String email,
@@ -22,7 +22,7 @@ public class RemoteIdentity {
 		super();
 		//TODO NOW check for null & .trim().isEmpty()
 		this.provider = provider;
-		this.id = id;
+		this.providerID = providerID;
 		this.username = username;
 		this.fullname = fullname;
 		this.email = email;
@@ -33,8 +33,8 @@ public class RemoteIdentity {
 		return provider;
 	}
 
-	public String getId() {
-		return id;
+	public String getProviderID() {
+		return providerID;
 	}
 
 	public String getUsername() {
@@ -59,7 +59,7 @@ public class RemoteIdentity {
 		int result = 1;
 		result = prime * result + ((email == null) ? 0 : email.hashCode());
 		result = prime * result + ((fullname == null) ? 0 : fullname.hashCode());
-		result = prime * result + ((id == null) ? 0 : id.hashCode());
+		result = prime * result + ((providerID == null) ? 0 : providerID.hashCode());
 		result = prime * result + (primary ? 1231 : 1237);
 		result = prime * result + ((provider == null) ? 0 : provider.hashCode());
 		result = prime * result + ((username == null) ? 0 : username.hashCode());
@@ -92,11 +92,11 @@ public class RemoteIdentity {
 		} else if (!fullname.equals(other.fullname)) {
 			return false;
 		}
-		if (id == null) {
-			if (other.id != null) {
+		if (providerID == null) {
+			if (other.providerID != null) {
 				return false;
 			}
-		} else if (!id.equals(other.id)) {
+		} else if (!providerID.equals(other.providerID)) {
 			return false;
 		}
 		if (primary != other.primary) {
@@ -125,7 +125,7 @@ public class RemoteIdentity {
 		builder.append("RemoteIdentity [provider=");
 		builder.append(provider);
 		builder.append(", id=");
-		builder.append(id);
+		builder.append(providerID);
 		builder.append(", username=");
 		builder.append(username);
 		builder.append(", fullname=");

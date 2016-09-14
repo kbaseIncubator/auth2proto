@@ -200,7 +200,7 @@ public class Link {
 		ret.put("ids", ris);
 		for (final RemoteIdentity ri: ids.getIdentities()) {
 			final Map<String, String> s = new HashMap<>();
-			s.put("prov_id", ri.getId());
+			s.put("prov_id", ri.getProviderID());
 			s.put("prov_username", ri.getUsername());
 			ris.add(s);
 		}

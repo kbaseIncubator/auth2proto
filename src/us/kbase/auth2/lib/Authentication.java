@@ -482,7 +482,7 @@ public class Authentication {
 		RemoteIdentity match = null;
 		for (final RemoteIdentity ri: ids) {
 			if (ri.getProvider().equals(provider) &&
-					ri.getId().equals(remoteID)) {
+					ri.getProviderID().equals(remoteID)) {
 				match = ri;
 			}
 		}

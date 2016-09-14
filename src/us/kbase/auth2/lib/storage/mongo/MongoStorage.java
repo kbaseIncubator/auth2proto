@@ -583,7 +583,7 @@ public class MongoStorage implements AuthStorage {
 		RemoteIdentity update = null;
 		for (final RemoteIdentity ri: user.getIdentities()) {
 			if (ri.getProvider().equals(remoteID.getProvider()) &&
-					ri.getId().equals(remoteID.getId()) &&
+					ri.getProviderID().equals(remoteID.getProviderID()) &&
 					!ri.equals(remoteID)) {
 				update = ri;
 			}
@@ -605,7 +605,7 @@ public class MongoStorage implements AuthStorage {
 		final Document query = new Document(Fields.USER_IDENTITIES,
 				new Document("$elemMatch", new Document(
 						Fields.IDENTITIES_PROVIDER, remoteID.getProvider())
-						.append(Fields.IDENTITIES_ID, remoteID.getId())));
+						.append(Fields.IDENTITIES_ID, remoteID.getProviderID())));
 		return query;
 	}
 	
@@ -661,7 +661,7 @@ public class MongoStorage implements AuthStorage {
 	private Document toDocument(final RemoteIdentity id) {
 		return new Document(
 				Fields.IDENTITIES_PROVIDER, id.getProvider())
-				.append(Fields.IDENTITIES_ID, id.getId())
+				.append(Fields.IDENTITIES_ID, id.getProviderID())
 				.append(Fields.IDENTITIES_PRIME, id.isPrimary())
 				.append(Fields.IDENTITIES_USER, id.getUsername())
 				.append(Fields.IDENTITIES_NAME, id.getFullname())
@@ -729,7 +729,7 @@ public class MongoStorage implements AuthStorage {
 		}
 		for (final RemoteIdentity ri: u.getIdentities()) {
 			if (ri.getProvider().equals(remoteID.getProvider()) &&
-					ri.getId().equals(remoteID.getId())) {
+					ri.getProviderID().equals(remoteID.getProviderID())) {
 				if (ri.equals(remoteID)) {
 					return true; //nothing to do
 				} else {
