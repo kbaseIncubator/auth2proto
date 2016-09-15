@@ -25,7 +25,7 @@ accounts and tests if any, allow setting auth service url
 
 Auth service work
 -----------------
-* UI (significant time sink per Bill & Erik)
+* UI (1-2 sprints w/ 1-2 FTEs per Bill & Erik)
   * Probably means altering server endpoints in concert with UI development
 * 150-200 TODOs in the codebase on average
 * Read through all prototype code and convert to production worthy

@@ -17,6 +17,8 @@ import javax.ws.rs.core.MultivaluedMap;
 import javax.ws.rs.core.Response;
 import javax.ws.rs.core.UriBuilder;
 
+import us.kbase.auth2.lib.exceptions.IdentityRetrievalException;
+
 public class GoogleIdentityProvider implements IdentityProvider {
 
 	//TODO TEST
@@ -108,17 +110,23 @@ public class GoogleIdentityProvider implements IdentityProvider {
 	@Override
 	public IdentitySet getIdentities(
 			final String authcode,
-			final boolean link) {
+			final boolean link) throws IdentityRetrievalException {
 		final String accessToken = getAccessToken(authcode, link);
 		final RemoteIdentity ri = getIdentity(accessToken);
 		return new IdentitySet(ri, null);
 	}
 
-	private RemoteIdentity getIdentity(final String accessToken) {
+	private RemoteIdentity getIdentity(final String accessToken)
+			throws IdentityRetrievalException {
 		final URI target = UriBuilder.fromUri(toURI(cfg.getApiURL()))
 				.path(IDENTITY_PATH).build();
 		final Map<String, Object> id = googleGetRequest(
 				accessToken, target);
+		if (id.containsKey("error")) {
+			//TODO ERROR better error handling
+			throw new IdentityRetrievalException(
+					"Provider error: " + id.get("error"));
+		}
 		@SuppressWarnings("unchecked")
 		final List<Map<String, String>> emails =
 				(List<Map<String, String>>) id.get("emails");
