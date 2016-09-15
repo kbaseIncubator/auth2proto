@@ -77,7 +77,7 @@ public class AuthUser {
 	
 	public RemoteIdentityWithID getIdentity(final RemoteIdentity ri) {
 		for (final RemoteIdentityWithID rid: identities) {
-			if (ri.isEqualProviderID(ri)) {
+			if (rid.getRemoteID().equals(ri.getRemoteID())) {
 				return rid;
 			}
 		}

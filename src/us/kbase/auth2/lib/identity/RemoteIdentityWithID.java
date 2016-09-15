@@ -11,13 +11,12 @@ public class RemoteIdentityWithID extends RemoteIdentity {
 	
 	public RemoteIdentityWithID(
 			final UUID id,
-			final String provider,
-			final String providerID,
+			final RemoteIdentityID remoteID,
 			final String username,
 			final String fullname,
 			final String email,
 			final boolean primary) {
-		super(provider, providerID, username, fullname, email, primary);
+		super(remoteID, username, fullname, email, primary);
 		if (id == null) {
 			throw new NullPointerException("id");
 		}
@@ -63,10 +62,8 @@ public class RemoteIdentityWithID extends RemoteIdentity {
 		StringBuilder builder = new StringBuilder();
 		builder.append("RemoteIdentityWithID [id=");
 		builder.append(id);
-		builder.append(", getProvider()=");
-		builder.append(getProvider());
-		builder.append(", getProviderID()=");
-		builder.append(getProviderID());
+		builder.append(", getId()=");
+		builder.append(getRemoteID());
 		builder.append(", getUsername()=");
 		builder.append(getUsername());
 		builder.append(", getFullname()=");

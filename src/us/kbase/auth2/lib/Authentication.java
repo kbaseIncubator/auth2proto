@@ -383,8 +383,8 @@ public class Authentication {
 		String provider = null;
 		for (final RemoteIdentityWithID ri: ids) {
 			if (provider == null) {
-				provider = ri.getProvider();
-			} else if (!provider.equals(ri.getProvider())) {
+				provider = ri.getRemoteID().getProvider();
+			} else if (!provider.equals(ri.getRemoteID().getProvider())) {
 				throw new AuthStorageException("More than one identity " +
 						"provider associated with this token");
 			}

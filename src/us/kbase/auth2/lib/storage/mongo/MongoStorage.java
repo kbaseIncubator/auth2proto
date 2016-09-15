@@ -40,6 +40,7 @@ import us.kbase.auth2.lib.exceptions.NoSuchUserException;
 import us.kbase.auth2.lib.exceptions.UnLinkFailedException;
 import us.kbase.auth2.lib.exceptions.UserExistsException;
 import us.kbase.auth2.lib.identity.RemoteIdentity;
+import us.kbase.auth2.lib.identity.RemoteIdentityID;
 import us.kbase.auth2.lib.identity.RemoteIdentityWithID;
 import us.kbase.auth2.lib.storage.AuthStorage;
 import us.kbase.auth2.lib.storage.exceptions.AuthStorageException;
@@ -587,7 +588,7 @@ public class MongoStorage implements AuthStorage {
 		 */
 		RemoteIdentityWithID update = null;
 		for (final RemoteIdentityWithID ri: user.getIdentities()) {
-			if (ri.isEqualProviderID(remoteID) &&
+			if (ri.getRemoteID().equals(remoteID.getRemoteID()) &&
 					!ri.isEqualProviderDetails(remoteID)) {
 				update = ri;
 			}
@@ -608,9 +609,10 @@ public class MongoStorage implements AuthStorage {
 	private Document makeUserQuery(final RemoteIdentity remoteID) {
 		final Document query = new Document(Fields.USER_IDENTITIES,
 				new Document("$elemMatch", new Document(
-						Fields.IDENTITIES_PROVIDER, remoteID.getProvider())
+						Fields.IDENTITIES_PROVIDER,
+								remoteID.getRemoteID().getProvider())
 						.append(Fields.IDENTITIES_PROV_ID,
-								remoteID.getProviderID())));
+								remoteID.getRemoteID().getId())));
 		return query;
 	}
 	
@@ -661,8 +663,9 @@ public class MongoStorage implements AuthStorage {
 
 	private Document toDocument(final RemoteIdentityWithID id) {
 		return new Document(Fields.IDENTITIES_ID, id.getID().toString())
-				.append(Fields.IDENTITIES_PROVIDER, id.getProvider())
-				.append(Fields.IDENTITIES_PROV_ID, id.getProviderID())
+				.append(Fields.IDENTITIES_PROVIDER,
+						id.getRemoteID().getProvider())
+				.append(Fields.IDENTITIES_PROV_ID, id.getRemoteID().getId())
 				.append(Fields.IDENTITIES_PRIME, id.isPrimary())
 				.append(Fields.IDENTITIES_USER, id.getUsername())
 				.append(Fields.IDENTITIES_NAME, id.getFullname())
@@ -696,10 +699,12 @@ public class MongoStorage implements AuthStorage {
 			return ret;
 		}
 		for (final Document i: ids) {
+			final RemoteIdentityID rid = new RemoteIdentityID(
+					i.getString(Fields.IDENTITIES_PROVIDER),
+					i.getString(Fields.IDENTITIES_PROV_ID));
 			ret.add(new RemoteIdentityWithID(
 					UUID.fromString(i.getString(Fields.IDENTITIES_ID)),
-					i.getString(Fields.IDENTITIES_PROVIDER),
-					i.getString(Fields.IDENTITIES_PROV_ID),
+					rid,
 					i.getString(Fields.IDENTITIES_USER),
 					i.getString(Fields.IDENTITIES_NAME),
 					i.getString(Fields.IDENTITIES_EMAIL),
@@ -731,7 +736,7 @@ public class MongoStorage implements AuthStorage {
 		}
 		//check for race conditions such that the id is already linked
 		for (final RemoteIdentityWithID ri: u.getIdentities()) {
-			if (ri.isEqualProviderID(remoteID)) {
+			if (ri.getRemoteID().equals(remoteID.getRemoteID())) {
 				if (ri.isEqualProviderDetails(remoteID)) {
 					return true; //nothing to do
 				} else {

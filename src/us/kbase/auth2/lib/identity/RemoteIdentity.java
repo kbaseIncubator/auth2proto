@@ -7,24 +7,24 @@ public class RemoteIdentity {
 	//TODO JAVADOC
 	//TODO TEST
 	
-	private final String provider;
-	private final String providerID;
+	private final RemoteIdentityID remoteID;
 	private final String username;
 	private final String fullname;
 	private final String email;
 	private final boolean primary;
 	
 	public RemoteIdentity(
-			final String provider,
-			final String providerID,
+			final RemoteIdentityID remoteID,
 			final String username,
 			final String fullname,
 			final String email,
 			final boolean primary) {
 		super();
 		//TODO NOW check for null & .trim().isEmpty()
-		this.provider = provider;
-		this.providerID = providerID;
+		if (remoteID == null) {
+			throw new NullPointerException("id");
+		}
+		this.remoteID = remoteID;
 		this.username = username;
 		this.fullname = fullname;
 		this.email = email;
@@ -36,16 +36,12 @@ public class RemoteIdentity {
 	}
 	
 	public RemoteIdentityWithID withID(final UUID id) {
-		return new RemoteIdentityWithID(id, provider,
-				providerID, username, fullname, email, primary);
-	}
-	
-	public String getProvider() {
-		return provider;
+		return new RemoteIdentityWithID(id, this.remoteID,
+				username, fullname, email, primary);
 	}
 
-	public String getProviderID() {
-		return providerID;
+	public RemoteIdentityID getRemoteID() {
+		return remoteID;
 	}
 
 	public String getUsername() {
@@ -64,14 +60,8 @@ public class RemoteIdentity {
 		return primary;
 	}
 	
-	public boolean isEqualProviderID(final RemoteIdentity other) {
-		return provider.equals(other.provider) &&
-				providerID.equals(other.providerID);
-	}
-	
 	public boolean isEqualProviderDetails(final RemoteIdentity other) {
-		return provider.equals(other.provider) &&
-				providerID.equals(other.providerID) &&
+		return remoteID.equals(other.remoteID) &&
 				email.equals(other.email) &&
 				fullname.equals(other.fullname) &&
 				username.equals(other.username) &&
@@ -84,9 +74,8 @@ public class RemoteIdentity {
 		int result = 1;
 		result = prime * result + ((email == null) ? 0 : email.hashCode());
 		result = prime * result + ((fullname == null) ? 0 : fullname.hashCode());
-		result = prime * result + ((providerID == null) ? 0 : providerID.hashCode());
+		result = prime * result + ((remoteID == null) ? 0 : remoteID.hashCode());
 		result = prime * result + (primary ? 1231 : 1237);
-		result = prime * result + ((provider == null) ? 0 : provider.hashCode());
 		result = prime * result + ((username == null) ? 0 : username.hashCode());
 		return result;
 	}
@@ -117,21 +106,14 @@ public class RemoteIdentity {
 		} else if (!fullname.equals(other.fullname)) {
 			return false;
 		}
-		if (providerID == null) {
-			if (other.providerID != null) {
+		if (remoteID == null) {
+			if (other.remoteID != null) {
 				return false;
 			}
-		} else if (!providerID.equals(other.providerID)) {
+		} else if (!remoteID.equals(other.remoteID)) {
 			return false;
 		}
 		if (primary != other.primary) {
-			return false;
-		}
-		if (provider == null) {
-			if (other.provider != null) {
-				return false;
-			}
-		} else if (!provider.equals(other.provider)) {
 			return false;
 		}
 		if (username == null) {
@@ -147,10 +129,8 @@ public class RemoteIdentity {
 	@Override
 	public String toString() {
 		StringBuilder builder = new StringBuilder();
-		builder.append("RemoteIdentity [provider=");
-		builder.append(provider);
-		builder.append(", providerID=");
-		builder.append(providerID);
+		builder.append("RemoteIdentity [remoteID=");
+		builder.append(remoteID);
 		builder.append(", username=");
 		builder.append(username);
 		builder.append(", fullname=");

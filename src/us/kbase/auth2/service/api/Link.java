@@ -196,7 +196,7 @@ public class Link {
 		final Map<String, Object> ret = new HashMap<>();
 		ret.put("user", ids.getUser().getUserName().getName());
 		ret.put("provider", ids.getIdentities()
-				.iterator().next().getProvider());
+				.iterator().next().getRemoteID().getProvider());
 		final List<Map<String, String>> ris = new LinkedList<>();
 		ret.put("ids", ris);
 		for (final RemoteIdentityWithID ri: ids.getIdentities()) {

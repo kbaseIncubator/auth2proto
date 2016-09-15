@@ -178,7 +178,7 @@ public class GlobusIdentityProvider implements IdentityProvider {
 		final String name = (String) m.get("name");
 		final String email = (String) m.get("email");
 		final RemoteIdentity primary = new RemoteIdentity(
-				NAME, id, username, name, email, true);
+				new RemoteIdentityID(NAME, id), username, name, email, true);
 		@SuppressWarnings("unchecked")
 		final List<String> secids = (List<String>) m.get("identities_set");
 		secids.remove(id);
@@ -195,7 +195,8 @@ public class GlobusIdentityProvider implements IdentityProvider {
 			final String name = (String) id.get("name");
 			final String email = (String) id.get("email");
 			final RemoteIdentity rid = new RemoteIdentity(
-					NAME, uid, username, name, email, false);
+					new RemoteIdentityID(NAME, uid), username, name, email,
+					false);
 			ret.add(rid);
 		}
 		return ret;

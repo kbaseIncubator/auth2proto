@@ -202,7 +202,7 @@ public class Login {
 				new IncomingToken(token.trim()));
 		
 		final Map<String, Object> ret = new HashMap<>();
-		ret.put("provider", ids.getPrimary().getProvider());
+		ret.put("provider", ids.getPrimary().getRemoteID().getProvider());
 		final List<Map<String, String>> secs = new LinkedList<>();
 		ret.put("secs", secs);
 		for (final Entry<RemoteIdentityWithID, AuthUser> e:

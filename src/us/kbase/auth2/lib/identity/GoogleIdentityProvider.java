@@ -132,8 +132,7 @@ public class GoogleIdentityProvider implements IdentityProvider {
 				(List<Map<String, String>>) id.get("emails");
 		final String email = emails.get(0).get("value");
 		return new RemoteIdentity(
-				NAME,
-				(String) id.get("id"),
+				new RemoteIdentityID(NAME, (String) id.get("id")),
 				email, // use email for user id
 				(String) id.get("displayName"),
 				email,
