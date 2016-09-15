@@ -40,6 +40,7 @@ import us.kbase.auth2.lib.exceptions.NoSuchUserException;
 import us.kbase.auth2.lib.exceptions.UnLinkFailedException;
 import us.kbase.auth2.lib.exceptions.UserExistsException;
 import us.kbase.auth2.lib.identity.RemoteIdentity;
+import us.kbase.auth2.lib.identity.RemoteIdentityWithID;
 import us.kbase.auth2.lib.storage.AuthStorage;
 import us.kbase.auth2.lib.storage.exceptions.AuthStorageException;
 import us.kbase.auth2.lib.storage.exceptions.StorageInitException;
@@ -100,13 +101,17 @@ public class MongoStorage implements AuthStorage {
 		final Map<List<String>, IndexOptions> users = new HashMap<>();
 		//find users and ensure user names are unique
 		users.put(Arrays.asList(Fields.USER_NAME), IDX_UNIQ);
-		//find user by provider and ensure providers are 1:1 with users
+		//find user by identity provider and identity id and ensure identities
+		//are 1:1 with users
 		users.put(Arrays.asList(
 				Fields.USER_IDENTITIES + Fields.FIELD_SEP +
 					Fields.IDENTITIES_PROVIDER,
 				Fields.USER_IDENTITIES + Fields.FIELD_SEP +
-					Fields.IDENTITIES_ID),
+					Fields.IDENTITIES_PROV_ID),
 				IDX_UNIQ_SPARSE);
+		//find user by local identity id and ensure unique ids
+		users.put(Arrays.asList(Fields.USER_IDENTITIES + Fields.FIELD_SEP +
+				Fields.IDENTITIES_ID), IDX_UNIQ_SPARSE);
 		INDEXES.put(COL_USERS, users);
 		
 		//token indexes
@@ -285,7 +290,7 @@ public class MongoStorage implements AuthStorage {
 			throw new IllegalArgumentException(
 					"user can only have one identity");
 		}
-		final RemoteIdentity ri = user.getIdentities().iterator().next();
+		final RemoteIdentityWithID ri = user.getIdentities().iterator().next();
 		final Document id = toDocument(ri);
 				
 		final Document u = new Document(
@@ -580,19 +585,18 @@ public class MongoStorage implements AuthStorage {
 		 * 99% of the time a set won't be necessary, so don't write lock the
 		 * DB/collection (depending on mongo version) unless necessary 
 		 */
-		RemoteIdentity update = null;
-		for (final RemoteIdentity ri: user.getIdentities()) {
-			if (ri.getProvider().equals(remoteID.getProvider()) &&
-					ri.getProviderID().equals(remoteID.getProviderID()) &&
-					!ri.equals(remoteID)) {
+		RemoteIdentityWithID update = null;
+		for (final RemoteIdentityWithID ri: user.getIdentities()) {
+			if (ri.isEqualProviderID(remoteID) &&
+					!ri.isEqualProviderDetails(remoteID)) {
 				update = ri;
 			}
 		}
 		if (update != null) {
-			final Set<RemoteIdentity> newIDs = new HashSet<>(
+			final Set<RemoteIdentityWithID> newIDs = new HashSet<>(
 					user.getIdentities());
 			newIDs.remove(update);
-			newIDs.add(remoteID);
+			newIDs.add(remoteID.withID(update.getID()));
 			user = new AuthUser(user.getUserName(), user.getEmail(),
 					user.getFullName(), newIDs, user.getRoles(),
 					user.getCustomRoles());
@@ -605,7 +609,8 @@ public class MongoStorage implements AuthStorage {
 		final Document query = new Document(Fields.USER_IDENTITIES,
 				new Document("$elemMatch", new Document(
 						Fields.IDENTITIES_PROVIDER, remoteID.getProvider())
-						.append(Fields.IDENTITIES_ID, remoteID.getProviderID())));
+						.append(Fields.IDENTITIES_PROV_ID,
+								remoteID.getProviderID())));
 		return query;
 	}
 	
@@ -632,13 +637,9 @@ public class MongoStorage implements AuthStorage {
 	@Override
 	public void storeIdentitiesTemporarily(
 			final TemporaryHashedToken t,
-			final Set<RemoteIdentity> identitySet)
+			final Set<RemoteIdentityWithID> identitySet)
 			throws AuthStorageException {
-		final List<Document> ids = new LinkedList<>();
-		for (final RemoteIdentity id: identitySet) {
-			ids.add(toDocument(id));
-		}
-		
+		final Set<Document> ids = toDocument(identitySet);
 		final Document td = new Document(
 				Fields.TEMP_TOKEN_ID, t.getId().toString())
 				.append(Fields.TEMP_TOKEN_TOKEN, t.getTokenHash())
@@ -658,10 +659,10 @@ public class MongoStorage implements AuthStorage {
 		
 	}
 
-	private Document toDocument(final RemoteIdentity id) {
-		return new Document(
-				Fields.IDENTITIES_PROVIDER, id.getProvider())
-				.append(Fields.IDENTITIES_ID, id.getProviderID())
+	private Document toDocument(final RemoteIdentityWithID id) {
+		return new Document(Fields.IDENTITIES_ID, id.getID().toString())
+				.append(Fields.IDENTITIES_PROVIDER, id.getProvider())
+				.append(Fields.IDENTITIES_PROV_ID, id.getProviderID())
 				.append(Fields.IDENTITIES_PRIME, id.isPrimary())
 				.append(Fields.IDENTITIES_USER, id.getUsername())
 				.append(Fields.IDENTITIES_NAME, id.getFullname())
@@ -669,7 +670,7 @@ public class MongoStorage implements AuthStorage {
 	}
 	
 	@Override
-	public Set<RemoteIdentity> getTemporaryIdentities(
+	public Set<RemoteIdentityWithID> getTemporaryIdentities(
 			final IncomingHashedToken token)
 			throws AuthStorageException, NoSuchTokenException {
 		final Document d = findOne(COL_TEMP_TOKEN,
@@ -685,19 +686,20 @@ public class MongoStorage implements AuthStorage {
 			throw new AuthStorageException(String.format(
 					"Temporary token %s has no associated IDs", tid));
 		}
-		final Set<RemoteIdentity> ret = toIdentities(ids);
+		final Set<RemoteIdentityWithID> ret = toIdentities(ids);
 		return ret;
 	}
 
-	private Set<RemoteIdentity> toIdentities(final List<Document> ids) {
-		final Set<RemoteIdentity> ret = new HashSet<>();
+	private Set<RemoteIdentityWithID> toIdentities(final List<Document> ids) {
+		final Set<RemoteIdentityWithID> ret = new HashSet<>();
 		if (ids == null) {
 			return ret;
 		}
 		for (final Document i: ids) {
-			ret.add(new RemoteIdentity(
+			ret.add(new RemoteIdentityWithID(
+					UUID.fromString(i.getString(Fields.IDENTITIES_ID)),
 					i.getString(Fields.IDENTITIES_PROVIDER),
-					i.getString(Fields.IDENTITIES_ID),
+					i.getString(Fields.IDENTITIES_PROV_ID),
 					i.getString(Fields.IDENTITIES_USER),
 					i.getString(Fields.IDENTITIES_NAME),
 					i.getString(Fields.IDENTITIES_EMAIL),
@@ -707,7 +709,7 @@ public class MongoStorage implements AuthStorage {
 	}
 	
 	@Override
-	public void link(final UserName user, final RemoteIdentity remoteID)
+	public void link(final UserName user, final RemoteIdentityWithID remoteID)
 			throws NoSuchUserException, AuthStorageException,
 			LinkFailedException {
 		boolean complete = false;
@@ -718,7 +720,7 @@ public class MongoStorage implements AuthStorage {
 	
 	private boolean addIdentity(
 			final UserName user,
-			final RemoteIdentity remoteID)
+			final RemoteIdentityWithID remoteID)
 			throws NoSuchUserException, AuthStorageException,
 			LinkFailedException {
 		//TODO NOW document this thoroughly
@@ -727,10 +729,10 @@ public class MongoStorage implements AuthStorage {
 			throw new LinkFailedException(
 					"Cannot link accounts to a local user");
 		}
-		for (final RemoteIdentity ri: u.getIdentities()) {
-			if (ri.getProvider().equals(remoteID.getProvider()) &&
-					ri.getProviderID().equals(remoteID.getProviderID())) {
-				if (ri.equals(remoteID)) {
+		//check for race conditions such that the id is already linked
+		for (final RemoteIdentityWithID ri: u.getIdentities()) {
+			if (ri.isEqualProviderID(remoteID)) {
+				if (ri.isEqualProviderDetails(remoteID)) {
 					return true; //nothing to do
 				} else {
 					updateIdentity(remoteID);
@@ -770,8 +772,7 @@ public class MongoStorage implements AuthStorage {
 	@Override
 	public void unlink(
 			final UserName username,
-			final String provider,
-			final String id)
+			final UUID id)
 			throws AuthStorageException, UnLinkFailedException {
 		final Document q = new Document(Fields.USER_NAME, username.getName())
 				/* this a neat trick to ensure that there's at least 2
@@ -782,8 +783,7 @@ public class MongoStorage implements AuthStorage {
 						new Document("$exists", true));
 		final Document a = new Document("$pull", new Document(
 				Fields.USER_IDENTITIES, new Document(
-						Fields.IDENTITIES_PROVIDER, provider)
-						.append(Fields.IDENTITIES_ID, id)));
+						Fields.IDENTITIES_ID, id.toString())));
 		try {
 			final UpdateResult r = db.getCollection(COL_USERS).updateOne(q, a);
 			if (r.getMatchedCount() != 1) {
@@ -802,7 +802,7 @@ public class MongoStorage implements AuthStorage {
 		
 	}
 
-	private Set<Document> toDocument(final Set<RemoteIdentity> rids) {
+	private Set<Document> toDocument(final Set<RemoteIdentityWithID> rids) {
 		return rids.stream().map(ri -> toDocument(ri))
 				.collect(Collectors.toSet());
 	}

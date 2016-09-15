@@ -13,6 +13,7 @@ import java.util.HashMap;
 import java.util.LinkedList;
 import java.util.List;
 import java.util.Map;
+import java.util.UUID;
 import java.util.Map.Entry;
 
 import javax.inject.Inject;
@@ -47,7 +48,7 @@ import us.kbase.auth2.lib.exceptions.NoSuchIdentityProviderException;
 import us.kbase.auth2.lib.exceptions.NoTokenProvidedException;
 import us.kbase.auth2.lib.exceptions.UserExistsException;
 import us.kbase.auth2.lib.identity.IdentityProvider;
-import us.kbase.auth2.lib.identity.RemoteIdentity;
+import us.kbase.auth2.lib.identity.RemoteIdentityWithID;
 import us.kbase.auth2.lib.storage.exceptions.AuthStorageException;
 import us.kbase.auth2.lib.token.IncomingToken;
 import us.kbase.auth2.lib.token.NewToken;
@@ -204,17 +205,17 @@ public class Login {
 		ret.put("provider", ids.getPrimary().getProvider());
 		final List<Map<String, String>> secs = new LinkedList<>();
 		ret.put("secs", secs);
-		for (final Entry<RemoteIdentity, AuthUser> e:
+		for (final Entry<RemoteIdentityWithID, AuthUser> e:
 				ids.getSecondaries().entrySet()) {
 			final Map<String, String> s = new HashMap<>();
-			s.put("prov_id", e.getKey().getProviderID());
+			s.put("id", e.getKey().getID().toString());
 			s.put("prov_username", e.getKey().getUsername());
 			s.put("username", e.getValue().getUserName().getName());
 			secs.add(s);
 		}
 		if (ids.getPrimaryUser() == null) {
 			ret.put("create", true);
-			ret.put("prov_id", ids.getPrimary().getProviderID());
+			ret.put("id", ids.getPrimary().getID().toString());
 			//TODO NOW get safe username from db
 			ret.put("usernamesugg", ids.getPrimary().getUsername()
 					.split("@")[0]);
@@ -230,7 +231,7 @@ public class Login {
 			// possibility of a race condition, but worst case is the user has
 			// to click the primary user with no other choices, so meh
 			final Map<String, String> p = new HashMap<>();
-			p.put("prov_id", ids.getPrimary().getProviderID());
+			p.put("id", ids.getPrimary().getID().toString());
 			p.put("prov_username", ids.getPrimary().getUsername());
 			p.put("username", ids.getPrimaryUser().getUserName().getName());
 			secs.add(p);
@@ -247,8 +248,7 @@ public class Login {
 	public Response pickAccount(
 			@CookieParam("in-process-login-token") final String token,
 			@CookieParam("redirect") final String redirect,
-			@FormParam("provider") final String provider,
-			@FormParam("id") final String remoteID)
+			@FormParam("id") final UUID identityID)
 			throws NoTokenProvidedException, AuthenticationException,
 			AuthStorageException {
 		
@@ -257,7 +257,7 @@ public class Login {
 					"Missing in-process-login-token");
 		}
 		final NewToken newtoken = auth.login(
-				new IncomingToken(token), provider, remoteID);
+				new IncomingToken(token), identityID);
 		return Response.seeOther(getRedirectURI(redirect, "/me"))
 				//TODO NOW can't set keep me logged in here, so set in profile
 				.cookie(getLoginCookie(newtoken, true))
@@ -270,8 +270,7 @@ public class Login {
 	public Response createUser(
 			@CookieParam("in-process-login-token") final String token,
 			@CookieParam("redirect") final String redirect,
-			@FormParam("provider") final String provider,
-			@FormParam("id") final String remoteID,
+			@FormParam("id") final UUID identityID,
 			@FormParam("user") final String userName,
 			@FormParam("full") final String fullName,
 			@FormParam("email") final String email,
@@ -292,8 +291,8 @@ public class Login {
 		
 		// might want to enapsulate the user data in a NewUser class
 		final NewToken newtoken = auth.createUser(new IncomingToken(token),
-				provider, remoteID, new UserName(userName), fullName, email,
-				sessionLogin, priv);
+				identityID, new UserName(userName),
+				fullName, email, sessionLogin, priv);
 		return Response.seeOther(getRedirectURI(redirect, "/me"))
 		//TODO NOW can't set keep me logged in here, so set in profile
 				.cookie(getLoginCookie(newtoken, true))

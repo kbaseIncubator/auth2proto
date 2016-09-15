@@ -4,7 +4,7 @@ import java.util.Collections;
 import java.util.HashMap;
 import java.util.Map;
 
-import us.kbase.auth2.lib.identity.RemoteIdentity;
+import us.kbase.auth2.lib.identity.RemoteIdentityWithID;
 
 public class LoginIdentities {
 	
@@ -13,26 +13,26 @@ public class LoginIdentities {
 	//TODO NOW check only one primary, check secondaries are secondary
 	//TODO NOW here and in Authentication check no duplicate IDs
 
-	private final RemoteIdentity primary;
+	private final RemoteIdentityWithID primary;
 	private final AuthUser primaryUser;
-	private final Map<RemoteIdentity, AuthUser> secondaries;
+	private final Map<RemoteIdentityWithID, AuthUser> secondaries;
 	
 	public LoginIdentities(
-			final RemoteIdentity primary,
+			final RemoteIdentityWithID primary,
 			final AuthUser primaryUser,
-			Map<RemoteIdentity, AuthUser> secondaries) {
+			Map<RemoteIdentityWithID, AuthUser> secs) {
 		if (primary == null) {
 			throw new NullPointerException("primary");
 		}
 		this.primary = primary;
 		this.primaryUser = primaryUser;
-		if (secondaries == null) {
-			secondaries = new HashMap<>();
+		if (secs == null) {
+			secs = new HashMap<>();
 		}
-		this.secondaries = Collections.unmodifiableMap(secondaries);
+		this.secondaries = Collections.unmodifiableMap(secs);
 	}
 
-	public RemoteIdentity getPrimary() {
+	public RemoteIdentityWithID getPrimary() {
 		return primary;
 	}
 
@@ -40,7 +40,7 @@ public class LoginIdentities {
 		return primaryUser;
 	}
 
-	public Map<RemoteIdentity, AuthUser> getSecondaries() {
+	public Map<RemoteIdentityWithID, AuthUser> getSecondaries() {
 		return secondaries;
 	}
 

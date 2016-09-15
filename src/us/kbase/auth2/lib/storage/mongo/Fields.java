@@ -22,8 +22,9 @@ public class Fields {
 	public static final String USER_RESET_PWD = "rstpwd";
 	
 	//identities fields
-	public static final String IDENTITIES_PROVIDER = "prov";
 	public static final String IDENTITIES_ID = "id";
+	public static final String IDENTITIES_PROVIDER = "prov";
+	public static final String IDENTITIES_PROV_ID = "prov_id";
 	public static final String IDENTITIES_PRIME = "primary";
 	public static final String IDENTITIES_USER = "uid";
 	public static final String IDENTITIES_NAME = "fullname";

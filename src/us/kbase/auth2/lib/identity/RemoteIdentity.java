@@ -1,5 +1,7 @@
 package us.kbase.auth2.lib.identity;
 
+import java.util.UUID;
+
 public class RemoteIdentity {
 	
 	//TODO JAVADOC
@@ -28,7 +30,16 @@ public class RemoteIdentity {
 		this.email = email;
 		this.primary = primary;
 	}
-
+	
+	public RemoteIdentityWithID withID() {
+		return withID(UUID.randomUUID());
+	}
+	
+	public RemoteIdentityWithID withID(final UUID id) {
+		return new RemoteIdentityWithID(id, provider,
+				providerID, username, fullname, email, primary);
+	}
+	
 	public String getProvider() {
 		return provider;
 	}
@@ -51,6 +62,20 @@ public class RemoteIdentity {
 
 	public boolean isPrimary() {
 		return primary;
+	}
+	
+	public boolean isEqualProviderID(final RemoteIdentity other) {
+		return provider.equals(other.provider) &&
+				providerID.equals(other.providerID);
+	}
+	
+	public boolean isEqualProviderDetails(final RemoteIdentity other) {
+		return provider.equals(other.provider) &&
+				providerID.equals(other.providerID) &&
+				email.equals(other.email) &&
+				fullname.equals(other.fullname) &&
+				username.equals(other.username) &&
+				primary == other.primary;
 	}
 
 	@Override
@@ -124,7 +149,7 @@ public class RemoteIdentity {
 		StringBuilder builder = new StringBuilder();
 		builder.append("RemoteIdentity [provider=");
 		builder.append(provider);
-		builder.append(", id=");
+		builder.append(", providerID=");
 		builder.append(providerID);
 		builder.append(", username=");
 		builder.append(username);

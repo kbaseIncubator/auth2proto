@@ -6,6 +6,7 @@ import java.util.HashMap;
 import java.util.LinkedList;
 import java.util.List;
 import java.util.Map;
+import java.util.UUID;
 import java.util.stream.Collectors;
 
 import javax.inject.Inject;
@@ -26,7 +27,7 @@ import us.kbase.auth2.lib.UserUpdate;
 import us.kbase.auth2.lib.exceptions.InvalidTokenException;
 import us.kbase.auth2.lib.exceptions.NoTokenProvidedException;
 import us.kbase.auth2.lib.exceptions.UnLinkFailedException;
-import us.kbase.auth2.lib.identity.RemoteIdentity;
+import us.kbase.auth2.lib.identity.RemoteIdentityWithID;
 import us.kbase.auth2.lib.storage.exceptions.AuthStorageException;
 import us.kbase.auth2.lib.token.IncomingToken;
 
@@ -65,11 +66,11 @@ public class Me {
 				.collect(Collectors.toList()));
 		final List<Map<String, String>> idents = new LinkedList<>();
 		ret.put("idents", idents);
-		for (final RemoteIdentity ri: u.getIdentities()) {
+		for (final RemoteIdentityWithID ri: u.getIdentities()) {
 			final Map<String, String> i = new HashMap<>();
 			i.put("provider", ri.getProvider());
 			i.put("username", ri.getUsername());
-			i.put("id", ri.getProviderID());
+			i.put("id", ri.getID().toString());
 			idents.add(i);
 		}
 		return ret;
@@ -93,18 +94,17 @@ public class Me {
 	}
 	
 	@POST
-	@Path("{provider}/{id}")
+	@Path("/{id}")
 	public void unlink(
 			@CookieParam("token") final String token,
-			@PathParam("provider") final String provider,
-			@PathParam("id") final String id)
+			@PathParam("id") final UUID id)
 			throws NoTokenProvidedException, InvalidTokenException,
 			AuthStorageException, UnLinkFailedException {
 		//TODO NOW make a get token method that returns an incomingtoken
 		if (token == null || token.trim().isEmpty()) {
 			throw new NoTokenProvidedException();
 		}
-		// provider and id can't be null or empty
-		auth.unlink(new IncomingToken(token), provider, id);
+		// id can't be null
+		auth.unlink(new IncomingToken(token), id);
 	}
 }
