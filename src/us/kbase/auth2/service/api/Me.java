@@ -69,7 +69,7 @@ public class Me {
 		for (final RemoteIdentityWithID ri: u.getIdentities()) {
 			final Map<String, String> i = new HashMap<>();
 			i.put("provider", ri.getRemoteID().getProvider());
-			i.put("username", ri.getUsername());
+			i.put("username", ri.getDetails().getUsername());
 			i.put("id", ri.getID().toString());
 			idents.add(i);
 		}

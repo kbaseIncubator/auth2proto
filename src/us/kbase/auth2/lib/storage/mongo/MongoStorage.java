@@ -40,6 +40,7 @@ import us.kbase.auth2.lib.exceptions.NoSuchUserException;
 import us.kbase.auth2.lib.exceptions.UnLinkFailedException;
 import us.kbase.auth2.lib.exceptions.UserExistsException;
 import us.kbase.auth2.lib.identity.RemoteIdentity;
+import us.kbase.auth2.lib.identity.RemoteIdentityDetails;
 import us.kbase.auth2.lib.identity.RemoteIdentityID;
 import us.kbase.auth2.lib.identity.RemoteIdentityWithID;
 import us.kbase.auth2.lib.storage.AuthStorage;
@@ -589,7 +590,7 @@ public class MongoStorage implements AuthStorage {
 		RemoteIdentityWithID update = null;
 		for (final RemoteIdentityWithID ri: user.getIdentities()) {
 			if (ri.getRemoteID().equals(remoteID.getRemoteID()) &&
-					!ri.isEqualProviderDetails(remoteID)) {
+					!ri.getDetails().equals(remoteID.getDetails())) {
 				update = ri;
 			}
 		}
@@ -622,11 +623,12 @@ public class MongoStorage implements AuthStorage {
 		final Document query = makeUserQuery(remoteID);
 		
 		final String pre = Fields.USER_IDENTITIES + ".$.";
+		final RemoteIdentityDetails rid = remoteID.getDetails();
 		final Document update = new Document("$set", new Document(
-				pre + Fields.IDENTITIES_USER, remoteID.getUsername())
-				.append(pre + Fields.IDENTITIES_EMAIL, remoteID.getEmail())
-				.append(pre + Fields.IDENTITIES_NAME, remoteID.getFullname())
-				.append(pre + Fields.IDENTITIES_PRIME, remoteID.isPrimary()));
+				pre + Fields.IDENTITIES_USER, rid.getUsername())
+				.append(pre + Fields.IDENTITIES_EMAIL, rid.getEmail())
+				.append(pre + Fields.IDENTITIES_NAME, rid.getFullname())
+				.append(pre + Fields.IDENTITIES_PRIME, rid.isPrimary()));
 		try {
 			// id might have been unlinked, so we just assume
 			// the update worked.
@@ -662,14 +664,15 @@ public class MongoStorage implements AuthStorage {
 	}
 
 	private Document toDocument(final RemoteIdentityWithID id) {
+		final RemoteIdentityDetails rid = id.getDetails();
 		return new Document(Fields.IDENTITIES_ID, id.getID().toString())
 				.append(Fields.IDENTITIES_PROVIDER,
 						id.getRemoteID().getProvider())
 				.append(Fields.IDENTITIES_PROV_ID, id.getRemoteID().getId())
-				.append(Fields.IDENTITIES_PRIME, id.isPrimary())
-				.append(Fields.IDENTITIES_USER, id.getUsername())
-				.append(Fields.IDENTITIES_NAME, id.getFullname())
-				.append(Fields.IDENTITIES_EMAIL, id.getEmail());
+				.append(Fields.IDENTITIES_PRIME, rid.isPrimary())
+				.append(Fields.IDENTITIES_USER, rid.getUsername())
+				.append(Fields.IDENTITIES_NAME, rid.getFullname())
+				.append(Fields.IDENTITIES_EMAIL, rid.getEmail());
 	}
 	
 	@Override
@@ -702,13 +705,14 @@ public class MongoStorage implements AuthStorage {
 			final RemoteIdentityID rid = new RemoteIdentityID(
 					i.getString(Fields.IDENTITIES_PROVIDER),
 					i.getString(Fields.IDENTITIES_PROV_ID));
-			ret.add(new RemoteIdentityWithID(
-					UUID.fromString(i.getString(Fields.IDENTITIES_ID)),
-					rid,
+			final RemoteIdentityDetails det = new RemoteIdentityDetails(
 					i.getString(Fields.IDENTITIES_USER),
 					i.getString(Fields.IDENTITIES_NAME),
 					i.getString(Fields.IDENTITIES_EMAIL),
-					i.getBoolean(Fields.IDENTITIES_PRIME)));
+					i.getBoolean(Fields.IDENTITIES_PRIME));
+			ret.add(new RemoteIdentityWithID(
+					UUID.fromString(i.getString(Fields.IDENTITIES_ID)),
+					rid, det));
 		}
 		return ret;
 	}
@@ -737,7 +741,7 @@ public class MongoStorage implements AuthStorage {
 		//check for race conditions such that the id is already linked
 		for (final RemoteIdentityWithID ri: u.getIdentities()) {
 			if (ri.getRemoteID().equals(remoteID.getRemoteID())) {
-				if (ri.isEqualProviderDetails(remoteID)) {
+				if (ri.getDetails().equals(remoteID.getDetails())) {
 					return true; //nothing to do
 				} else {
 					updateIdentity(remoteID);

@@ -202,7 +202,7 @@ public class Link {
 		for (final RemoteIdentityWithID ri: ids.getIdentities()) {
 			final Map<String, String> s = new HashMap<>();
 			s.put("id", ri.getID().toString());
-			s.put("prov_username", ri.getUsername());
+			s.put("prov_username", ri.getDetails().getUsername());
 			ris.add(s);
 		}
 		ret.put("pickurl", relativize(uriInfo, "/link/pick"));

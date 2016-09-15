@@ -388,7 +388,7 @@ public class Authentication {
 				throw new AuthStorageException("More than one identity " +
 						"provider associated with this token");
 			}
-			if (ri.isPrimary()) {
+			if (ri.getDetails().isPrimary()) {
 				if (primary != null) {
 					throw new AuthStorageException("More than one primary " +
 							"identity associated with this token");

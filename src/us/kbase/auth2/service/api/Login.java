@@ -209,7 +209,7 @@ public class Login {
 				ids.getSecondaries().entrySet()) {
 			final Map<String, String> s = new HashMap<>();
 			s.put("id", e.getKey().getID().toString());
-			s.put("prov_username", e.getKey().getUsername());
+			s.put("prov_username", e.getKey().getDetails().getUsername());
 			s.put("username", e.getValue().getUserName().getName());
 			secs.add(s);
 		}
@@ -217,11 +217,13 @@ public class Login {
 			ret.put("create", true);
 			ret.put("id", ids.getPrimary().getID().toString());
 			//TODO NOW get safe username from db
-			ret.put("usernamesugg", ids.getPrimary().getUsername()
+			ret.put("usernamesugg", ids.getPrimary().getDetails().getUsername()
 					.split("@")[0]);
-			ret.put("prov_username", ids.getPrimary().getUsername());
-			ret.put("prov_fullname", ids.getPrimary().getFullname());
-			ret.put("prov_email", ids.getPrimary().getEmail());
+			ret.put("prov_username",
+					ids.getPrimary().getDetails().getUsername());
+			ret.put("prov_fullname",
+					ids.getPrimary().getDetails().getFullname());
+			ret.put("prov_email", ids.getPrimary().getDetails().getEmail());
 			ret.put("createurl",
 					relativize(uriInfo, "/login/create"));
 			
@@ -232,7 +234,8 @@ public class Login {
 			// to click the primary user with no other choices, so meh
 			final Map<String, String> p = new HashMap<>();
 			p.put("id", ids.getPrimary().getID().toString());
-			p.put("prov_username", ids.getPrimary().getUsername());
+			p.put("prov_username",
+					ids.getPrimary().getDetails().getUsername());
 			p.put("username", ids.getPrimaryUser().getUserName().getName());
 			secs.add(p);
 		}

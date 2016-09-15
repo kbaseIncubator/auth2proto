@@ -133,10 +133,11 @@ public class GoogleIdentityProvider implements IdentityProvider {
 		final String email = emails.get(0).get("value");
 		return new RemoteIdentity(
 				new RemoteIdentityID(NAME, (String) id.get("id")),
-				email, // use email for user id
-				(String) id.get("displayName"),
-				email,
-				true);
+				new RemoteIdentityDetails(
+						email, // use email for user id
+						(String) id.get("displayName"),
+						email,
+						true));
 	}
 
 	private Map<String, Object> googleGetRequest(

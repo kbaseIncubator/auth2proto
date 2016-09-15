@@ -8,16 +8,16 @@ public class RemoteIdentityID {
 	private final String provider;
 	private final String id;
 	public RemoteIdentityID(final String provider, final String id) {
-		if (provider == null || provider.isEmpty()) {
+		if (provider == null || provider.trim().isEmpty()) {
 			throw new IllegalArgumentException(
 					"provider cannot be null or emtpy");
 		}
-		if (id == null || id.isEmpty()) {
+		if (id == null || id.trim().isEmpty()) {
 			throw new IllegalArgumentException(
 					"id cannot be null or emtpy");
 		}
-		this.provider = provider;
-		this.id = id;
+		this.provider = provider.trim();
+		this.id = id.trim();
 	}
 	
 	public String getProvider() {
