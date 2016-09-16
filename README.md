@@ -100,4 +100,4 @@ Create the deployment.cfg (see above)
 
 Run the image standalone  (this assumes mongo and nginx are already configured)
 
-    docker run -d auth2 -v ./deployment.cfg:/config/deployment.cfg -p 8080:8080 auth2
+    docker run -d --name auth2 -v ./deployment.cfg:/config/deployment.cfg -p 8080:8080 auth2
