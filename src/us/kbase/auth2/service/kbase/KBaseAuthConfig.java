@@ -87,7 +87,8 @@ public class KBaseAuthConfig implements AuthConfig {
 		}
 	}
 	
-	private Set<IdentityProviderConfig> getProviders(final Map<String, String> cfg)
+	private Set<IdentityProviderConfig> getProviders(
+			final Map<String, String> cfg)
 			throws AuthConfigurationException {
 		final String comsepProv = getString(KEY_ID_PROV, cfg);
 		final Set<IdentityProviderConfig> ips = new HashSet<>();

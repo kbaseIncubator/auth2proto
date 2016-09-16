@@ -3,17 +3,13 @@ package us.kbase.auth2.lib;
 import static us.kbase.auth2.lib.Utils.checkString;
 
 import java.security.NoSuchAlgorithmException;
-import java.security.NoSuchProviderException;
 import java.util.Arrays;
-import java.util.Collections;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.Iterator;
-import java.util.LinkedList;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
-import java.util.TreeMap;
 import java.util.UUID;
 import java.util.stream.Collectors;
 
@@ -32,6 +28,7 @@ import us.kbase.auth2.lib.exceptions.UnLinkFailedException;
 import us.kbase.auth2.lib.exceptions.UnauthorizedException;
 import us.kbase.auth2.lib.exceptions.UserExistsException;
 import us.kbase.auth2.lib.identity.IdentityProvider;
+import us.kbase.auth2.lib.identity.IdentityProviderFactory;
 import us.kbase.auth2.lib.identity.IdentitySet;
 import us.kbase.auth2.lib.identity.RemoteIdentity;
 import us.kbase.auth2.lib.identity.RemoteIdentityWithID;
@@ -68,15 +65,16 @@ public class Authentication {
 	//TODO NOW move jars into kbase/jars
 	//TODO DEPLOY jetty should start app immediately & fail if app fails
 	//TODO CONFIG set token cache time to be sent to client via api
+	//TODO NOW set keep me logged in on login page
 	
 	private final AuthStorage storage;
-	private final Map<String, IdentityProvider> idprov;
+	private final IdentityProviderFactory idFactory;
 	private final TokenGenerator tokens;
 	private final PasswordCrypt pwdcrypt;
 	
 	public Authentication(
 			final AuthStorage storage,
-			final Set<IdentityProvider> set) {
+			final IdentityProviderFactory identityProviderFactory) {
 		System.out.println("starting application");
 		try {
 			tokens = new TokenGenerator();
@@ -87,15 +85,11 @@ public class Authentication {
 		if (storage == null) {
 			throw new NullPointerException("storage");
 		}
-		this.storage = storage;
-		final Map<String, IdentityProvider> idp = new TreeMap<>();
-		if (set != null) {
-			for (final IdentityProvider id: set) {
-				idp.put(id.getProviderName(), id);
-			}
+		if (identityProviderFactory == null) {
+			throw new NullPointerException("identityProviderFactory");
 		}
-		this.idprov = Collections.unmodifiableMap(idp);
-		
+		this.storage = storage;
+		this.idFactory = identityProviderFactory;
 	}
 
 
@@ -309,7 +303,7 @@ public class Authentication {
 
 
 	public List<IdentityProvider> getIdentityProviders() {
-		return new LinkedList<IdentityProvider>(idprov.values());
+		return idFactory.getProviders();
 	}
 
 	// note not saved in DB
@@ -320,10 +314,7 @@ public class Authentication {
 
 	public IdentityProvider getIdentityProvider(final String provider)
 			throws NoSuchIdentityProviderException {
-		if (!idprov.containsKey(provider)) {
-			throw new NoSuchIdentityProviderException(provider); 
-		}
-		return idprov.get(provider);
+		return idFactory.getProvider(provider);
 	}
 
 	// split from getloginstate since the user may need to make a choice
@@ -331,12 +322,9 @@ public class Authentication {
 	// occur before said choice to hide the authcode, hence the temporary
 	// token instead of returning the choices directly
 	public LoginToken login(final String provider, final String authcode)
-			throws NoSuchProviderException, MissingParameterException,
-			IdentityRetrievalException, AuthStorageException {
-		final IdentityProvider idp = idprov.get(provider);
-		if (idp == null) {
-			throw new NoSuchProviderException(provider);
-		}
+			throws MissingParameterException, IdentityRetrievalException,
+			AuthStorageException, NoSuchIdentityProviderException {
+		final IdentityProvider idp = getIdentityProvider(provider);
 		if (authcode == null || authcode.trim().isEmpty()) {
 			throw new MissingParameterException("authorization code");
 		}
@@ -505,17 +493,14 @@ public class Authentication {
 			final String provider,
 			final String authcode)
 			throws InvalidTokenException, AuthStorageException,
-			NoSuchProviderException, MissingParameterException,
-			IdentityRetrievalException, LinkFailedException {
+			MissingParameterException, IdentityRetrievalException,
+			LinkFailedException, NoSuchIdentityProviderException {
 		final AuthUser u = getUser(token);
 		if (u.isLocal()) {
 			throw new LinkFailedException(
 					"Cannot link identities to local accounts");
 		}
-		final IdentityProvider idp = idprov.get(provider);
-		if (idp == null) {
-			throw new NoSuchProviderException(provider);
-		}
+		final IdentityProvider idp = getIdentityProvider(provider);
 		if (authcode == null || authcode.trim().isEmpty()) {
 			throw new MissingParameterException("authorization code");
 		}

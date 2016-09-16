@@ -34,7 +34,7 @@ public class GoogleIdentityProvider implements IdentityProvider {
 	 * https://developers.google.com/+/web/api/rest/latest/people
 	 */
 	
-	public static final String NAME = "Google";
+	private static final String NAME = "Google";
 	private static final String SCOPE =
 			"https://www.googleapis.com/auth/plus.me profile email";
 	private static final String LOGIN_PATH = "/o/oauth2/v2/auth";
@@ -197,6 +197,20 @@ public class GoogleIdentityProvider implements IdentityProvider {
 			if (r != null) {
 				r.close();
 			}
+		}
+	}
+	
+	public static class GoogleIdentityProviderConfigurator implements
+			IdentityProviderConfigurator {
+
+		@Override
+		public IdentityProvider configure(final IdentityProviderConfig cfg) {
+			return new GoogleIdentityProvider(cfg);
+		}
+
+		@Override
+		public String getProviderName() {
+			return NAME;
 		}
 	}
 

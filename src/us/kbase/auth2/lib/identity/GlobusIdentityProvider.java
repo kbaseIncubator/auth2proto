@@ -31,7 +31,7 @@ public class GlobusIdentityProvider implements IdentityProvider {
 	/* Docs: https://docs.globus.org/api/auth/ 
 	 */
 	
-	public static final String NAME = "Globus";
+	private static final String NAME = "Globus";
 	private static final String SCOPE =
 			"urn:globus:auth:scope:auth.globus.org:view_identities " + 
 			"email";
@@ -262,6 +262,20 @@ public class GlobusIdentityProvider implements IdentityProvider {
 			if (r != null) {
 				r.close();
 			}
+		}
+	}
+	
+	public static class GlobusIdentityProviderConfigurator implements
+			IdentityProviderConfigurator {
+
+		@Override
+		public IdentityProvider configure(final IdentityProviderConfig cfg) {
+			return new GlobusIdentityProvider(cfg);
+		}
+
+		@Override
+		public String getProviderName() {
+			return NAME;
 		}
 	}
 }

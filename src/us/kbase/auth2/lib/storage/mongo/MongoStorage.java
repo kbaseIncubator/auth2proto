@@ -136,6 +136,8 @@ public class MongoStorage implements AuthStorage {
 				new IndexOptions().expireAfter(0L, TimeUnit.SECONDS));
 		INDEXES.put(COL_TEMP_TOKEN, temptoken);
 		
+		//TODO NOW role indexes
+		
 		//config indexes
 		final Map<List<String>, IndexOptions> cfg = new HashMap<>();
 		//ensure only one config object

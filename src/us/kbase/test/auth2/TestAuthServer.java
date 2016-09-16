@@ -6,10 +6,15 @@ import org.eclipse.jetty.servlet.ServletContextHandler;
 import org.eclipse.jetty.servlet.ServletHolder;
 import org.glassfish.jersey.servlet.ServletContainer;
 
+import us.kbase.auth2.service.AuthenticationService;
+import us.kbase.auth2.service.kbase.KBaseAuthConfig;
+
 public class TestAuthServer {
 
 	public static void main(String[] args) throws Exception {
 
+		
+		AuthenticationService.setConfig(new KBaseAuthConfig());
 		final Server server = new Server(Integer.valueOf(args[0]));
 
 		final ServletContextHandler context = new ServletContextHandler();
