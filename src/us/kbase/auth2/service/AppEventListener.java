@@ -3,11 +3,19 @@ package us.kbase.auth2.service;
 import javax.servlet.ServletContextEvent;
 import javax.servlet.ServletContextListener;
 
+import us.kbase.auth2.service.exceptions.AuthConfigurationException;
+import us.kbase.auth2.service.kbase.KBaseAuthConfig;
+
 public class AppEventListener implements ServletContextListener {
 	
 	@Override
 	public void contextInitialized(ServletContextEvent arg0) {
-		// do nothing
+		try {
+			AuthenticationService.setConfig(new KBaseAuthConfig());
+		} catch (AuthConfigurationException e) {
+			e.printStackTrace();
+			//server will fail to start since there's no config
+		}
 	}
 	
 	@Override

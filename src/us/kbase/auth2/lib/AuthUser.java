@@ -5,6 +5,7 @@ import java.util.HashSet;
 import java.util.Set;
 
 import us.kbase.auth2.lib.identity.RemoteIdentity;
+import us.kbase.auth2.lib.identity.RemoteIdentityWithID;
 
 public class AuthUser {
 
@@ -18,13 +19,13 @@ public class AuthUser {
 	private final UserName userName;
 	private final Set<Role> roles;
 	private final Set<String> customRoles;
-	private final Set<RemoteIdentity> identities;
+	private final Set<RemoteIdentityWithID> identities;
 	
 	public AuthUser(
 			final UserName userName,
 			final String email,
 			final String fullName,
-			Set<RemoteIdentity> identities,
+			Set<RemoteIdentityWithID> identities,
 			Set<Role> roles,
 			Set<String> customRoles) {
 		super();
@@ -70,8 +71,17 @@ public class AuthUser {
 		return customRoles;
 	}
 	
-	public Set<RemoteIdentity> getIdentities() {
+	public Set<RemoteIdentityWithID> getIdentities() {
 		return identities;
+	}
+	
+	public RemoteIdentityWithID getIdentity(final RemoteIdentity ri) {
+		for (final RemoteIdentityWithID rid: identities) {
+			if (rid.getRemoteID().equals(ri.getRemoteID())) {
+				return rid;
+			}
+		}
+		return null;
 	}
 
 	@Override

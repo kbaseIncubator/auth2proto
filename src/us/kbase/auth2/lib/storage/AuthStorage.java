@@ -15,6 +15,7 @@ import us.kbase.auth2.lib.exceptions.NoSuchUserException;
 import us.kbase.auth2.lib.exceptions.UnLinkFailedException;
 import us.kbase.auth2.lib.exceptions.UserExistsException;
 import us.kbase.auth2.lib.identity.RemoteIdentity;
+import us.kbase.auth2.lib.identity.RemoteIdentityWithID;
 import us.kbase.auth2.lib.storage.exceptions.AuthStorageException;
 import us.kbase.auth2.lib.token.HashedToken;
 import us.kbase.auth2.lib.token.IncomingHashedToken;
@@ -80,18 +81,18 @@ public interface AuthStorage {
 	// assumes token is unique
 	void storeIdentitiesTemporarily(
 			TemporaryHashedToken token,
-			Set<RemoteIdentity> ids)
+			Set<RemoteIdentityWithID> ids)
 			throws AuthStorageException;
 
-	Set<RemoteIdentity> getTemporaryIdentities(
+	Set<RemoteIdentityWithID> getTemporaryIdentities(
 			IncomingHashedToken token)
 			throws AuthStorageException, NoSuchTokenException;
 
-	void link(UserName userName, RemoteIdentity remoteID)
+	void link(UserName userName, RemoteIdentityWithID remoteID)
 			throws NoSuchUserException, AuthStorageException,
 			LinkFailedException;
 
-	void unlink(UserName userName, String provider, String id)
+	void unlink(UserName userName, UUID id)
 			throws AuthStorageException, UnLinkFailedException;
 
 	void updateUser(UserName userName, UserUpdate update)

@@ -13,6 +13,7 @@ import java.util.HashMap;
 import java.util.LinkedList;
 import java.util.List;
 import java.util.Map;
+import java.util.UUID;
 import java.util.Map.Entry;
 
 import javax.inject.Inject;
@@ -36,7 +37,6 @@ import org.glassfish.jersey.server.mvc.Viewable;
 
 import us.kbase.auth2.lib.AuthUser;
 import us.kbase.auth2.lib.Authentication;
-import us.kbase.auth2.lib.LoginIdentities;
 import us.kbase.auth2.lib.LoginToken;
 import us.kbase.auth2.lib.UserName;
 import us.kbase.auth2.lib.exceptions.AuthenticationException;
@@ -47,7 +47,7 @@ import us.kbase.auth2.lib.exceptions.NoSuchIdentityProviderException;
 import us.kbase.auth2.lib.exceptions.NoTokenProvidedException;
 import us.kbase.auth2.lib.exceptions.UserExistsException;
 import us.kbase.auth2.lib.identity.IdentityProvider;
-import us.kbase.auth2.lib.identity.RemoteIdentity;
+import us.kbase.auth2.lib.identity.RemoteIdentityWithID;
 import us.kbase.auth2.lib.storage.exceptions.AuthStorageException;
 import us.kbase.auth2.lib.token.IncomingToken;
 import us.kbase.auth2.lib.token.NewToken;
@@ -197,47 +197,39 @@ public class Login {
 			throw new NoTokenProvidedException(
 					"Missing in-process-login-token");
 		}
-		final LoginIdentities ids = auth.getLoginState(
+		final Map<RemoteIdentityWithID, AuthUser> ids = auth.getLoginState(
 				new IncomingToken(token.trim()));
 		
 		final Map<String, Object> ret = new HashMap<>();
-		ret.put("provider", ids.getPrimary().getProvider());
-		final List<Map<String, String>> secs = new LinkedList<>();
-		ret.put("secs", secs);
-		for (final Entry<RemoteIdentity, AuthUser> e:
-				ids.getSecondaries().entrySet()) {
-			final Map<String, String> s = new HashMap<>();
-			s.put("prov_id", e.getKey().getId());
-			s.put("prov_username", e.getKey().getUsername());
-			s.put("username", e.getValue().getUserName().getName());
-			secs.add(s);
-		}
-		if (ids.getPrimaryUser() == null) {
-			ret.put("create", true);
-			ret.put("prov_id", ids.getPrimary().getId());
-			//TODO NOW get safe username from db
-			ret.put("usernamesugg", ids.getPrimary().getUsername()
-					.split("@")[0]);
-			ret.put("prov_username", ids.getPrimary().getUsername());
-			ret.put("prov_fullname", ids.getPrimary().getFullname());
-			ret.put("prov_email", ids.getPrimary().getEmail());
-			ret.put("createurl",
-					relativize(uriInfo, "/login/create"));
-			
-		} else {
-			// if here we know there's at least one secondary, otherwise
-			// the user would've been logged in at /complete/{provider}
-			// possibility of a race condition, but worst case is the user has
-			// to click the primary user with no other choices, so meh
-			final Map<String, String> p = new HashMap<>();
-			p.put("prov_id", ids.getPrimary().getId());
-			p.put("prov_username", ids.getPrimary().getUsername());
-			p.put("username", ids.getPrimaryUser().getUserName().getName());
-			secs.add(p);
-		}
-		if (!secs.isEmpty()) {
-			ret.put("hassecs", true);
-			ret.put("pickurl", relativize(uriInfo, "/login/pick"));
+		ret.put("createurl", relativize(uriInfo, "/login/create"));
+		ret.put("pickurl", relativize(uriInfo, "/login/pick"));
+		ret.put("provider", ids.keySet().iterator().next().getRemoteID()
+				.getProvider());
+		
+		final List<Map<String, String>> create = new LinkedList<>();
+		final List<Map<String, String>> login = new LinkedList<>();
+		ret.put("create", create);
+		ret.put("login", login);
+		
+		for (final Entry<RemoteIdentityWithID, AuthUser> e: ids.entrySet()) {
+			final RemoteIdentityWithID id = e.getKey();
+			if (e.getValue() == null) {
+				final Map<String, String> c = new HashMap<>();
+				c.put("id", id.getID().toString());
+				//TODO NOW get safe username from db. Splitting on @ is not necessarily safe, only do it if it's there
+				c.put("usernamesugg", id.getDetails().getUsername()
+						.split("@")[0]);
+				c.put("prov_username", id.getDetails().getUsername());
+				c.put("prov_fullname", id.getDetails().getFullname());
+				c.put("prov_email", id.getDetails().getEmail());
+				create.add(c);
+			} else {
+				final Map<String, String> l = new HashMap<>();
+				l.put("id", id.getID().toString());
+				l.put("prov_username", id.getDetails().getUsername());
+				l.put("username", e.getValue().getUserName().getName());
+				login.add(l);
+			}
 		}
 		return ret;
 	}
@@ -247,8 +239,7 @@ public class Login {
 	public Response pickAccount(
 			@CookieParam("in-process-login-token") final String token,
 			@CookieParam("redirect") final String redirect,
-			@FormParam("provider") final String provider,
-			@FormParam("id") final String remoteID)
+			@FormParam("id") final UUID identityID)
 			throws NoTokenProvidedException, AuthenticationException,
 			AuthStorageException {
 		
@@ -257,7 +248,7 @@ public class Login {
 					"Missing in-process-login-token");
 		}
 		final NewToken newtoken = auth.login(
-				new IncomingToken(token), provider, remoteID);
+				new IncomingToken(token), identityID);
 		return Response.seeOther(getRedirectURI(redirect, "/me"))
 				//TODO NOW can't set keep me logged in here, so set in profile
 				.cookie(getLoginCookie(newtoken, true))
@@ -270,8 +261,7 @@ public class Login {
 	public Response createUser(
 			@CookieParam("in-process-login-token") final String token,
 			@CookieParam("redirect") final String redirect,
-			@FormParam("provider") final String provider,
-			@FormParam("id") final String remoteID,
+			@FormParam("id") final UUID identityID,
 			@FormParam("user") final String userName,
 			@FormParam("full") final String fullName,
 			@FormParam("email") final String email,
@@ -292,8 +282,8 @@ public class Login {
 		
 		// might want to enapsulate the user data in a NewUser class
 		final NewToken newtoken = auth.createUser(new IncomingToken(token),
-				provider, remoteID, new UserName(userName), fullName, email,
-				sessionLogin, priv);
+				identityID, new UserName(userName),
+				fullName, email, sessionLogin, priv);
 		return Response.seeOther(getRedirectURI(redirect, "/me"))
 		//TODO NOW can't set keep me logged in here, so set in profile
 				.cookie(getLoginCookie(newtoken, true))

@@ -12,6 +12,7 @@ import java.util.HashMap;
 import java.util.LinkedList;
 import java.util.List;
 import java.util.Map;
+import java.util.UUID;
 
 import javax.inject.Inject;
 import javax.ws.rs.CookieParam;
@@ -43,7 +44,7 @@ import us.kbase.auth2.lib.exceptions.MissingParameterException;
 import us.kbase.auth2.lib.exceptions.NoSuchIdentityProviderException;
 import us.kbase.auth2.lib.exceptions.NoTokenProvidedException;
 import us.kbase.auth2.lib.identity.IdentityProvider;
-import us.kbase.auth2.lib.identity.RemoteIdentity;
+import us.kbase.auth2.lib.identity.RemoteIdentityWithID;
 import us.kbase.auth2.lib.storage.exceptions.AuthStorageException;
 import us.kbase.auth2.lib.token.IncomingToken;
 import us.kbase.auth2.lib.token.TemporaryToken;
@@ -195,13 +196,13 @@ public class Link {
 		final Map<String, Object> ret = new HashMap<>();
 		ret.put("user", ids.getUser().getUserName().getName());
 		ret.put("provider", ids.getIdentities()
-				.iterator().next().getProvider());
+				.iterator().next().getRemoteID().getProvider());
 		final List<Map<String, String>> ris = new LinkedList<>();
 		ret.put("ids", ris);
-		for (final RemoteIdentity ri: ids.getIdentities()) {
+		for (final RemoteIdentityWithID ri: ids.getIdentities()) {
 			final Map<String, String> s = new HashMap<>();
-			s.put("prov_id", ri.getId());
-			s.put("prov_username", ri.getUsername());
+			s.put("id", ri.getID().toString());
+			s.put("prov_username", ri.getDetails().getUsername());
 			ris.add(s);
 		}
 		ret.put("pickurl", relativize(uriInfo, "/link/pick"));
@@ -213,8 +214,7 @@ public class Link {
 	public Response pickAccount(
 			@CookieParam("in-process-link-token") final String linktoken,
 			@CookieParam("token") final String token,
-			@FormParam("provider") final String provider,
-			@FormParam("id") final String remoteID)
+			@FormParam("id") final UUID identityID)
 			throws NoTokenProvidedException, AuthenticationException,
 			AuthStorageException, LinkFailedException {
 		
@@ -227,7 +227,7 @@ public class Link {
 					"Missing user token");
 		}
 		auth.link(new IncomingToken(token), new IncomingToken(linktoken),
-				provider, remoteID);
+				identityID);
 		return Response.seeOther(toURI("/me"))
 				.cookie(getLinkInProcessCookie(null)).build();
 	}

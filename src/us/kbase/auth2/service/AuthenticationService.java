@@ -1,8 +1,6 @@
 package us.kbase.auth2.service;
 
 import java.nio.file.Paths;
-import java.util.HashSet;
-import java.util.Set;
 
 import org.glassfish.hk2.utilities.binding.AbstractBinder;
 import org.glassfish.jersey.jackson.JacksonFeature;
@@ -17,17 +15,18 @@ import com.mongodb.client.MongoDatabase;
 import ch.qos.logback.classic.Level;
 import ch.qos.logback.classic.Logger;
 import us.kbase.auth2.lib.Authentication;
-import us.kbase.auth2.lib.identity.GlobusIdentityProvider;
-import us.kbase.auth2.lib.identity.GoogleIdentityProvider;
-import us.kbase.auth2.lib.identity.IdentityProvider;
+import us.kbase.auth2.lib.identity.GlobusIdentityProvider
+		.GlobusIdentityProviderConfigurator;
+import us.kbase.auth2.lib.identity.GoogleIdentityProvider
+		.GoogleIdentityProviderConfigurator;
 import us.kbase.auth2.lib.identity.IdentityProviderConfig;
+import us.kbase.auth2.lib.identity.IdentityProviderFactory;
 import us.kbase.auth2.lib.storage.AuthStorage;
 import us.kbase.auth2.lib.storage.exceptions.StorageInitException;
 import us.kbase.auth2.lib.storage.mongo.MongoStorage;
 import us.kbase.auth2.service.LoggingFilter;
 import us.kbase.auth2.service.exceptions.AuthConfigurationException;
 import us.kbase.auth2.service.exceptions.ExceptionHandler;
-import us.kbase.auth2.service.kbase.KBaseAuthConfig;
 import us.kbase.auth2.service.template.TemplateProcessor;
 import us.kbase.auth2.service.template.mustache.MustacheProcessor;
 
@@ -38,17 +37,32 @@ public class AuthenticationService extends ResourceConfig {
 	//TODO TEST
 	//TODO JAVADOC
 	
+	private static AuthConfig cfg = null;
 	private static MongoClient mc;
 	@SuppressWarnings("unused")
 	private final SLF4JAutoLogger logger; //keep a reference to prevent GC
 	
+	public static void setConfig(final AuthConfig config) {
+		if (config == null) {
+			throw new NullPointerException("cfg");
+		}
+		cfg = config;
+	}
+	
 	public AuthenticationService()
 			throws StorageInitException, AuthConfigurationException {
+		if (cfg == null) {
+			throw new IllegalStateException("Call setConfig() before " +
+					"starting the server ya daft numpty");
+		}
 		quietLogger();
-		final AuthConfig c = new KBaseAuthConfig();
-		logger = c.getLogger();
+		final IdentityProviderFactory fac =
+				IdentityProviderFactory.getInstance();
+		fac.register(new GlobusIdentityProviderConfigurator());
+		fac.register(new GoogleIdentityProviderConfigurator());
+		logger = cfg.getLogger();
 		try {
-			buildApp(c);
+			buildApp(cfg);
 		} catch (StorageInitException e) {
 			LoggerFactory.getLogger(getClass()).error(
 					"Failed to initialize storage engine: " + e.getMessage(),
@@ -119,26 +133,21 @@ public class AuthenticationService extends ResourceConfig {
 		return new Authentication(s, getIdentityProviders(c));
 	}
 	
-	private Set<IdentityProvider> getIdentityProviders(final AuthConfig c)
+	private IdentityProviderFactory getIdentityProviders(final AuthConfig c)
 			throws AuthConfigurationException {
-		final Set<IdentityProvider> ips = new HashSet<>();
+		final IdentityProviderFactory fac =
+				IdentityProviderFactory.getInstance();
 		for (final IdentityProviderConfig idc:
 				c.getIdentityProviderConfigs()) {
-			switch (idc.getIdentityProviderName()) {
-				case GoogleIdentityProvider.NAME:
-					ips.add(new GoogleIdentityProvider(idc));
-					break;
-				case GlobusIdentityProvider.NAME:
-					ips.add(new GlobusIdentityProvider(idc));
-					break;
-				default:
-					throw new AuthConfigurationException(
-							"Unknown identity provider: " +
-							idc.getIdentityProviderName());
+			try {
+				fac.configure(idc);
+			} catch (IllegalArgumentException e) {
+				throw new AuthConfigurationException(String.format(
+						"Error registering identity provider %s: %s",
+						idc.getIdentityProviderName(),  e.getMessage()), e);
 			}
-				
 		}
-		return ips;
+		return fac;
 	}
 
 	static void shutdown() {

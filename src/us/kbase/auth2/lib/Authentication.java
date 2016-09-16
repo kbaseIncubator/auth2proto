@@ -3,17 +3,13 @@ package us.kbase.auth2.lib;
 import static us.kbase.auth2.lib.Utils.checkString;
 
 import java.security.NoSuchAlgorithmException;
-import java.security.NoSuchProviderException;
 import java.util.Arrays;
-import java.util.Collections;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.Iterator;
-import java.util.LinkedList;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
-import java.util.TreeMap;
 import java.util.UUID;
 import java.util.stream.Collectors;
 
@@ -32,8 +28,9 @@ import us.kbase.auth2.lib.exceptions.UnLinkFailedException;
 import us.kbase.auth2.lib.exceptions.UnauthorizedException;
 import us.kbase.auth2.lib.exceptions.UserExistsException;
 import us.kbase.auth2.lib.identity.IdentityProvider;
-import us.kbase.auth2.lib.identity.IdentitySet;
+import us.kbase.auth2.lib.identity.IdentityProviderFactory;
 import us.kbase.auth2.lib.identity.RemoteIdentity;
+import us.kbase.auth2.lib.identity.RemoteIdentityWithID;
 import us.kbase.auth2.lib.storage.AuthStorage;
 import us.kbase.auth2.lib.storage.exceptions.AuthStorageException;
 import us.kbase.auth2.lib.token.NewToken;
@@ -66,15 +63,17 @@ public class Authentication {
 	//TODO NOW allow redirect url on login
 	//TODO NOW move jars into kbase/jars
 	//TODO DEPLOY jetty should start app immediately & fail if app fails
+	//TODO CONFIG set token cache time to be sent to client via api
+	//TODO NOW set keep me logged in on login page
 	
 	private final AuthStorage storage;
-	private final Map<String, IdentityProvider> idprov;
+	private final IdentityProviderFactory idFactory;
 	private final TokenGenerator tokens;
 	private final PasswordCrypt pwdcrypt;
 	
 	public Authentication(
 			final AuthStorage storage,
-			final Set<IdentityProvider> set) {
+			final IdentityProviderFactory identityProviderFactory) {
 		System.out.println("starting application");
 		try {
 			tokens = new TokenGenerator();
@@ -85,15 +84,11 @@ public class Authentication {
 		if (storage == null) {
 			throw new NullPointerException("storage");
 		}
-		this.storage = storage;
-		final Map<String, IdentityProvider> idp = new TreeMap<>();
-		if (set != null) {
-			for (final IdentityProvider id: set) {
-				idp.put(id.getProviderName(), id);
-			}
+		if (identityProviderFactory == null) {
+			throw new NullPointerException("identityProviderFactory");
 		}
-		this.idprov = Collections.unmodifiableMap(idp);
-		
+		this.storage = storage;
+		this.idFactory = identityProviderFactory;
 	}
 
 
@@ -307,7 +302,7 @@ public class Authentication {
 
 
 	public List<IdentityProvider> getIdentityProviders() {
-		return new LinkedList<IdentityProvider>(idprov.values());
+		return idFactory.getProviders();
 	}
 
 	// note not saved in DB
@@ -318,10 +313,7 @@ public class Authentication {
 
 	public IdentityProvider getIdentityProvider(final String provider)
 			throws NoSuchIdentityProviderException {
-		if (!idprov.containsKey(provider)) {
-			throw new NoSuchIdentityProviderException(provider); 
-		}
-		return idprov.get(provider);
+		return idFactory.getProvider(provider);
 	}
 
 	// split from getloginstate since the user may need to make a choice
@@ -329,109 +321,87 @@ public class Authentication {
 	// occur before said choice to hide the authcode, hence the temporary
 	// token instead of returning the choices directly
 	public LoginToken login(final String provider, final String authcode)
-			throws NoSuchProviderException, MissingParameterException,
-			IdentityRetrievalException, AuthStorageException {
-		final IdentityProvider idp = idprov.get(provider);
-		if (idp == null) {
-			throw new NoSuchProviderException(provider);
-		}
+			throws MissingParameterException, IdentityRetrievalException,
+			AuthStorageException, NoSuchIdentityProviderException {
+		final IdentityProvider idp = getIdentityProvider(provider);
 		if (authcode == null || authcode.trim().isEmpty()) {
 			throw new MissingParameterException("authorization code");
 		}
-		final IdentitySet ids = idp.getIdentities(authcode, false);
-		final AuthUser primary = storage.getUser(ids.getPrimary());
-		final Set<RemoteIdentity> filteredIDs = new HashSet<>();
-		for (final RemoteIdentity id: ids.getSecondaries()) {
-			if (storage.getUser(id) != null) {
-				filteredIDs.add(id);
+		final Set<RemoteIdentity> ids = idp.getIdentities(authcode, false);
+		final Set<RemoteIdentity> noUser = new HashSet<>();
+		final Map<RemoteIdentityWithID, AuthUser> hasUser = new HashMap<>();
+		for (final RemoteIdentity id: ids) {
+			final AuthUser user = storage.getUser(id);
+			if (user != null) {
+				hasUser.put(user.getIdentity(id), user);
+			} else {
+				noUser.add(id);
 			}
 		}
 		final LoginToken lr;
-		if (primary == null || !filteredIDs.isEmpty()) {
-			final int expmin = primary == null ? 30 : 10;
-			final TemporaryToken tt = new TemporaryToken(tokens.getToken(),
-					expmin * 60 * 1000);
-			filteredIDs.add(ids.getPrimary());
-			storage.storeIdentitiesTemporarily(
-					tt.getHashedToken(), filteredIDs);
-			lr = new LoginToken(tt);
-		} else {
+		if (hasUser.size() == 1 && noUser.isEmpty()) {
+			final AuthUser user = hasUser.values().iterator().next();
 			final NewToken t = new NewToken(tokens.getToken(),
 					//TODO CONFIG make token lifetime configurable
-					primary.getUserName(), 14 * 24 * 60 * 60 * 1000);
+					user.getUserName(), 14 * 24 * 60 * 60 * 1000);
 			storage.storeToken(t.getHashedToken());
 			lr = new LoginToken(t);
+		} else {
+			final TemporaryToken tt = new TemporaryToken(tokens.getToken(),
+					10 * 60 * 1000);
+			final Set<RemoteIdentityWithID> store = noUser.stream()
+					.map(id -> id.withID()).collect(Collectors.toSet());
+			hasUser.keySet().stream().forEach(id -> store.add(id));
+
+			storage.storeIdentitiesTemporarily(tt.getHashedToken(), store);
+			lr = new LoginToken(tt);
 		}
 		return lr;
-		//TODO NOW provide choice to create kbase id for primary if not already, and provide choices to login as secondaries
 	}
 
 
-	public LoginIdentities getLoginState(final IncomingToken token)
+	public Map<RemoteIdentityWithID, AuthUser> getLoginState(
+			final IncomingToken token)
 			throws AuthStorageException, InvalidTokenException {
-		final Set<RemoteIdentity> ids = getTemporaryIdentities(token);
-		RemoteIdentity primary = null;
+		final Set<RemoteIdentityWithID> ids = getTemporaryIdentities(token);
+		final Map<RemoteIdentityWithID, AuthUser> ret = new HashMap<>();
+		
 		String provider = null;
-		for (final RemoteIdentity ri: ids) {
+		for (final RemoteIdentityWithID ri: ids) {
 			if (provider == null) {
-				provider = ri.getProvider();
-			} else if (!provider.equals(ri.getProvider())) {
+				provider = ri.getRemoteID().getProvider();
+			} else if (!provider.equals(ri.getRemoteID().getProvider())) {
 				throw new AuthStorageException("More than one identity " +
 						"provider associated with this token");
 			}
-			if (ri.isPrimary()) {
-				if (primary != null) {
-					throw new AuthStorageException("More than one primary " +
-							"identity associated with this token");
-				}
-				primary = ri;
-			}
-		}
-		if (primary == null) {
-			throw new AuthStorageException(
-					"No primary identity associated with this token");
-		}
-		ids.remove(primary);
-		final AuthUser pu = storage.getUser(primary);
-		final Map<RemoteIdentity, AuthUser> secs = processSecondaries(ids);
-		return new LoginIdentities(primary, pu, secs);
-	}
-
-
-	private Set<RemoteIdentity> getTemporaryIdentities(
-			final IncomingToken token)
-			throws AuthStorageException, InvalidTokenException {
-		if (token == null) {
-			throw new NullPointerException("token");
-		}
-		final Set<RemoteIdentity> ids;
-		try {
-			ids = storage.getTemporaryIdentities(
-					token.getHashedToken());
-		} catch (NoSuchTokenException e) {
-			throw new InvalidTokenException();
-		}
-		return ids;
-	}
-
-
-	private Map<RemoteIdentity, AuthUser> processSecondaries(
-			final Set<RemoteIdentity> ids)
-			throws AuthStorageException {
-		final Map<RemoteIdentity, AuthUser> ret = new HashMap<>();
-		for (final RemoteIdentity ri: ids) {
 			final AuthUser u = storage.getUser(ri);
-			if (u != null && !ret.containsValue(u)) {
+			if (u == null) {
+				ret.put(ri, null);
+			} else if (!ret.containsValue(u)){
+				//don't use the updated ri here since the ri associated with
+				//the temporary token has not been updated
 				ret.put(ri, u);
 			}
 		}
 		return ret;
 	}
 
+	private Set<RemoteIdentityWithID> getTemporaryIdentities(
+			final IncomingToken token)
+			throws AuthStorageException, InvalidTokenException {
+		if (token == null) {
+			throw new NullPointerException("token");
+		}
+		try {
+			return storage.getTemporaryIdentities(token.getHashedToken());
+		} catch (NoSuchTokenException e) {
+			throw new InvalidTokenException();
+		}
+	}
+
 	public NewToken createUser(
 			final IncomingToken token,
-			final String provider,
-			final String remoteID,
+			final UUID identityID,
 			final UserName userName,
 			final String fullName,
 			final String email,
@@ -441,7 +411,8 @@ public class Authentication {
 				UserExistsException {
 		//TODO NOW handle sessionLogin, privateNameEmail
 		
-		final RemoteIdentity match = getIdentity(token, provider, remoteID);
+		final RemoteIdentityWithID match =
+				getIdentity(token, identityID);
 		storage.createUser(new AuthUser(userName, email, fullName,
 				new HashSet<>(Arrays.asList(match)), null, null));
 		final NewToken nt = new NewToken(tokens.getToken(), userName,
@@ -452,12 +423,9 @@ public class Authentication {
 	}
 
 
-	public NewToken login(
-			final IncomingToken token,
-			final String provider,
-			final String remoteID)
+	public NewToken login(final IncomingToken token, final UUID identityID)
 			throws AuthenticationException, AuthStorageException {
-		final RemoteIdentity ri = getIdentity(token, provider, remoteID);
+		final RemoteIdentity ri = getIdentity(token, identityID);
 		final AuthUser u = storage.getUser(ri);
 		if (u == null) {
 			// someone's trying to login to an account they haven't created yet
@@ -473,16 +441,14 @@ public class Authentication {
 		return nt;
 	}
 	
-	private RemoteIdentity getIdentity(
+	private RemoteIdentityWithID getIdentity(
 			final IncomingToken token,
-			final String provider,
-			final String remoteID)
+			final UUID identityID)
 			throws AuthStorageException, AuthenticationException {
-		final Set<RemoteIdentity> ids = getTemporaryIdentities(token);
-		RemoteIdentity match = null;
-		for (final RemoteIdentity ri: ids) {
-			if (ri.getProvider().equals(provider) &&
-					ri.getId().equals(remoteID)) {
+		final Set<RemoteIdentityWithID> ids = getTemporaryIdentities(token);
+		RemoteIdentityWithID match = null;
+		for (final RemoteIdentityWithID ri: ids) {
+			if (ri.getID().equals(identityID)) {
 				match = ri;
 			}
 		}
@@ -502,28 +468,24 @@ public class Authentication {
 			final String provider,
 			final String authcode)
 			throws InvalidTokenException, AuthStorageException,
-			NoSuchProviderException, MissingParameterException,
-			IdentityRetrievalException, LinkFailedException {
+			MissingParameterException, IdentityRetrievalException,
+			LinkFailedException, NoSuchIdentityProviderException {
 		final AuthUser u = getUser(token);
 		if (u.isLocal()) {
 			throw new LinkFailedException(
 					"Cannot link identities to local accounts");
 		}
-		final IdentityProvider idp = idprov.get(provider);
-		if (idp == null) {
-			throw new NoSuchProviderException(provider);
-		}
+		final IdentityProvider idp = getIdentityProvider(provider);
 		if (authcode == null || authcode.trim().isEmpty()) {
 			throw new MissingParameterException("authorization code");
 		}
-		final IdentitySet ids = idp.getIdentities(authcode, true);
-		final Set<RemoteIdentity> rids = new HashSet<>(ids.getSecondaries());
-		rids.add(ids.getPrimary());
-		filterLinkCandidates(rids);
+		final Set<RemoteIdentity> ids = idp.getIdentities(authcode, true);
+		filterLinkCandidates(ids);
 		final LinkToken lt;
-		if (rids.size() == 1) {
+		//TODO CONFIG allow forcing choice per id provider
+		if (ids.size() == 1) {
 			try {
-				storage.link(u.getUserName(), rids.iterator().next());
+				storage.link(u.getUserName(), ids.iterator().next().withID());
 			} catch (NoSuchUserException e) {
 				throw new AuthStorageException(
 						"User unexpectedly disappeared from the database", e);
@@ -532,15 +494,17 @@ public class Authentication {
 		} else {
 			final TemporaryToken tt = new TemporaryToken(tokens.getToken(),
 					10 * 60 * 1000);
-			storage.storeIdentitiesTemporarily(tt.getHashedToken(), rids);
+			storage.storeIdentitiesTemporarily(tt.getHashedToken(),
+					ids.stream().map(r -> r.withID())
+					.collect(Collectors.toSet()));
 			lt = new LinkToken(tt);
 		}
 		return lt;
 	}
 
-	private void filterLinkCandidates(final Set<RemoteIdentity> rids)
+	private void filterLinkCandidates(final Set<? extends RemoteIdentity> rids)
 			throws AuthStorageException, LinkFailedException {
-		final Iterator<RemoteIdentity> iter = rids.iterator();
+		final Iterator<? extends RemoteIdentity> iter = rids.iterator();
 		while (iter.hasNext()) {
 			if (storage.getUser(iter.next()) != null) {
 				iter.remove();
@@ -551,14 +515,15 @@ public class Authentication {
 					"All provided identities are already linked");
 		}
 	}
-
+	
 	public LinkIdentities getLinkState(
 			final IncomingToken token,
 			final IncomingToken linktoken)
 			throws InvalidTokenException, AuthStorageException,
 			LinkFailedException {
 		final AuthUser u = getUser(token);
-		final Set<RemoteIdentity> ids = getTemporaryIdentities(linktoken);
+		final Set<RemoteIdentityWithID> ids =
+				getTemporaryIdentities(linktoken);
 		filterLinkCandidates(ids);
 		return new LinkIdentities(u, ids);
 	}
@@ -567,12 +532,11 @@ public class Authentication {
 	public void link(
 			final IncomingToken token,
 			final IncomingToken linktoken,
-			final String provider,
-			final String remoteID)
+			final UUID identityID)
 			throws AuthStorageException, AuthenticationException,
 			LinkFailedException {
 		final HashedToken ht = getToken(token);
-		final RemoteIdentity ri = getIdentity(linktoken, provider, remoteID);
+		final RemoteIdentityWithID ri = getIdentity(linktoken, identityID);
 		try {
 			storage.link(ht.getUserName(), ri);
 		} catch (NoSuchUserException e) {
@@ -584,13 +548,14 @@ public class Authentication {
 
 	public void unlink(
 			final IncomingToken token,
-			final String provider,
-			final String id)
+			final UUID id)
 			throws InvalidTokenException, AuthStorageException,
 			UnLinkFailedException {
-		//TODO NOW use own identity ID
+		if (id == null) {
+			throw new NullPointerException("id");
+		}
 		final HashedToken ht = getToken(token);
-		storage.unlink(ht.getUserName(), provider, id);
+		storage.unlink(ht.getUserName(), id);
 		
 	}
 

@@ -31,7 +31,7 @@ public class GlobusIdentityProvider implements IdentityProvider {
 	/* Docs: https://docs.globus.org/api/auth/ 
 	 */
 	
-	public static final String NAME = "Globus";
+	private static final String NAME = "Globus";
 	private static final String SCOPE =
 			"urn:globus:auth:scope:auth.globus.org:view_identities " + 
 			"email";
@@ -117,7 +117,9 @@ public class GlobusIdentityProvider implements IdentityProvider {
 	}
 	
 	@Override
-	public IdentitySet getIdentities(final String authCode, final boolean link)
+	public Set<RemoteIdentity> getIdentities(
+			final String authCode,
+			final boolean link)
 			throws IdentityRetrievalException {
 		/* Note authcode only works once. After that globus returns
 		 * {error=invalid_grant}
@@ -126,8 +128,8 @@ public class GlobusIdentityProvider implements IdentityProvider {
 		final Idents idents = getPrimaryIdentity(accessToken);
 		final Set<RemoteIdentity> secondaries = getSecondaryIdentities(
 				accessToken, idents.secondaryIDs);
-		
-		return new IdentitySet(idents.primary, secondaries);
+		secondaries.add(idents.primary);
+		return secondaries;
 	}
 
 	private Set<RemoteIdentity> getSecondaryIdentities(
@@ -178,7 +180,8 @@ public class GlobusIdentityProvider implements IdentityProvider {
 		final String name = (String) m.get("name");
 		final String email = (String) m.get("email");
 		final RemoteIdentity primary = new RemoteIdentity(
-				NAME, id, username, name, email, true);
+				new RemoteIdentityID(NAME, id),
+				new RemoteIdentityDetails(username, name, email));
 		@SuppressWarnings("unchecked")
 		final List<String> secids = (List<String>) m.get("identities_set");
 		secids.remove(id);
@@ -195,7 +198,8 @@ public class GlobusIdentityProvider implements IdentityProvider {
 			final String name = (String) id.get("name");
 			final String email = (String) id.get("email");
 			final RemoteIdentity rid = new RemoteIdentity(
-					NAME, uid, username, name, email, false);
+					new RemoteIdentityID(NAME, uid),
+					new RemoteIdentityDetails(username, name, email));
 			ret.add(rid);
 		}
 		return ret;
@@ -260,6 +264,20 @@ public class GlobusIdentityProvider implements IdentityProvider {
 			if (r != null) {
 				r.close();
 			}
+		}
+	}
+	
+	public static class GlobusIdentityProviderConfigurator implements
+			IdentityProviderConfigurator {
+
+		@Override
+		public IdentityProvider configure(final IdentityProviderConfig cfg) {
+			return new GlobusIdentityProvider(cfg);
+		}
+
+		@Override
+		public String getProviderName() {
+			return NAME;
 		}
 	}
 }

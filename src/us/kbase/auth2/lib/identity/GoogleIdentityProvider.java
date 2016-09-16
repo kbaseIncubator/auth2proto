@@ -4,8 +4,11 @@ import java.net.MalformedURLException;
 import java.net.URI;
 import java.net.URISyntaxException;
 import java.net.URL;
+import java.util.Arrays;
+import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
+import java.util.Set;
 
 import javax.ws.rs.client.Client;
 import javax.ws.rs.client.ClientBuilder;
@@ -34,7 +37,7 @@ public class GoogleIdentityProvider implements IdentityProvider {
 	 * https://developers.google.com/+/web/api/rest/latest/people
 	 */
 	
-	public static final String NAME = "Google";
+	private static final String NAME = "Google";
 	private static final String SCOPE =
 			"https://www.googleapis.com/auth/plus.me profile email";
 	private static final String LOGIN_PATH = "/o/oauth2/v2/auth";
@@ -108,12 +111,12 @@ public class GoogleIdentityProvider implements IdentityProvider {
 	}
 
 	@Override
-	public IdentitySet getIdentities(
+	public Set<RemoteIdentity> getIdentities(
 			final String authcode,
 			final boolean link) throws IdentityRetrievalException {
 		final String accessToken = getAccessToken(authcode, link);
 		final RemoteIdentity ri = getIdentity(accessToken);
-		return new IdentitySet(ri, null);
+		return new HashSet<>(Arrays.asList(ri));
 	}
 
 	private RemoteIdentity getIdentity(final String accessToken)
@@ -132,12 +135,11 @@ public class GoogleIdentityProvider implements IdentityProvider {
 				(List<Map<String, String>>) id.get("emails");
 		final String email = emails.get(0).get("value");
 		return new RemoteIdentity(
-				NAME,
-				(String) id.get("id"),
-				email, // use email for user id
-				(String) id.get("displayName"),
-				email,
-				true);
+				new RemoteIdentityID(NAME, (String) id.get("id")),
+				new RemoteIdentityDetails(
+						email, // use email for user id
+						(String) id.get("displayName"),
+						email));
 	}
 
 	private Map<String, Object> googleGetRequest(
@@ -197,6 +199,20 @@ public class GoogleIdentityProvider implements IdentityProvider {
 			if (r != null) {
 				r.close();
 			}
+		}
+	}
+	
+	public static class GoogleIdentityProviderConfigurator implements
+			IdentityProviderConfigurator {
+
+		@Override
+		public IdentityProvider configure(final IdentityProviderConfig cfg) {
+			return new GoogleIdentityProvider(cfg);
+		}
+
+		@Override
+		public String getProviderName() {
+			return NAME;
 		}
 	}
 
