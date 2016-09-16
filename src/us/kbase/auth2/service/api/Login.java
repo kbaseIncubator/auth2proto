@@ -37,7 +37,6 @@ import org.glassfish.jersey.server.mvc.Viewable;
 
 import us.kbase.auth2.lib.AuthUser;
 import us.kbase.auth2.lib.Authentication;
-import us.kbase.auth2.lib.LoginIdentities;
 import us.kbase.auth2.lib.LoginToken;
 import us.kbase.auth2.lib.UserName;
 import us.kbase.auth2.lib.exceptions.AuthenticationException;
@@ -198,50 +197,39 @@ public class Login {
 			throw new NoTokenProvidedException(
 					"Missing in-process-login-token");
 		}
-		final LoginIdentities ids = auth.getLoginState(
+		final Map<RemoteIdentityWithID, AuthUser> ids = auth.getLoginState(
 				new IncomingToken(token.trim()));
 		
 		final Map<String, Object> ret = new HashMap<>();
-		ret.put("provider", ids.getPrimary().getRemoteID().getProvider());
-		final List<Map<String, String>> secs = new LinkedList<>();
-		ret.put("secs", secs);
-		for (final Entry<RemoteIdentityWithID, AuthUser> e:
-				ids.getSecondaries().entrySet()) {
-			final Map<String, String> s = new HashMap<>();
-			s.put("id", e.getKey().getID().toString());
-			s.put("prov_username", e.getKey().getDetails().getUsername());
-			s.put("username", e.getValue().getUserName().getName());
-			secs.add(s);
-		}
-		if (ids.getPrimaryUser() == null) {
-			ret.put("create", true);
-			ret.put("id", ids.getPrimary().getID().toString());
-			//TODO NOW get safe username from db
-			ret.put("usernamesugg", ids.getPrimary().getDetails().getUsername()
-					.split("@")[0]);
-			ret.put("prov_username",
-					ids.getPrimary().getDetails().getUsername());
-			ret.put("prov_fullname",
-					ids.getPrimary().getDetails().getFullname());
-			ret.put("prov_email", ids.getPrimary().getDetails().getEmail());
-			ret.put("createurl",
-					relativize(uriInfo, "/login/create"));
-			
-		} else {
-			// if here we know there's at least one secondary, otherwise
-			// the user would've been logged in at /complete/{provider}
-			// possibility of a race condition, but worst case is the user has
-			// to click the primary user with no other choices, so meh
-			final Map<String, String> p = new HashMap<>();
-			p.put("id", ids.getPrimary().getID().toString());
-			p.put("prov_username",
-					ids.getPrimary().getDetails().getUsername());
-			p.put("username", ids.getPrimaryUser().getUserName().getName());
-			secs.add(p);
-		}
-		if (!secs.isEmpty()) {
-			ret.put("hassecs", true);
-			ret.put("pickurl", relativize(uriInfo, "/login/pick"));
+		ret.put("createurl", relativize(uriInfo, "/login/create"));
+		ret.put("pickurl", relativize(uriInfo, "/login/pick"));
+		ret.put("provider", ids.keySet().iterator().next().getRemoteID()
+				.getProvider());
+		
+		final List<Map<String, String>> create = new LinkedList<>();
+		final List<Map<String, String>> login = new LinkedList<>();
+		ret.put("create", create);
+		ret.put("login", login);
+		
+		for (final Entry<RemoteIdentityWithID, AuthUser> e: ids.entrySet()) {
+			final RemoteIdentityWithID id = e.getKey();
+			if (e.getValue() == null) {
+				final Map<String, String> c = new HashMap<>();
+				c.put("id", id.getID().toString());
+				//TODO NOW get safe username from db. Splitting on @ is not necessarily safe, only do it if it's there
+				c.put("usernamesugg", id.getDetails().getUsername()
+						.split("@")[0]);
+				c.put("prov_username", id.getDetails().getUsername());
+				c.put("prov_fullname", id.getDetails().getFullname());
+				c.put("prov_email", id.getDetails().getEmail());
+				create.add(c);
+			} else {
+				final Map<String, String> l = new HashMap<>();
+				l.put("id", id.getID().toString());
+				l.put("prov_username", id.getDetails().getUsername());
+				l.put("username", e.getValue().getUserName().getName());
+				login.add(l);
+			}
 		}
 		return ret;
 	}

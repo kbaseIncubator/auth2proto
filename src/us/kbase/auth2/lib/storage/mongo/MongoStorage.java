@@ -629,8 +629,7 @@ public class MongoStorage implements AuthStorage {
 		final Document update = new Document("$set", new Document(
 				pre + Fields.IDENTITIES_USER, rid.getUsername())
 				.append(pre + Fields.IDENTITIES_EMAIL, rid.getEmail())
-				.append(pre + Fields.IDENTITIES_NAME, rid.getFullname())
-				.append(pre + Fields.IDENTITIES_PRIME, rid.isPrimary()));
+				.append(pre + Fields.IDENTITIES_NAME, rid.getFullname()));
 		try {
 			// id might have been unlinked, so we just assume
 			// the update worked.
@@ -671,7 +670,6 @@ public class MongoStorage implements AuthStorage {
 				.append(Fields.IDENTITIES_PROVIDER,
 						id.getRemoteID().getProvider())
 				.append(Fields.IDENTITIES_PROV_ID, id.getRemoteID().getId())
-				.append(Fields.IDENTITIES_PRIME, rid.isPrimary())
 				.append(Fields.IDENTITIES_USER, rid.getUsername())
 				.append(Fields.IDENTITIES_NAME, rid.getFullname())
 				.append(Fields.IDENTITIES_EMAIL, rid.getEmail());
@@ -710,8 +708,7 @@ public class MongoStorage implements AuthStorage {
 			final RemoteIdentityDetails det = new RemoteIdentityDetails(
 					i.getString(Fields.IDENTITIES_USER),
 					i.getString(Fields.IDENTITIES_NAME),
-					i.getString(Fields.IDENTITIES_EMAIL),
-					i.getBoolean(Fields.IDENTITIES_PRIME));
+					i.getString(Fields.IDENTITIES_EMAIL));
 			ret.add(new RemoteIdentityWithID(
 					UUID.fromString(i.getString(Fields.IDENTITIES_ID)),
 					rid, det));

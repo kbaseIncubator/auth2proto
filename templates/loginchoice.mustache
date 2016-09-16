@@ -3,22 +3,20 @@
 
 <h2>Provider: {{provider}}</h2>
 
-{{#hassecs}}
 <h3>Login</h3>
 <p>The login information from the provider allows you to access these KBase
 accounts:</p>
-{{/hassecs}}
-{{#secs}}
+{{#login}}
 Provider username: {{prov_username}}<br/>
 KBase username: {{username}}<br/>
 <form action="{{pickurl}}" method="post">
 	<input type="hidden" name="id" value="{{id}}"/>
 	<input type="submit" value="Login"/>
 </form>
-{{/secs}}
+{{/login}}
 
-{{#create}}
 <h3>Create account</h3>
+{{#create}}
 <p>Create a KBase account linked to {{prov_username}}</p>
 </p>
 <form action="{{createurl}}" method="post">
@@ -31,8 +29,6 @@ KBase username: {{username}}<br/>
 	<input type="submit" value="Create"/>
 </form>
 {{/create}}
-
-
 
 </html>
 </body>

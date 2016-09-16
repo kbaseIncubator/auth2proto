@@ -29,7 +29,6 @@ import us.kbase.auth2.lib.exceptions.UnauthorizedException;
 import us.kbase.auth2.lib.exceptions.UserExistsException;
 import us.kbase.auth2.lib.identity.IdentityProvider;
 import us.kbase.auth2.lib.identity.IdentityProviderFactory;
-import us.kbase.auth2.lib.identity.IdentitySet;
 import us.kbase.auth2.lib.identity.RemoteIdentity;
 import us.kbase.auth2.lib.identity.RemoteIdentityWithID;
 import us.kbase.auth2.lib.storage.AuthStorage;
@@ -328,46 +327,45 @@ public class Authentication {
 		if (authcode == null || authcode.trim().isEmpty()) {
 			throw new MissingParameterException("authorization code");
 		}
-		final IdentitySet ids = idp.getIdentities(authcode, false);
-		final AuthUser primary = storage.getUser(ids.getPrimary());
-		final Set<RemoteIdentityWithID> filteredIDs = new HashSet<>();
-		for (final RemoteIdentity id: ids.getSecondaries()) {
+		final Set<RemoteIdentity> ids = idp.getIdentities(authcode, false);
+		final Set<RemoteIdentity> noUser = new HashSet<>();
+		final Map<RemoteIdentityWithID, AuthUser> hasUser = new HashMap<>();
+		for (final RemoteIdentity id: ids) {
 			final AuthUser user = storage.getUser(id);
 			if (user != null) {
-				filteredIDs.add(user.getIdentity(id));
+				hasUser.put(user.getIdentity(id), user);
+			} else {
+				noUser.add(id);
 			}
 		}
 		final LoginToken lr;
-		if (primary == null || !filteredIDs.isEmpty()) {
-			final int expmin = primary == null ? 30 : 10;
-			final TemporaryToken tt = new TemporaryToken(tokens.getToken(),
-					expmin * 60 * 1000);
-			final RemoteIdentityWithID rid;
-			if (primary == null) {
-				rid = ids.getPrimary().withID();
-			} else {
-				rid = primary.getIdentity(ids.getPrimary());
-			}
-			filteredIDs.add(rid);
-			storage.storeIdentitiesTemporarily(
-					tt.getHashedToken(), filteredIDs);
-			lr = new LoginToken(tt);
-		} else {
+		if (hasUser.size() == 1 && noUser.isEmpty()) {
+			final AuthUser user = hasUser.values().iterator().next();
 			final NewToken t = new NewToken(tokens.getToken(),
 					//TODO CONFIG make token lifetime configurable
-					primary.getUserName(), 14 * 24 * 60 * 60 * 1000);
+					user.getUserName(), 14 * 24 * 60 * 60 * 1000);
 			storage.storeToken(t.getHashedToken());
 			lr = new LoginToken(t);
+		} else {
+			final TemporaryToken tt = new TemporaryToken(tokens.getToken(),
+					10 * 60 * 1000);
+			final Set<RemoteIdentityWithID> store = noUser.stream()
+					.map(id -> id.withID()).collect(Collectors.toSet());
+			hasUser.keySet().stream().forEach(id -> store.add(id));
+
+			storage.storeIdentitiesTemporarily(tt.getHashedToken(), store);
+			lr = new LoginToken(tt);
 		}
 		return lr;
-		//TODO NOW provide choice to create kbase id for primary if not already, and provide choices to login as secondaries
 	}
 
 
-	public LoginIdentities getLoginState(final IncomingToken token)
+	public Map<RemoteIdentityWithID, AuthUser> getLoginState(
+			final IncomingToken token)
 			throws AuthStorageException, InvalidTokenException {
 		final Set<RemoteIdentityWithID> ids = getTemporaryIdentities(token);
-		RemoteIdentityWithID primary = null;
+		final Map<RemoteIdentityWithID, AuthUser> ret = new HashMap<>();
+		
 		String provider = null;
 		for (final RemoteIdentityWithID ri: ids) {
 			if (provider == null) {
@@ -376,25 +374,17 @@ public class Authentication {
 				throw new AuthStorageException("More than one identity " +
 						"provider associated with this token");
 			}
-			if (ri.getDetails().isPrimary()) {
-				if (primary != null) {
-					throw new AuthStorageException("More than one primary " +
-							"identity associated with this token");
-				}
-				primary = ri;
+			final AuthUser u = storage.getUser(ri);
+			if (u == null) {
+				ret.put(ri, null);
+			} else if (!ret.containsValue(u)){
+				//don't use the updated ri here since the ri associated with
+				//the temporary token has not been updated
+				ret.put(ri, u);
 			}
 		}
-		if (primary == null) {
-			throw new AuthStorageException(
-					"No primary identity associated with this token");
-		}
-		ids.remove(primary);
-		final AuthUser pu = storage.getUser(primary);
-		final Map<RemoteIdentityWithID, AuthUser> secs =
-				processSecondaries(ids);
-		return new LoginIdentities(primary, pu, secs);
+		return ret;
 	}
-
 
 	private Set<RemoteIdentityWithID> getTemporaryIdentities(
 			final IncomingToken token)
@@ -403,25 +393,10 @@ public class Authentication {
 			throw new NullPointerException("token");
 		}
 		try {
-			return storage.getTemporaryIdentities(
-					token.getHashedToken());
+			return storage.getTemporaryIdentities(token.getHashedToken());
 		} catch (NoSuchTokenException e) {
 			throw new InvalidTokenException();
 		}
-	}
-
-
-	private Map<RemoteIdentityWithID, AuthUser> processSecondaries(
-			final Set<RemoteIdentityWithID> ids)
-			throws AuthStorageException {
-		final Map<RemoteIdentityWithID, AuthUser> ret = new HashMap<>();
-		for (final RemoteIdentity ri: ids) {
-			final AuthUser u = storage.getUser(ri);
-			if (u != null && !ret.containsValue(u)) {
-				ret.put(u.getIdentity(ri), u);
-			}
-		}
-		return ret;
 	}
 
 	public NewToken createUser(
@@ -504,15 +479,13 @@ public class Authentication {
 		if (authcode == null || authcode.trim().isEmpty()) {
 			throw new MissingParameterException("authorization code");
 		}
-		final IdentitySet ids = idp.getIdentities(authcode, true);
-		final Set<RemoteIdentity> rids = new HashSet<>(ids.getSecondaries());
-		rids.add(ids.getPrimary());
-		filterLinkCandidates(rids);
+		final Set<RemoteIdentity> ids = idp.getIdentities(authcode, true);
+		filterLinkCandidates(ids);
 		final LinkToken lt;
 		//TODO CONFIG allow forcing choice per id provider
-		if (rids.size() == 1) {
+		if (ids.size() == 1) {
 			try {
-				storage.link(u.getUserName(), rids.iterator().next().withID());
+				storage.link(u.getUserName(), ids.iterator().next().withID());
 			} catch (NoSuchUserException e) {
 				throw new AuthStorageException(
 						"User unexpectedly disappeared from the database", e);
@@ -522,7 +495,7 @@ public class Authentication {
 			final TemporaryToken tt = new TemporaryToken(tokens.getToken(),
 					10 * 60 * 1000);
 			storage.storeIdentitiesTemporarily(tt.getHashedToken(),
-					rids.stream().map(r -> r.withID())
+					ids.stream().map(r -> r.withID())
 					.collect(Collectors.toSet()));
 			lt = new LinkToken(tt);
 		}

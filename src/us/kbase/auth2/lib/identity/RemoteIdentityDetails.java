@@ -8,13 +8,11 @@ public class RemoteIdentityDetails {
 	private String username;
 	private String fullname;
 	private String email;
-	private boolean primary;
 	
 	public RemoteIdentityDetails(
 			final String username,
 			final String fullname,
-			final String email,
-			final boolean primary) {
+			final String email) {
 		super();
 		if (username == null || username.trim().isEmpty()) {
 			throw new IllegalArgumentException(
@@ -31,7 +29,6 @@ public class RemoteIdentityDetails {
 		this.username = username.trim();
 		this.fullname = fullname.trim();
 		this.email = email.trim();
-		this.primary = primary;
 	}
 
 	public String getUsername() {
@@ -46,17 +43,12 @@ public class RemoteIdentityDetails {
 		return email;
 	}
 
-	public boolean isPrimary() {
-		return primary;
-	}
-
 	@Override
 	public int hashCode() {
 		final int prime = 31;
 		int result = 1;
 		result = prime * result + ((email == null) ? 0 : email.hashCode());
 		result = prime * result + ((fullname == null) ? 0 : fullname.hashCode());
-		result = prime * result + (primary ? 1231 : 1237);
 		result = prime * result + ((username == null) ? 0 : username.hashCode());
 		return result;
 	}
@@ -87,9 +79,6 @@ public class RemoteIdentityDetails {
 		} else if (!fullname.equals(other.fullname)) {
 			return false;
 		}
-		if (primary != other.primary) {
-			return false;
-		}
 		if (username == null) {
 			if (other.username != null) {
 				return false;
@@ -109,8 +98,6 @@ public class RemoteIdentityDetails {
 		builder.append(fullname);
 		builder.append(", email=");
 		builder.append(email);
-		builder.append(", primary=");
-		builder.append(primary);
 		builder.append("]");
 		return builder.toString();
 	}

@@ -4,8 +4,11 @@ import java.net.MalformedURLException;
 import java.net.URI;
 import java.net.URISyntaxException;
 import java.net.URL;
+import java.util.Arrays;
+import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
+import java.util.Set;
 
 import javax.ws.rs.client.Client;
 import javax.ws.rs.client.ClientBuilder;
@@ -108,12 +111,12 @@ public class GoogleIdentityProvider implements IdentityProvider {
 	}
 
 	@Override
-	public IdentitySet getIdentities(
+	public Set<RemoteIdentity> getIdentities(
 			final String authcode,
 			final boolean link) throws IdentityRetrievalException {
 		final String accessToken = getAccessToken(authcode, link);
 		final RemoteIdentity ri = getIdentity(accessToken);
-		return new IdentitySet(ri, null);
+		return new HashSet<>(Arrays.asList(ri));
 	}
 
 	private RemoteIdentity getIdentity(final String accessToken)
@@ -136,8 +139,7 @@ public class GoogleIdentityProvider implements IdentityProvider {
 				new RemoteIdentityDetails(
 						email, // use email for user id
 						(String) id.get("displayName"),
-						email,
-						true));
+						email));
 	}
 
 	private Map<String, Object> googleGetRequest(
