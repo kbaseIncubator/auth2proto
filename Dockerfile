@@ -4,7 +4,7 @@ MAINTAINER Shane Canon <scanon@lbl.gov>
 #
 # Install build dependencies and openjdk-8
 #
-RUN apt-get update && apt-get -y install git ant make gcc wget software-properties-common unzip && \
+RUN apt-get update && apt-get -y install git ant wget software-properties-common unzip && \
    add-apt-repository -y ppa:openjdk-r/ppa && \
    apt-get update && \
    apt-get -y install openjdk-8-jdk
@@ -12,7 +12,6 @@ RUN apt-get update && apt-get -y install git ant make gcc wget software-properti
 # Install jars and Jetty
 RUN \
    mkdir /src && cd /src && git clone https://github.com/kbase/jars  && \
-   apt-get -y install unzip  && \
    cd /src/ && wget http://repo1.maven.org/maven2/org/eclipse/jetty/jetty-distribution/9.3.11.v20160721/jetty-distribution-9.3.11.v20160721.zip && \
    unzip jetty*zip && \
    rm jetty*zip 
