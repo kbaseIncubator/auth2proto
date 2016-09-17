@@ -61,12 +61,21 @@
     <include name="jersey-media-jaxb-2.23.2.jar"/>
     <include name="jersey-server-2.23.2.jar"/>
   </fileset>
+
+  <fileset dir="${jardir}hk2/" id="hk2">
+    <include name="aopalliance-repackaged-2.5.0-b05.jar"/>
+    <include name="hk2-api-2.5.0-b05.jar"/>
+    <include name="hk2-locator-2.5.0-b05.jar"/>
+    <include name="hk2-utils-2.5.0-b05.jar"/>
+    <include name="osgi-resource-locator-1.0.1.jar"/>
+  </fileset>
 	
   <fileset dir="./lib" id="intlib">
     <include name="jersey/*.jar"/>
   </fileset>
 
   <union id="serverside">
+    <fileset refid="hk2"/>
     <fileset refid="jackson"/>
     <fileset refid="jersey"/>
     <fileset refid="lib"/>
