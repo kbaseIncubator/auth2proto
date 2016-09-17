@@ -27,8 +27,6 @@
 	<classpathentry kind="lib" path="lib/jersey/validation-api-1.1.0.Final.jar"/>
 	<classpathentry kind="lib" path="lib/jerseyjackson/jersey-entity-filtering-2.23.2.jar"/>
 	<classpathentry kind="lib" path="lib/jerseyjackson/jersey-media-json-jackson-2.23.2.jar"/>
-	<classpathentry kind="lib" path="lib/jerseymustache/jersey-mvc-2.23.2.jar" sourcepath="lib/jerseymustache/jersey-mvc-2.23.2-sources.jar"/>
-	<classpathentry kind="lib" path="lib/jerseymustache/jersey-mvc-mustache-2.23.2.jar" sourcepath="lib/jerseymustache/jersey-mvc-mustache-2.23.2-sources.jar"/>
 	<classpathentry kind="lib" path="/jars/lib/jars/google/guava-18.0.jar"/>
 	<classpathentry kind="lib" path="/jars/lib/jars/jna/jna-3.4.0.jar"/>
 	<classpathentry kind="lib" path="/jars/lib/jars/syslog4j/syslog4j-0.9.46.jar"/>
@@ -46,5 +44,7 @@
 	<classpathentry kind="lib" path="/jars/lib/jars/mongo/mongo-java-driver-3.3.0.jar"/>
 	<classpathentry kind="lib" path="/jars/lib/jars/mustache/compiler-0.9.3.jar"/>
 	<classpathentry kind="lib" path="/jars/lib/jars/kbase/common/kbase-common-0.0.22.jar"/>
+	<classpathentry kind="lib" path="/jars/lib/jars/jersey/mvc/jersey-mvc-2.23.2.jar"/>
+	<classpathentry kind="lib" path="/jars/lib/jars/jersey/mvc/jersey-mvc-mustache-2.23.2.jar"/>
 	<classpathentry kind="output" path="bin"/>
 </classpath>

@@ -64,10 +64,14 @@
     <include name="jackson-module-jaxb-annotations-2.5.4.jar"/>
   </fileset>
 	
+<fileset dir="${jardir}jersey/" id="jersey">
+    <include name="mvc/jersey-mvc-2.23.2.jar"/>
+    <include name="mvc/jersey-mvc-mustache-2.23.2.jar"/>
+  </fileset>
+	
   <fileset dir="./lib" id="intlib">
     <include name="jersey/*.jar"/>
     <include name="jerseyjackson/*.jar"/>
-    <include name="jerseymustache/*.jar"/>
   </fileset>
 
   <union id="serverside">
