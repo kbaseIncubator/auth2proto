@@ -32,6 +32,7 @@ public class LoggingFilter implements ContainerRequestFilter,
 	@Override
 	public void filter(final ContainerRequestContext reqcon)
 			throws IOException {
+		//TODO NOW ADD to autologger abstraction, hide JsonServerSyslog
 		final RpcInfo rpc = JsonServerSyslog.getCurrentRpcInfo();
 		rpc.setId(("" + Math.random()).substring(2));
 		//TODO AUTH get config and set ignoreIPs appropriately

@@ -44,6 +44,7 @@ public class ErrorMessage {
 		if (ex == null) {
 			throw new NullPointerException("exp");
 		}
+		//TODO NOW ADD to autologger abstraction, hide JsonServerSyslog
 		callID = JsonServerSyslog.getCurrentRpcInfo().getId(); // may be null
 		if (includeTrace) {
 			final StringWriter st = new StringWriter();
