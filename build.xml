@@ -63,6 +63,7 @@
 
   <fileset dir="${jardir}" id="jerseydeps">
     <include name="annotation/javax-annotation-api-1.2.jar"/>
+    <include name="asm/asm-debug-all-5.0.4.jar"/>
     <include name="inject/javax-inject-2.5.0-b05.jar"/>
     <include name="javassist/javassist-3.20.0-GA.jar"/>
     <include name="jaxrs/javax.ws.rs-api-2.0.1.jar"/>
