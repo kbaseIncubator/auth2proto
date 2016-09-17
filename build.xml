@@ -36,7 +36,7 @@
     <include name="kbase/common/kbase-common-0.0.20.jar"/>
   </fileset>
 
-  <fileset dir="${jardir}" id="extlib">
+  <fileset dir="${jardir}" id="lib">
     <include name="apache_commons/commons-codec-1.8.jar"/>
     <include name="google/guava-18.0.jar"/>
     <include name="kbase/common/kbase-common-0.0.20.jar"/>
@@ -47,9 +47,17 @@
     <include name="logback/logback-classic-1.1.2.jar"/>
     <include name="ini4j/ini4j-0.5.2.jar"/>
   </fileset>
-
+	
+  <fileset dir="${jardir}" id="jackson">
+    <include name="jackson/jackson-annotations-2.5.4.jar"/>
+    <include name="jackson/jackson-core-2.5.4.jar"/>
+    <include name="jackson/jackson-databind-2.5.4.jar"/>
+    <include name="jackson/jackson-jaxrs-base-2.5.4.jar"/>
+    <include name="jackson/jackson-jaxrs-json-provider-2.5.4.jar"/>
+    <include name="jackson/jackson-module-jaxb-annotations-2.5.4.jar"/>
+  </fileset>
+	
   <fileset dir="./lib" id="intlib">
-    <include name="jackson/*.jar"/>
     <include name="jersey/*.jar"/>
     <include name="jerseyjackson/*.jar"/>
     <include name="mustache/*.jar"/>
@@ -59,7 +67,8 @@
   </fileset>
 
   <union id="serverside">
-    <fileset refid="extlib"/>
+    <fileset refid="lib"/>
+  	<fileset refid="jackson"/>
     <fileset refid="intlib"/>
   </union>
 
