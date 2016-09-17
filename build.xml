@@ -68,6 +68,7 @@
     <include name="javassist/javassist-3.20.0-GA.jar"/>
     <include name="jaxb/jaxb-api-2.2.7.jar"/>
     <include name="jaxrs/javax.ws.rs-api-2.0.1.jar"/>
+    <include name="osgi/org.osgi.core-4.2.0.jar"/>
     <include name="persistence/persistence-api-1.0.jar"/>
     <include name="servlet/javax.servlet-api-3.0.1.jar"/>
   </fileset>
