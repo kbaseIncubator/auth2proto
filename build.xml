@@ -62,7 +62,11 @@
     <include name="jersey-server-2.23.2.jar"/>
   </fileset>
 
-  <fileset dir="${jardir}hk2/" id="hk2">
+  <fileset dir="${jardir}" id="jerseydeps">
+    <include name="javax-annotation-api-1.2.jar"/>
+  </fileset>
+
+  <fileset dir="${jardir}hk2/" id="jerseydep_hk2">
     <include name="aopalliance-repackaged-2.5.0-b05.jar"/>
     <include name="hk2-api-2.5.0-b05.jar"/>
     <include name="hk2-locator-2.5.0-b05.jar"/>
@@ -75,7 +79,8 @@
   </fileset>
 
   <union id="serverside">
-    <fileset refid="hk2"/>
+    <fileset refid="jerseydeps"/>
+    <fileset refid="jerseydep_hk2"/>
     <fileset refid="jackson"/>
     <fileset refid="jersey"/>
     <fileset refid="lib"/>
