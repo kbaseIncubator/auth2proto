@@ -37,7 +37,6 @@
 	<classpathentry kind="lib" path="/jars/lib/jars/slf4j/slf4j-api-1.7.7.jar"/>
 	<classpathentry kind="lib" path="/jars/lib/jars/logback/logback-classic-1.1.2.jar"/>
 	<classpathentry kind="lib" path="/jars/lib/jars/logback/logback-core-1.1.2.jar"/>
-	<classpathentry kind="lib" path="lib/mongo/mongo-java-driver-3.3.0.jar"/>
 	<classpathentry kind="lib" path="/jars/lib/jars/ini4j/ini4j-0.5.2.jar"/>
 	<classpathentry kind="lib" path="/jars/lib/jars/jackson/jackson-annotations-2.5.4.jar"/>
 	<classpathentry kind="lib" path="/jars/lib/jars/jackson/jackson-core-2.5.4.jar"/>
@@ -46,5 +45,6 @@
 	<classpathentry kind="lib" path="/jars/lib/jars/jackson/jackson-jaxrs-json-provider-2.5.4.jar"/>
 	<classpathentry kind="lib" path="/jars/lib/jars/jackson/jackson-module-jaxb-annotations-2.5.4.jar"/>
 	<classpathentry kind="lib" path="/jars/lib/jars/jetty/jetty-all-9.3.11.v20160721-uber.jar"/>
+	<classpathentry kind="lib" path="/jars/lib/jars/mongo/mongo-java-driver-3.3.0.jar"/>
 	<classpathentry kind="output" path="bin"/>
 </classpath>

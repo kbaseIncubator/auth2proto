@@ -37,6 +37,7 @@
   </fileset>
 
   <fileset dir="${jardir}" id="lib">
+    <!-- don't compile with the jetty jar, just use for test code -->
     <include name="apache_commons/commons-codec-1.8.jar"/>
     <include name="google/guava-18.0.jar"/>
     <include name="kbase/common/kbase-common-0.0.20.jar"/>
@@ -46,6 +47,7 @@
     <include name="logback/logback-core-1.1.2.jar"/>
     <include name="logback/logback-classic-1.1.2.jar"/>
     <include name="ini4j/ini4j-0.5.2.jar"/>
+    <include name="mongo/mongo-java-driver-3.3.0.jar"/>
   </fileset>
 	
   <fileset dir="${jardir}" id="jackson">
@@ -62,8 +64,6 @@
     <include name="jerseyjackson/*.jar"/>
     <include name="mustache/*.jar"/>
     <include name="jerseymustache/*.jar"/>
-    <include name="mongo/*.jar"/>
-    <!-- don't compile with the jetty jar, just use for test code -->
   </fileset>
 
   <union id="serverside">
