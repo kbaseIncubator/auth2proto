@@ -25,15 +25,8 @@
 	<classpathentry kind="lib" path="lib/jersey/osgi-resource-locator-1.0.1.jar"/>
 	<classpathentry kind="lib" path="lib/jersey/persistence-api-1.0.jar"/>
 	<classpathentry kind="lib" path="lib/jersey/validation-api-1.1.0.Final.jar"/>
-	<classpathentry kind="lib" path="lib/jackson/jackson-annotations-2.5.4.jar"/>
-	<classpathentry kind="lib" path="lib/jackson/jackson-jaxrs-base-2.5.4.jar"/>
-	<classpathentry kind="lib" path="lib/jackson/jackson-jaxrs-json-provider-2.5.4.jar"/>
 	<classpathentry kind="lib" path="lib/jerseyjackson/jersey-entity-filtering-2.23.2.jar"/>
 	<classpathentry kind="lib" path="lib/jerseyjackson/jersey-media-json-jackson-2.23.2.jar"/>
-	<classpathentry kind="lib" path="lib/jackson/jackson-core-2.5.4.jar"/>
-	<classpathentry kind="lib" path="lib/jackson/jackson-databind-2.5.4.jar"/>
-	<classpathentry kind="lib" path="lib/jackson/jackson-module-jaxb-annotations-2.5.4.jar"/>
-	<classpathentry kind="lib" path="lib/jetty/jetty-all-9.3.11.v20160721-uber.jar"/>
 	<classpathentry kind="lib" path="lib/jerseymustache/jersey-mvc-2.23.2.jar" sourcepath="lib/jerseymustache/jersey-mvc-2.23.2-sources.jar"/>
 	<classpathentry kind="lib" path="lib/jerseymustache/jersey-mvc-mustache-2.23.2.jar" sourcepath="lib/jerseymustache/jersey-mvc-mustache-2.23.2-sources.jar"/>
 	<classpathentry kind="lib" path="lib/mustache/compiler-0.9.3.jar"/>
@@ -46,5 +39,12 @@
 	<classpathentry kind="lib" path="/jars/lib/jars/logback/logback-core-1.1.2.jar"/>
 	<classpathentry kind="lib" path="lib/mongo/mongo-java-driver-3.3.0.jar"/>
 	<classpathentry kind="lib" path="/jars/lib/jars/ini4j/ini4j-0.5.2.jar"/>
+	<classpathentry kind="lib" path="/jars/lib/jars/jackson/jackson-annotations-2.5.4.jar"/>
+	<classpathentry kind="lib" path="/jars/lib/jars/jackson/jackson-core-2.5.4.jar"/>
+	<classpathentry kind="lib" path="/jars/lib/jars/jackson/jackson-databind-2.5.4.jar"/>
+	<classpathentry kind="lib" path="/jars/lib/jars/jackson/jackson-jaxrs-base-2.5.4.jar"/>
+	<classpathentry kind="lib" path="/jars/lib/jars/jackson/jackson-jaxrs-json-provider-2.5.4.jar"/>
+	<classpathentry kind="lib" path="/jars/lib/jars/jackson/jackson-module-jaxb-annotations-2.5.4.jar"/>
+	<classpathentry kind="lib" path="/jars/lib/jars/jetty/jetty-all-9.3.11.v20160721-uber.jar"/>
 	<classpathentry kind="output" path="bin"/>
 </classpath>
