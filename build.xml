@@ -40,23 +40,28 @@
     <!-- don't compile with the jetty jar, just use for test code -->
     <include name="apache_commons/commons-codec-1.8.jar"/>
     <include name="google/guava-18.0.jar"/>
-    <include name="kbase/common/kbase-common-0.0.20.jar"/>
-    <include name="jna/jna-3.4.0.jar"/>
-    <include name="syslog4j/syslog4j-0.9.46.jar"/>
-    <include name="slf4j/slf4j-api-1.7.7.jar"/>
-    <include name="logback/logback-core-1.1.2.jar"/>
-    <include name="logback/logback-classic-1.1.2.jar"/>
     <include name="ini4j/ini4j-0.5.2.jar"/>
     <include name="mongo/mongo-java-driver-3.3.0.jar"/>
+    <include name="mustache/compiler-0.9.3.jar"/>
   </fileset>
 	
-  <fileset dir="${jardir}" id="jackson">
-    <include name="jackson/jackson-annotations-2.5.4.jar"/>
-    <include name="jackson/jackson-core-2.5.4.jar"/>
-    <include name="jackson/jackson-databind-2.5.4.jar"/>
-    <include name="jackson/jackson-jaxrs-base-2.5.4.jar"/>
-    <include name="jackson/jackson-jaxrs-json-provider-2.5.4.jar"/>
-    <include name="jackson/jackson-module-jaxb-annotations-2.5.4.jar"/>
+
+  <fileset dir="${jardir}" id="logging">
+    <include name="kbase/common/kbase-common-0.0.22.jar"/>
+    <include name="jna/jna-3.4.0.jar"/>
+    <include name="logback/logback-core-1.1.2.jar"/>
+    <include name="logback/logback-classic-1.1.2.jar"/>
+    <include name="slf4j/slf4j-api-1.7.7.jar"/>
+    <include name="syslog4j/syslog4j-0.9.46.jar"/>
+  </fileset>
+
+  <fileset dir="${jardir}jackson/" id="jackson">
+    <include name="jackson-annotations-2.5.4.jar"/>
+    <include name="jackson-core-2.5.4.jar"/>
+    <include name="jackson-databind-2.5.4.jar"/>
+    <include name="jackson-jaxrs-base-2.5.4.jar"/>
+    <include name="jackson-jaxrs-json-provider-2.5.4.jar"/>
+    <include name="jackson-module-jaxb-annotations-2.5.4.jar"/>
   </fileset>
 	
   <fileset dir="./lib" id="intlib">
@@ -68,7 +73,8 @@
 
   <union id="serverside">
     <fileset refid="lib"/>
-  	<fileset refid="jackson"/>
+    <fileset refid="logging"/>
+    <fileset refid="jackson"/>
     <fileset refid="intlib"/>
   </union>
 
