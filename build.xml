@@ -67,7 +67,6 @@
   <fileset dir="./lib" id="intlib">
     <include name="jersey/*.jar"/>
     <include name="jerseyjackson/*.jar"/>
-    <include name="mustache/*.jar"/>
     <include name="jerseymustache/*.jar"/>
   </fileset>
 
