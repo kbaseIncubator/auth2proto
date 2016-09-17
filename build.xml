@@ -63,7 +63,8 @@
   </fileset>
 
   <fileset dir="${jardir}" id="jerseydeps">
-    <include name="javax-annotation-api-1.2.jar"/>
+    <include name="annotation/javax-annotation-api-1.2.jar"/>
+    <include name="persistence/persistence-api-1.0.jar"/>
   </fileset>
 
   <fileset dir="${jardir}hk2/" id="jerseydep_hk2">
