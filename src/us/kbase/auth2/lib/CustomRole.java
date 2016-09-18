@@ -10,6 +10,9 @@ public class CustomRole {
 	private final String desc;
 	private final UUID id;
 	
+	//TODO NOW make the name the ID and store that in the DB. The name should be sanity checked for length and url safety. Note that the id is permanent.
+	//TODO LATER remote role from all users fucntion
+	
 	public CustomRole(final UUID id, final String name, final String desc)
 			throws MissingParameterException {
 		super();

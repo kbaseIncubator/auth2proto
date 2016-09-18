@@ -13,6 +13,8 @@ public enum Role {
 	DEV_TOKEN	("Create developer tokens"),
 	SERV_TOKEN	("Create server tokens");
 	
+	//TODO NOW make role ID and store that in the DB. The role ID can't change.
+	
 	private static final Map<String, Role> ROLE_MAP = new HashMap<>();
 	static {
 		for (final Role r: Role.values()) {
