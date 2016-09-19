@@ -19,6 +19,7 @@ import us.kbase.auth2.service.AuthConfig;
 import us.kbase.auth2.service.SLF4JAutoLogger;
 import us.kbase.auth2.service.exceptions.AuthConfigurationException;
 import us.kbase.common.service.JsonServerSyslog;
+import us.kbase.common.service.JsonServerSyslog.RpcInfo;
 
 public class KBaseAuthConfig implements AuthConfig {
 	
@@ -161,6 +162,22 @@ public class KBaseAuthConfig implements AuthConfig {
 		private JsonServerSysLogAutoLogger(JsonServerSyslog logger) {
 			super();
 			this.logger = logger;
+		}
+
+		@Override
+		public void setCallInfo(
+				final String method,
+				final String id,
+				final String ipAddress) {
+			final RpcInfo rpc = JsonServerSyslog.getCurrentRpcInfo();
+			rpc.setId(id);
+			rpc.setIp(ipAddress);
+			rpc.setMethod(method);
+		}
+
+		@Override
+		public String getCallID() {
+			return JsonServerSyslog.getCurrentRpcInfo().getId();
 		}
 	}
 	

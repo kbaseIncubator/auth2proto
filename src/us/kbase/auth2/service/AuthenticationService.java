@@ -102,6 +102,7 @@ public class AuthenticationService extends ResourceConfig {
 				bind(new MustacheProcessor(Paths.get(templatePath)
 						.toAbsolutePath()))
 					.to(TemplateProcessor.class);
+				bind(c.getLogger()).to(SLF4JAutoLogger.class);
 			}
 		});
 	}
