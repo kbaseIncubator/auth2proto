@@ -122,9 +122,9 @@ public class Admin {
 		final Set<Role> r = au.getRoles();
 		//TODO ADMIN only show admin button if root user
 		//TODO ADMIN only allow changing admin status if root user
-		ret.put("admin", Role.hasRole(r, Role.ADMIN));
-		ret.put("serv", Role.hasRole(r, Role.SERV_TOKEN));
-		ret.put("dev", Role.hasRole(r, Role.DEV_TOKEN));
+		ret.put("admin", Role.ADMIN.isSatisfiedBy(r));
+		ret.put("serv", Role.SERV_TOKEN.isSatisfiedBy(r));
+		ret.put("dev", Role.DEV_TOKEN.isSatisfiedBy(r));
 		return ret;
 	}
 	

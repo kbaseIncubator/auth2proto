@@ -189,8 +189,8 @@ public class Tokens {
 		final List<APIToken> ats = ts.getTokens().stream()
 				.map(t -> new APIToken(t)).collect(Collectors.toList());
 		ret.put("tokens", ats);
-		ret.put("dev", Role.hasRole(au.getRoles(), Role.DEV_TOKEN));
-		ret.put("serv", Role.hasRole(au.getRoles(), Role.SERV_TOKEN));
+		ret.put("dev", Role.DEV_TOKEN.isSatisfiedBy(au.getRoles()));
+		ret.put("serv", Role.SERV_TOKEN.isSatisfiedBy(au.getRoles()));
 		return ret;
 	}
 	

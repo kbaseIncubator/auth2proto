@@ -9,34 +9,41 @@ import java.util.Set;
 import java.util.stream.Collectors;
 
 public enum Role {
-	ADMIN		("Admin"),
-	DEV_TOKEN	("Create developer tokens"),
-	SERV_TOKEN	("Create server tokens");
-	
-	//TODO ROLES make role ID and store that in the DB. The role ID can't change.
+	/* first arg is ID, second arg is description. ID CANNOT change
+	 * since that field is stored in the DB.
+	 */
+	ADMIN		("Admin", "Administrator"),
+	DEV_TOKEN	("DevToken", "Create developer tokens"),
+	SERV_TOKEN	("ServToken", "Create server tokens");
 	
 	private static final Map<String, Role> ROLE_MAP = new HashMap<>();
 	static {
 		for (final Role r: Role.values()) {
-			ROLE_MAP.put(r.getRole(), r);
+			ROLE_MAP.put(r.getID(), r);
 		}
 	}
 	
-	private final String role;
+	private final String id;
+	private final String description;
 	
-	private Role(final String role) {
-		this.role = role;
+	private Role(final String id, final String description) {
+		this.id = id;
+		this.description = description;
 	}
 	
-	public String getRole() {
-		return role;
+	public String getID() {
+		return id;
 	}
 	
-	public static Role getRole(final String role) {
-		if (!ROLE_MAP.containsKey(role)) {
-			throw new IllegalArgumentException("Invalid role: " + role);
+	public String getDescription() {
+		return description;
+	}
+	
+	public static Role getRole(final String id) {
+		if (!ROLE_MAP.containsKey(id)) {
+			throw new IllegalArgumentException("Invalid role id: " + id);
 		}
-		return ROLE_MAP.get(role);
+		return ROLE_MAP.get(id);
 	}
 	
 	public static List<Role> grantedRoles(final Role role) {
@@ -52,13 +59,11 @@ public enum Role {
 		return new LinkedList<>();
 	}
 	
-	public static boolean hasRole(
-			final Set<Role> possesed,
-			final Role required) {
-		final Set<Role> granted = possesed.stream()
+	public boolean isSatisfiedBy(final Set<Role> possessed) {
+		final Set<Role> granted = possessed.stream()
 				.flatMap(r -> grantedRoles(r).stream())
 				.collect(Collectors.toSet());
-		return granted.contains(required);
+		return granted.contains(this);
 		
 	}
 }

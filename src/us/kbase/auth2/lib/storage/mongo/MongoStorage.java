@@ -492,7 +492,7 @@ public class MongoStorage implements AuthStorage {
 	@Override
 	public void setRoles(final UserName userName, final Set<Role> roles)
 			throws AuthStorageException, NoSuchUserException {
-		final Set<String> strrl = roles.stream().map(r -> r.getRole())
+		final Set<String> strrl = roles.stream().map(r -> r.getID())
 				.collect(Collectors.toSet());
 		setRoles(userName, strrl, Fields.USER_ROLES);
 	}

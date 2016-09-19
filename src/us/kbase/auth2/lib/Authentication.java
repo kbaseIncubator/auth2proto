@@ -182,7 +182,7 @@ public class Authentication {
 		//TODO TOKEN only login tokens can create other tokens, and login tokens can't create login tokens
 		final AuthUser au = getUser(token);
 		final Role reqRole = serverToken ? Role.SERV_TOKEN : Role.DEV_TOKEN;
-		if (!Role.hasRole(au.getRoles(), reqRole)) {
+		if (!reqRole.isSatisfiedBy(au.getRoles())) {
 			throw new UnauthorizedException(ErrorType.UNAUTHORIZED,
 					"User %s is not authorized to create this token type.");
 		}

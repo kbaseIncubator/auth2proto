@@ -62,7 +62,7 @@ public class Me {
 		ret.put("email", u.getEmail());
 		ret.put("customroles", u.getCustomRoles());
 		ret.put("unlink", u.getIdentities().size() > 1);
-		ret.put("roles", u.getRoles().stream().map(r -> r.getRole())
+		ret.put("roles", u.getRoles().stream().map(r -> r.getDescription())
 				.collect(Collectors.toList()));
 		final List<Map<String, String>> idents = new LinkedList<>();
 		ret.put("idents", idents);
