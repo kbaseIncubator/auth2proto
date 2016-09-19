@@ -154,7 +154,7 @@ public class GoogleIdentityProvider implements IdentityProvider {
 			//TODO TEST with 500s with HTML
 			@SuppressWarnings("unchecked")
 			final Map<String, Object> mtemp = r.readEntity(Map.class);
-			//TODO NOW handle {error=?} in object and check response code
+			//TODO IDPROVERR handle {error=?} in object and check response code
 			return mtemp;
 		} finally {
 			if (r != null) {
@@ -193,7 +193,7 @@ public class GoogleIdentityProvider implements IdentityProvider {
 			@SuppressWarnings("unchecked")
 			//TODO TEST with 500s with HTML
 			final Map<String, Object> mtemp = r.readEntity(Map.class);
-			//TODO NOW handle {error=?} in object and check response code
+			//TODO IDPROVERR handle {error=?} in object and check response code
 			return mtemp;
 		} finally {
 			if (r != null) {

@@ -41,6 +41,7 @@ import us.kbase.auth2.lib.LoginToken;
 import us.kbase.auth2.lib.UserName;
 import us.kbase.auth2.lib.exceptions.AuthenticationException;
 import us.kbase.auth2.lib.exceptions.ErrorType;
+import us.kbase.auth2.lib.exceptions.IllegalParameterException;
 import us.kbase.auth2.lib.exceptions.InvalidTokenException;
 import us.kbase.auth2.lib.exceptions.MissingParameterException;
 import us.kbase.auth2.lib.exceptions.NoSuchIdentityProviderException;
@@ -132,11 +133,11 @@ public class Login {
 			@Context final UriInfo uriInfo)
 			throws MissingParameterException, AuthenticationException,
 			NoSuchProviderException, AuthStorageException {
-		//TODO NOW handle error in params (provider, state)
+		//TODO INPUT handle error in params (provider, state)
 		provider = upperCase(provider);
 		final MultivaluedMap<String, String> qps =
 				uriInfo.getQueryParameters();
-		//TODO NOW handle returned OAuth error code in queryparams
+		//TODO ERRHANDLE handle returned OAuth error code in queryparams
 		final IdentityProvider idp = auth.getIdentityProvider(provider);
 		final String authcode = qps.getFirst(idp.getAuthCodeQueryParamName());
 		final String retstate = qps.getFirst("state"); //may need to be configurable
@@ -155,7 +156,7 @@ public class Login {
 		// redirects are ok
 		if (lr.isLoggedIn()) {
 			r = Response.seeOther(getRedirectURI(redirect, "/me"))
-			//TODO NOW can't set keep me logged in here, so set in profile
+			//TODO LOGIN get keep me logged in from cookie set at start of login
 					.cookie(getLoginCookie(lr.getToken(), true))
 					.cookie(getStateCookie(null))
 					.cookie(getRedirectCookie(null)).build();
@@ -215,7 +216,7 @@ public class Login {
 			if (e.getValue() == null) {
 				final Map<String, String> c = new HashMap<>();
 				c.put("id", id.getID().toString());
-				//TODO NOW get safe username from db. Splitting on @ is not necessarily safe, only do it if it's there
+				//TODO UI get safe username from db. Splitting on @ is not necessarily safe, only do it if it's there
 				c.put("usernamesugg", id.getDetails().getUsername()
 						.split("@")[0]);
 				c.put("prov_username", id.getDetails().getUsername());
@@ -249,7 +250,7 @@ public class Login {
 		final NewToken newtoken = auth.login(
 				new IncomingToken(token), identityID);
 		return Response.seeOther(getRedirectURI(redirect, "/me"))
-				//TODO NOW can't set keep me logged in here, so set in profile
+				//TODO LOGIN get keep me logged in from cookie set at start of login
 				.cookie(getLoginCookie(newtoken, true))
 				.cookie(getLoginInProcessCookie(null))
 				.cookie(getRedirectCookie(null)).build();
@@ -267,12 +268,13 @@ public class Login {
 			@FormParam("stayLoggedIn") final String stayLoggedIn,
 			@FormParam("private") final String nameAndEmailPrivate)
 			throws AuthenticationException, AuthStorageException,
-				UserExistsException, NoTokenProvidedException {
+				UserExistsException, NoTokenProvidedException,
+				MissingParameterException, IllegalParameterException {
 		if (token == null || token.trim().isEmpty()) {
 			throw new NoTokenProvidedException(
 					"Missing in-process-login-token");
 		}
-		//TODO NOW sanity check inputs
+		//TODO INPUT sanity check inputs
 		final boolean sessionLogin = stayLoggedIn == null ||
 				stayLoggedIn.isEmpty();
 		final boolean priv = nameAndEmailPrivate != null &&
@@ -284,7 +286,7 @@ public class Login {
 				identityID, new UserName(userName),
 				fullName, email, sessionLogin, priv);
 		return Response.seeOther(getRedirectURI(redirect, "/me"))
-		//TODO NOW can't set keep me logged in here, so set in profile
+				//TODO LOGIN get keep me logged in from cookie set at start of login
 				.cookie(getLoginCookie(newtoken, true))
 				.cookie(getLoginInProcessCookie(null))
 				.cookie(getRedirectCookie(null)).build();

@@ -4,6 +4,7 @@ public class UserUpdate {
 	
 	//TODO TEST
 	//TODO JAVADOC
+	//TODO INPUT needs input checking
 	
 	private String fullname;
 	private String email;

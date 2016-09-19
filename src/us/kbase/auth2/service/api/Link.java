@@ -54,7 +54,7 @@ public class Link {
 
 	//TODO JAVADOC
 	//TODO TEST
-	//TODO NOW can probably share some code with /login
+	//TODO CODE can probably share some code with /login
 	
 	@Inject
 	private Authentication auth;
@@ -126,11 +126,11 @@ public class Link {
 			throw new NoTokenProvidedException();
 		}
 		
-		//TODO NOW handle error in params (provider, state)
+		//TODO INPUT handle error in params (provider, state)
 		provider = upperCase(provider);
 		final MultivaluedMap<String, String> qps =
 				uriInfo.getQueryParameters();
-		//TODO NOW handle returned OAuth error code in queryparams
+		//TODO ERRHANDLE handle returned OAuth error code in queryparams
 		final IdentityProvider idp = auth.getIdentityProvider(provider);
 		final String authcode = qps.getFirst(idp.getAuthCodeQueryParamName());
 		final String retstate = qps.getFirst("state"); //may need to be configurable

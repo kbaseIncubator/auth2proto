@@ -34,7 +34,7 @@ public class AuthUser {
 			final Date created,
 			final Date lastLogin) {
 		super();
-		//TODO NOW check for nulls & empty strings - should email & fullName be allowed as empty strings?
+		//TODO INPUT check for nulls & empty strings - should email & fullName be allowed as empty strings?
 		this.fullName = fullName;
 		this.email = email;
 		this.userName = userName;

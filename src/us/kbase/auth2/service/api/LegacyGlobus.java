@@ -20,8 +20,10 @@ import us.kbase.auth2.lib.AuthUser;
 import us.kbase.auth2.lib.Authentication;
 import us.kbase.auth2.lib.UserName;
 import us.kbase.auth2.lib.exceptions.ErrorType;
+import us.kbase.auth2.lib.exceptions.IllegalParameterException;
 import us.kbase.auth2.lib.exceptions.AuthException;
 import us.kbase.auth2.lib.exceptions.InvalidTokenException;
+import us.kbase.auth2.lib.exceptions.MissingParameterException;
 import us.kbase.auth2.lib.exceptions.NoSuchUserException;
 import us.kbase.auth2.lib.exceptions.UnauthorizedException;
 import us.kbase.auth2.lib.storage.exceptions.AuthStorageException;
@@ -102,7 +104,8 @@ public class LegacyGlobus {
 			@HeaderParam("authorization") String token,
 			@PathParam("user") final String user)
 			throws UnauthorizedException, AuthStorageException,
-			NoSuchUserException {
+			NoSuchUserException, MissingParameterException,
+			IllegalParameterException {
 		if (token != null) {
 			final String[] bits = token.trim().split("\\s+");
 			if (bits.length != 2) {

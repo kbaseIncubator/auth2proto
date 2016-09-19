@@ -25,7 +25,14 @@ public class LocalUser extends AuthUser {
 			final boolean forceReset) {
 		super(userName, email, fullName, null, roles, customRoles, created,
 				lastLogin);
-		//TODO NOW check for nulls & empty strings - should email & fullName be allowed as empty strings?
+		// what's the right # here? Have to rely on user to some extent
+		if (passwordHash == null || passwordHash.length < 10) {
+			throw new IllegalArgumentException(
+					"passwordHash missing or too small");
+		}
+		if (salt == null || salt.length < 2) {
+			throw new NullPointerException("salt missing or too small");
+		}
 		this.passwordHash = passwordHash;
 		this.salt = salt;
 		this.forceReset = forceReset;

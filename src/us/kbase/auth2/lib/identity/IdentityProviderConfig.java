@@ -28,7 +28,7 @@ public class IdentityProviderConfig {
 			final URL loginRedirectURL,
 			final URL linkRedirectURL) {
 		super();
-		//TODO NOW check for nulls & empty strings
+		//TODO INPUT check for nulls & empty strings
 		this.identityProviderName = identityProviderName.trim();
 		this.clientID = clientID.trim();
 		this.clientSecrect = clientSecrect.trim();

@@ -52,20 +52,21 @@ public class Authentication {
 	//TODO AUTH handle root user somehow (spec chars unallowed in usernames?)
 	//TODO AUTH server root should return server version (and urls for endpoints?)
 	//TODO AUTH check workspace for other useful things like the schema manager
-	//TODO NOW logging everywhere - on login, on logout, on create / delete / expire token
+	//TODO LOG logging everywhere - on login, on logout, on create / delete / expire token
 	//TODO SCOPES configure scopes via ui
 	//TODO SCOPES configure scope on login via ui
 	//TODO SCOPES restricted scopes - allow for specific roles or users (or for specific clients via oauth2)
 	//TODO ADMIN revoke user token, revoke all tokens for a user, revoke all tokens
 	//TODO ADMIN deactivate account
 	//TODO ADMIN force user pwd reset
-	//TODO NOW tokens - redirect to standard login if not logged in (other pages as well)
+	//TODO TOKEN tokens - redirect to standard login if not logged in (other pages as well)
 	//TODO USERPROFILE email & username change propagation
 	//TODO USERCONFIG set email & username privacy & respect (in both legacy apis)
 	//TODO USERCONFIG set email & username
 	//TODO DEPLOY jetty should start app immediately & fail if app fails
 	//TODO CONFIG set token cache time to be sent to client via api
-	//TODO NOW set keep me logged in on login page
+	//TODO UI set keep me logged in on login page
+	//TODO PWD last pwd reset field for local users
 	
 	/* TODO ROLES feature: delete custom roles (see below)
 	 * Delete role from all users
@@ -126,7 +127,6 @@ public class Authentication {
 				pwd.getPassword(), salt);
 		final LocalUser lu = new LocalUser(userName, email, fullName, null,
 				null, new Date(), null, passwordHash, salt, true);
-		//TODO NOW store creation date
 		storage.createLocalUser(lu);
 		return pwd;
 	}
@@ -146,7 +146,7 @@ public class Authentication {
 					"Username / password mismatch");
 		}
 		pwd.clear();
-		//TODO NOW if reset required, make reset token
+		//TODO PWD if reset required, make reset token
 		final NewToken t = new NewToken(TokenType.LOGIN, tokens.getToken(),
 				userName,
 				//TODO CONFIG make token lifetime configurable
@@ -246,8 +246,8 @@ public class Authentication {
 		if (ht.getUserName().equals(u.getUserName())) {
 			return u;
 		} else {
-			//TODO NOW this shouldn't return roles
-			//TODO NOW only return fullname & email if info is public - actually, never return email
+			//TODO PRIVACY this shouldn't return roles
+			//TODO PRIVACY only return fullname & email if info is public - actually, never return email
 			return u;
 		}
 	}
@@ -456,7 +456,7 @@ public class Authentication {
 			final boolean privateNameEmail)
 			throws AuthStorageException, AuthenticationException,
 				UserExistsException {
-		//TODO NOW handle sessionLogin, privateNameEmail
+		//TODO USER_CONFIG handle sessionLogin, privateNameEmail
 		
 		final RemoteIdentityWithID match =
 				getIdentity(token, identityID);

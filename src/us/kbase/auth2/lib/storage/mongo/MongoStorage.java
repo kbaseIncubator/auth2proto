@@ -34,6 +34,7 @@ import us.kbase.auth2.lib.LocalUser;
 import us.kbase.auth2.lib.Role;
 import us.kbase.auth2.lib.UserName;
 import us.kbase.auth2.lib.UserUpdate;
+import us.kbase.auth2.lib.exceptions.IllegalParameterException;
 import us.kbase.auth2.lib.exceptions.LinkFailedException;
 import us.kbase.auth2.lib.exceptions.MissingParameterException;
 import us.kbase.auth2.lib.exceptions.NoSuchTokenException;
@@ -159,9 +160,9 @@ public class MongoStorage implements AuthStorage {
 		}
 		this.db = db;
 		
-		//TODO NOW check workspace startup for stuff to port over
-		//TODO NOW check / set config with root user
-		//TODO NOW check root password or something and warn if not set
+		//TODO MISC check workspace startup for stuff to port over
+		//TODO ROOT check / set config with root user
+		//TODO ROOt check root password or something and warn if not set
 		checkConfig();
 		ensureIndexes();
 	}
@@ -280,7 +281,7 @@ public class MongoStorage implements AuthStorage {
 		final List<String> croles = (List<String>) user.get(
 				Fields.USER_CUSTOM_ROLES);
 		return new LocalUser(
-				new UserName(user.getString(Fields.USER_NAME)),
+				getUserName(user.getString(Fields.USER_NAME)),
 				user.getString(Fields.USER_EMAIL),
 				user.getString(Fields.USER_FULL_NAME),
 				new HashSet<>(roles),
@@ -320,7 +321,7 @@ public class MongoStorage implements AuthStorage {
 			db.getCollection(COL_USERS).insertOne(u);
 		} catch (MongoWriteException mwe) {
 			if (isDuplicateKeyException(mwe)) {
-				//TODO NOW handle case where duplicate is a remote id, not the username
+				//TODO ERRHANDLE handle case where duplicate is a remote id, not the username
 				throw new UserExistsException(user.getUserName().getName());
 			} else {
 				throw new AuthStorageException("Database write failed", mwe);
@@ -406,7 +407,7 @@ public class MongoStorage implements AuthStorage {
 		if (t == null) {
 			throw new NoSuchTokenException("Token not found");
 		}
-		//TODO NOW if token expired, throw error
+		//TODO TOKEN if token expired, throw error
 		return getToken(t);
 	}
 	
@@ -417,9 +418,20 @@ public class MongoStorage implements AuthStorage {
 				t.getString(Fields.TOKEN_NAME),
 				UUID.fromString(t.getString(Fields.TOKEN_ID)),
 				t.getString(Fields.TOKEN_TOKEN),
-				new UserName(t.getString(Fields.TOKEN_USER_NAME)),
+				getUserName(t.getString(Fields.TOKEN_USER_NAME)),
 				t.getDate(Fields.TOKEN_CREATION),
 				t.getDate(Fields.TOKEN_EXPIRY));
+	}
+
+	private UserName getUserName(String namestr) throws AuthStorageException {
+		final UserName name;
+		try {
+			name = new UserName(namestr);
+		} catch (MissingParameterException | IllegalParameterException e) {
+			throw new AuthStorageException("Illegal value stored in db: " +
+					e.getMessage(), e);
+		}
+		return name;
 	}
 
 	@Override
@@ -448,7 +460,7 @@ public class MongoStorage implements AuthStorage {
 		return toUser(user);
 	}
 
-	private AuthUser toUser(final Document user) {
+	private AuthUser toUser(final Document user) throws AuthStorageException {
 		@SuppressWarnings("unchecked")
 		final List<String> rolestr =
 				(List<String>) user.get(Fields.USER_ROLES);
@@ -461,7 +473,7 @@ public class MongoStorage implements AuthStorage {
 		final List<Document> ids = (List<Document>)
 				user.get(Fields.USER_IDENTITIES);
 		return new AuthUser(
-				new UserName(user.getString(Fields.USER_NAME)),
+				getUserName(user.getString(Fields.USER_NAME)),
 				user.getString(Fields.USER_EMAIL),
 				user.getString(Fields.USER_FULL_NAME),
 				toIdentities(ids),
@@ -735,7 +747,7 @@ public class MongoStorage implements AuthStorage {
 		boolean complete = false;
 		while (!complete) {
 			complete = addIdentity(user, remoteID);
-		} //TODO NOW have a max loop limit to protect against bugs
+		} //TODO CODE have a max loop limit to protect against bugs
 	}
 	
 	private boolean addIdentity(
@@ -743,7 +755,7 @@ public class MongoStorage implements AuthStorage {
 			final RemoteIdentityWithID remoteID)
 			throws NoSuchUserException, AuthStorageException,
 			LinkFailedException {
-		//TODO NOW document this thoroughly
+		//TODO DOCS_CODE document this thoroughly
 		final AuthUser u = getUser(user);
 		if (u.isLocal()) {
 			throw new LinkFailedException(

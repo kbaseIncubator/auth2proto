@@ -1,15 +1,34 @@
 package us.kbase.auth2.lib;
 
+import static us.kbase.auth2.lib.Utils.checkString;
+
+import java.util.regex.Matcher;
+import java.util.regex.Pattern;
+
+import us.kbase.auth2.lib.exceptions.IllegalParameterException;
+import us.kbase.auth2.lib.exceptions.MissingParameterException;
+
 public class UserName {
 
+	//TODO TEST
+	//TODO JAVADOC
+	
+	private final static Pattern INVALID_USER_NAME =
+			Pattern.compile("[^\\w-]");
+	private final static int MAX_NAME_LENGTH = 100;
+	
 	private final String name;
 
-	public UserName(final String name) {
-		if (name == null) {
-			throw new NullPointerException("name");
+	public UserName(final String name)
+			throws MissingParameterException, IllegalParameterException {
+		checkString(name, "user name", MAX_NAME_LENGTH);
+		final Matcher m = INVALID_USER_NAME.matcher(name);
+		if (m.find()) {
+			throw new IllegalArgumentException(String.format(
+					"Illegal character in user name %s: %s", name, m.group()));
 		}
-		//TODO NOW appropriate checking for name - size, allowed chars, special root name
-		this.name = name;
+		//TODO INPUT appropriate checking for name - size, allowed chars, special root name
+		this.name = name.trim();
 	}
 
 	public String getName() {

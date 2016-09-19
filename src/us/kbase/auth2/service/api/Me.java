@@ -36,7 +36,6 @@ public class Me {
 
 	//TODO TEST
 	//TODO JAVADOC
-	//TODO NOW don't expose provider IDs. Make own id for the remote id. Check entire UI for this.
 	
 	@Inject
 	private Authentication auth;
@@ -48,7 +47,7 @@ public class Me {
 			@Context final UriInfo uriInfo)
 			throws NoTokenProvidedException, InvalidTokenException,
 			AuthStorageException {
-		//TODO NOW handle keep logged in, private
+		//TODO CONFIG_USER handle keep logged in, private
 		if (token == null || token.trim().isEmpty()) {
 			throw new NoTokenProvidedException();
 		}
@@ -85,8 +84,8 @@ public class Me {
 			@FormParam("email") final String email)
 			throws NoTokenProvidedException, InvalidTokenException,
 			AuthStorageException {
-		//TODO NOW check inputs
-		//TODO NOW handle keep logged in, private
+		//TODO INPUT check inputs
+		//TODO CONFIG_USER handle keep logged in, private
 		if (token == null || token.trim().isEmpty()) {
 			throw new NoTokenProvidedException();
 		}
@@ -102,7 +101,7 @@ public class Me {
 			@PathParam("id") final UUID id)
 			throws NoTokenProvidedException, InvalidTokenException,
 			AuthStorageException, UnLinkFailedException {
-		//TODO NOW make a get token method that returns an incomingtoken
+		//TODO CODE make a get token method that returns an incomingtoken
 		if (token == null || token.trim().isEmpty()) {
 			throw new NoTokenProvidedException();
 		}

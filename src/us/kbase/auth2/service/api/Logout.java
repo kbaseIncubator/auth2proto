@@ -60,7 +60,7 @@ public class Logout {
 				.build();
 	}
 	
-	//TODO NOW make this a convenience method - API helper class
+	//TODO CODE make this a convenience method - API helper class
 	private void checkToken(final String token)
 			throws NoTokenProvidedException {
 		if (token == null || token.isEmpty()) {

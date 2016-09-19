@@ -33,6 +33,7 @@ import us.kbase.auth2.lib.CustomRole;
 import us.kbase.auth2.lib.Password;
 import us.kbase.auth2.lib.Role;
 import us.kbase.auth2.lib.UserName;
+import us.kbase.auth2.lib.exceptions.IllegalParameterException;
 import us.kbase.auth2.lib.exceptions.MissingParameterException;
 import us.kbase.auth2.lib.exceptions.NoSuchRoleException;
 import us.kbase.auth2.lib.exceptions.NoSuchUserException;
@@ -47,7 +48,7 @@ public class Admin {
 	//TODO JAVADOC
 
 	//TODO ADMIN reset user pwd
-	//TODO NOW find user
+	//TODO ADMIN find user
 	
 	@Inject
 	private Authentication auth;
@@ -80,10 +81,10 @@ public class Admin {
 			@FormParam("full") final String fullName,
 			@FormParam("email") final String email)
 			throws AuthStorageException, UserExistsException,
-			MissingParameterException {
+			MissingParameterException, IllegalParameterException {
 		//TODO ADMIN check user is admin
-		//TODO NOW log
-		//TODO NOW email class with proper checking (probably not validation)
+		//TODO LOG log
+		//TODO INPUT email class with proper checking (probably not validation)
 		if (userName == null) {
 			throw new MissingParameterException("userName");
 		}
@@ -105,7 +106,8 @@ public class Admin {
 	public Map<String, Object> userDisplay(
 			@PathParam("user") final String user,
 			@Context final UriInfo uriInfo)
-		throws AuthStorageException, NoSuchUserException {
+			throws AuthStorageException, NoSuchUserException,
+			MissingParameterException, IllegalParameterException {
 		//TODO ADMIN get adminname from token & check
 		final IncomingToken adminToken = new IncomingToken("fake");
 		final AuthUser au = auth.getUserAsAdmin(
@@ -151,7 +153,8 @@ public class Admin {
 			@PathParam("user") final String user,
 			final MultivaluedMap<String, String> form)
 			throws NoSuchUserException, AuthStorageException,
-			NoSuchRoleException {
+			NoSuchRoleException, MissingParameterException,
+			IllegalParameterException {
 		//TODO ADMIN get adminname from token & check
 		final Set<Role> roles = new HashSet<>();
 		//TODO UI Needs to be smarter - built in role names can clash w/ custom
@@ -159,9 +162,9 @@ public class Admin {
 		addRoleFromForm(form, roles, "dev", Role.DEV_TOKEN);
 		addRoleFromForm(form, roles, "serv", Role.SERV_TOKEN);
 		final IncomingToken adminToken = new IncomingToken("fake");
-		auth.updateRoles(adminToken, new UserName(user), roles);
-		auth.updateCustomRoles(adminToken, new UserName(user),
-				getRoleIds(form));
+		final UserName userName = new UserName(user);
+		auth.updateRoles(adminToken, userName, roles);
+		auth.updateCustomRoles(adminToken, userName, getRoleIds(form));
 		
 	}
 
