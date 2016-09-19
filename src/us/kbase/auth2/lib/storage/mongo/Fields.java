@@ -30,6 +30,7 @@ public class Fields {
 	public static final String IDENTITIES_EMAIL = "email";
 	
 	//token fields
+	public static final String TOKEN_TYPE = "type";
 	public static final String TOKEN_USER_NAME = "user";
 	public static final String TOKEN_TOKEN = "token";
 	public static final String TOKEN_EXPIRY = "expires";

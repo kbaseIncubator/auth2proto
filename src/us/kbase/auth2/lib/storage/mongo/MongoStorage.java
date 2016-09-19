@@ -49,6 +49,7 @@ import us.kbase.auth2.lib.storage.exceptions.StorageInitException;
 import us.kbase.auth2.lib.token.HashedToken;
 import us.kbase.auth2.lib.token.IncomingHashedToken;
 import us.kbase.auth2.lib.token.TemporaryHashedToken;
+import us.kbase.auth2.lib.token.TokenType;
 
 public class MongoStorage implements AuthStorage {
 
@@ -344,7 +345,8 @@ public class MongoStorage implements AuthStorage {
 	@Override
 	public void storeToken(final HashedToken t) throws AuthStorageException {
 		final Document td = new Document(
-				Fields.TOKEN_USER_NAME, t.getUserName().getName())
+				Fields.TOKEN_TYPE, t.getTokenType().getID())
+				.append(Fields.TOKEN_USER_NAME, t.getUserName().getName())
 				.append(Fields.TOKEN_ID, t.getId().toString())
 				.append(Fields.TOKEN_NAME, t.getTokenName())
 				.append(Fields.TOKEN_TOKEN, t.getTokenHash())
@@ -403,7 +405,9 @@ public class MongoStorage implements AuthStorage {
 	
 	private HashedToken getToken(final Document t)
 			throws AuthStorageException {
-		return new HashedToken(t.getString(Fields.TOKEN_NAME),
+		return new HashedToken(
+				TokenType.getType(t.getString(Fields.TOKEN_TYPE)),
+				t.getString(Fields.TOKEN_NAME),
 				UUID.fromString(t.getString(Fields.TOKEN_ID)),
 				t.getString(Fields.TOKEN_TOKEN),
 				new UserName(t.getString(Fields.TOKEN_USER_NAME)),

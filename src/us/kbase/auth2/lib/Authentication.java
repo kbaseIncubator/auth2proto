@@ -37,6 +37,7 @@ import us.kbase.auth2.lib.storage.exceptions.AuthStorageException;
 import us.kbase.auth2.lib.token.NewToken;
 import us.kbase.auth2.lib.token.TemporaryToken;
 import us.kbase.auth2.lib.token.TokenSet;
+import us.kbase.auth2.lib.token.TokenType;
 import us.kbase.auth2.lib.token.HashedToken;
 import us.kbase.auth2.lib.token.IncomingToken;
 
@@ -145,7 +146,8 @@ public class Authentication {
 		}
 		pwd.clear();
 		//TODO NOW if reset required, make reset token
-		final NewToken t = new NewToken(tokens.getToken(), userName,
+		final NewToken t = new NewToken(TokenType.LOGIN, tokens.getToken(),
+				userName,
 				//TODO CONFIG make token lifetime configurable
 				14 * 24 * 60 * 60 * 1000);
 		storage.storeToken(t.getHashedToken());
@@ -178,9 +180,12 @@ public class Authentication {
 			throws AuthStorageException, MissingParameterException,
 			InvalidTokenException, UnauthorizedException {
 		checkString(tokenName, "token name");
-		//TODO TOKEN make token types - login & extended lifetime
-		//TODO TOKEN only login tokens can create other tokens, and login tokens can't create login tokens
-		final AuthUser au = getUser(token);
+		final HashedToken t = getToken(token);
+		if (!t.getTokenType().equals(TokenType.LOGIN)) {
+			throw new UnauthorizedException(ErrorType.UNAUTHORIZED,
+					"Only login tokens may be used to create a token");
+		}
+		final AuthUser au = getUser(t);
 		final Role reqRole = serverToken ? Role.SERV_TOKEN : Role.DEV_TOKEN;
 		if (!reqRole.isSatisfiedBy(au.getRoles())) {
 			throw new UnauthorizedException(ErrorType.UNAUTHORIZED,
@@ -193,16 +198,21 @@ public class Authentication {
 		} else {
 			life = 90L * 24L * 60L * 60L * 1000L;
 		}
-		final NewToken t = new NewToken(tokenName, tokens.getToken(),
-				au.getUserName(), life);
-		storage.storeToken(t.getHashedToken());
-		return t;
+		final NewToken nt = new NewToken(TokenType.EXTENDED_LIFETIME,
+				tokenName, tokens.getToken(), au.getUserName(), life);
+		storage.storeToken(nt.getHashedToken());
+		return nt;
 	}
 	
 	// gets user for token
 	public AuthUser getUser(final IncomingToken token)
 			throws AuthStorageException, InvalidTokenException {
 		final HashedToken ht = getToken(token);
+		return getUser(ht);
+	}
+
+	// assumes hashed token is good
+	private AuthUser getUser(final HashedToken ht) throws AuthStorageException {
 		try {
 			return storage.getUser(ht.getUserName());
 		} catch (NoSuchUserException e) {
@@ -363,7 +373,7 @@ public class Authentication {
 		final LoginToken lr;
 		if (hasUser.size() == 1 && noUser.isEmpty()) {
 			final AuthUser user = hasUser.values().iterator().next();
-			final NewToken t = new NewToken(tokens.getToken(),
+			final NewToken t = new NewToken(TokenType.LOGIN, tokens.getToken(),
 					//TODO CONFIG make token lifetime configurable
 					user.getUserName(), 14 * 24 * 60 * 60 * 1000);
 			storage.storeToken(t.getHashedToken());
@@ -437,7 +447,8 @@ public class Authentication {
 				getIdentity(token, identityID);
 		storage.createUser(new AuthUser(userName, email, fullName,
 				new HashSet<>(Arrays.asList(match)), null, null));
-		final NewToken nt = new NewToken(tokens.getToken(), userName,
+		final NewToken nt = new NewToken(TokenType.LOGIN, tokens.getToken(),
+				userName,
 				//TODO CONFIG make token lifetime configurable
 				14 * 24 * 60 * 60 * 1000);
 		storage.storeToken(nt.getHashedToken());
@@ -456,7 +467,8 @@ public class Authentication {
 					"There is no account linked to the provided identity");
 		}
 		
-		final NewToken nt = new NewToken(tokens.getToken(), u.getUserName(),
+		final NewToken nt = new NewToken(TokenType.LOGIN, tokens.getToken(),
+				u.getUserName(),
 				//TODO CONFIG make token lifetime configurable
 				14 * 24 * 60 * 60 * 1000);
 		storage.storeToken(nt.getHashedToken());

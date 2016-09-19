@@ -15,6 +15,7 @@ public class HashedToken {
 	//TODO TEST
 	//TODO JAVADOC
 
+	private final TokenType type;
 	private final UUID id;
 	private final String tokenName;
 	private final String tokenHash;
@@ -23,6 +24,7 @@ public class HashedToken {
 	private final Date creationDate;
 	
 	public HashedToken(
+			final TokenType type,
 			final String tokenName,
 			final UUID id,
 			final String tokenHash,
@@ -30,6 +32,9 @@ public class HashedToken {
 			final Date creationDate,
 			final Date expirationDate) {
 		checkString(tokenHash, "tokenHash", true);
+		if (type == null) {
+			throw new NullPointerException("type");
+		}
 		if (userName == null) {
 			throw new NullPointerException("userName");
 		}
@@ -42,6 +47,7 @@ public class HashedToken {
 		if (id == null) {
 			throw new NullPointerException("id");
 		}
+		this.type = type;
 		this.tokenName = tokenName; // null ok
 		this.tokenHash = tokenHash;
 		this.userName = userName;
@@ -50,6 +56,10 @@ public class HashedToken {
 		this.id = id;
 	}
 
+	public TokenType getTokenType() {
+		return type;
+	}
+	
 	public UUID getId() {
 		return id;
 	}
