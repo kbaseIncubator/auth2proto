@@ -15,6 +15,7 @@ public enum ErrorType {
 	NO_SUCH_USER			(30002, "No such user"),
 	NO_SUCH_TOKEN			(30003, "No such token"),
 	NO_SUCH_IDENT_PROV		(30004, "No such identity provider"),
+	NO_SUCH_ROLE			(30005, "No such role"),
 	LINK_FAILED				(40000, "Account linkage failed"),
 	UNLINK_FAILED			(40001, "Account unlink failed"),
 	UNSUPPORTED_OP			(50000, "Unsupported opertation");

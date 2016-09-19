@@ -8,7 +8,6 @@ import java.util.LinkedList;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
-import java.util.UUID;
 
 import javax.inject.Inject;
 import javax.ws.rs.Consumes;
@@ -35,6 +34,7 @@ import us.kbase.auth2.lib.Password;
 import us.kbase.auth2.lib.Role;
 import us.kbase.auth2.lib.UserName;
 import us.kbase.auth2.lib.exceptions.MissingParameterException;
+import us.kbase.auth2.lib.exceptions.NoSuchRoleException;
 import us.kbase.auth2.lib.exceptions.NoSuchUserException;
 import us.kbase.auth2.lib.exceptions.UserExistsException;
 import us.kbase.auth2.lib.storage.exceptions.AuthStorageException;
@@ -135,10 +135,9 @@ public class Admin {
 		final List<Map<String, Object>> ret = new LinkedList<>();
 		for (final CustomRole r: roles) {
 			ret.add(ImmutableMap.of(
-					"name", r.getName(),
 					"desc", r.getDesc(),
-					"id", r.getId(),
-					"has", set.contains(r.getName())));
+					"id", r.getID(),
+					"has", set.contains(r.getID())));
 		}
 		return ret;
 	}
@@ -149,9 +148,11 @@ public class Admin {
 	public void changeRoles(
 			@PathParam("user") final String user,
 			final MultivaluedMap<String, String> form)
-			throws NoSuchUserException, AuthStorageException {
+			throws NoSuchUserException, AuthStorageException,
+			NoSuchRoleException {
 		//TODO ADMIN get adminname from token & check
 		final Set<Role> roles = new HashSet<>();
+		//TODO UI Needs to be smarter - built in role names can clash w/ custom
 		addRoleFromForm(form, roles, "admin", Role.ADMIN);
 		addRoleFromForm(form, roles, "dev", Role.DEV_TOKEN);
 		addRoleFromForm(form, roles, "serv", Role.SERV_TOKEN);
@@ -162,15 +163,11 @@ public class Admin {
 		
 	}
 
-	private Set<UUID> getRoleIds(final MultivaluedMap<String, String> form) {
-		final Set<UUID> ret = new HashSet<>();
+	private Set<String> getRoleIds(final MultivaluedMap<String, String> form) {
+		final Set<String> ret = new HashSet<>();
 		for (final String s: form.keySet()) {
 			if (form.get(s) != null) {
-				try {
-					ret.add(UUID.fromString(s));
-				} catch (IllegalArgumentException e) {
-					//pass
-				}
+					ret.add(s);
 			}
 		}
 		return ret;
@@ -183,6 +180,7 @@ public class Admin {
 			final Role role) {
 		if (form.get(rstr) != null) {
 			roles.add(role);
+			form.remove(rstr);
 		}
 	}
 	
@@ -202,11 +200,11 @@ public class Admin {
 	@POST // should take PUT as well
 	@Path("/customroles/set")
 	public void createCustomRole(
-			@FormParam("name") final String roleName,
+			@FormParam("id") final String roleId,
 			@FormParam("desc") final String description)
 			throws MissingParameterException, AuthStorageException {
 		//TODO ADMIN check is admin
-		auth.setCustomRole(new IncomingToken("fake"), roleName, description);
+		auth.setCustomRole(new IncomingToken("fake"), roleId, description);
 	}
 
 }

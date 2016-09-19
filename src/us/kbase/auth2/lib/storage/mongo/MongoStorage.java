@@ -116,6 +116,11 @@ public class MongoStorage implements AuthStorage {
 				Fields.IDENTITIES_ID), IDX_UNIQ_SPARSE);
 		INDEXES.put(COL_USERS, users);
 		
+		//roles indexes
+		final Map<List<String>, IndexOptions> roles = new HashMap<>();
+		roles.put(Arrays.asList(Fields.ROLES_ID), IDX_UNIQ);
+		INDEXES.put(COL_CUST_ROLES, roles);
+		
 		//token indexes
 		final Map<List<String>, IndexOptions> token = new HashMap<>();
 		token.put(Arrays.asList(Fields.TOKEN_USER_NAME), null);
@@ -135,8 +140,6 @@ public class MongoStorage implements AuthStorage {
 				//TODO TEST that tokens expire appropriately
 				new IndexOptions().expireAfter(0L, TimeUnit.SECONDS));
 		INDEXES.put(COL_TEMP_TOKEN, temptoken);
-		
-		//TODO NOW role indexes
 		
 		//config indexes
 		final Map<List<String>, IndexOptions> cfg = new HashMap<>();
@@ -517,12 +520,9 @@ public class MongoStorage implements AuthStorage {
 			throws AuthStorageException {
 		try {
 			db.getCollection(COL_CUST_ROLES).updateOne(
-					new Document(Fields.ROLES_NAME, role.getName()),
-					new Document("$set",
-							new Document(Fields.ROLES_DESC, role.getDesc()))
-					.append("$setOnInsert",
-							new Document(Fields.ROLES_ID,
-									role.getId().toString())),
+					new Document(Fields.ROLES_ID, role.getID()),
+					new Document("$set", new Document(
+							Fields.ROLES_DESC, role.getDesc())),
 					new UpdateOptions().upsert(true));
 		} catch (MongoException e) {
 			throw new AuthStorageException("Connection to database failed", e);
@@ -542,8 +542,7 @@ public class MongoStorage implements AuthStorage {
 			final Set<CustomRole> ret = new HashSet<>();
 			for (final Document d: roles) {
 				ret.add(new CustomRole(
-						UUID.fromString(d.getString(Fields.ROLES_ID)),
-						d.getString(Fields.ROLES_NAME),
+						d.getString(Fields.ROLES_ID),
 						d.getString(Fields.ROLES_DESC)));
 			}
 			return ret;
@@ -556,11 +555,10 @@ public class MongoStorage implements AuthStorage {
 	}
 
 	@Override
-	public Set<CustomRole> getCustomRoles(final Set<UUID> roleIds)
+	public Set<CustomRole> getCustomRoles(final Set<String> roleIds)
 			throws AuthStorageException {
 		return getCustomRoles(new Document(Fields.ROLES_ID,
-				new Document("$in", roleIds.stream().map(i -> i.toString())
-						.collect(Collectors.toList()))));
+				new Document("$in", roleIds)));
 	}
 
 	@Override

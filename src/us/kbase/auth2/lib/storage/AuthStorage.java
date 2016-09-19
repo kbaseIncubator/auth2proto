@@ -72,7 +72,7 @@ public interface AuthStorage {
 
 	Set<CustomRole> getCustomRoles() throws AuthStorageException;
 
-	Set<CustomRole> getCustomRoles(Set<UUID> roleIds)
+	Set<CustomRole> getCustomRoles(Set<String> roleIds)
 			throws AuthStorageException;
 
 	void setCustomRoles(UserName userName, Set<String> roles)

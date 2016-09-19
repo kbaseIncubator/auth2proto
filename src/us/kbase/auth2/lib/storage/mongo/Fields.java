@@ -46,7 +46,6 @@ public class Fields {
 	
 	//Custom roles fields
 	public static final String ROLES_ID = "id";
-	public static final String ROLES_NAME = "name";
 	public static final String ROLES_DESC = "desc";
 	
 	// configuration fields

@@ -22,6 +22,7 @@ import us.kbase.auth2.lib.exceptions.InvalidTokenException;
 import us.kbase.auth2.lib.exceptions.LinkFailedException;
 import us.kbase.auth2.lib.exceptions.MissingParameterException;
 import us.kbase.auth2.lib.exceptions.NoSuchIdentityProviderException;
+import us.kbase.auth2.lib.exceptions.NoSuchRoleException;
 import us.kbase.auth2.lib.exceptions.NoSuchTokenException;
 import us.kbase.auth2.lib.exceptions.NoSuchUserException;
 import us.kbase.auth2.lib.exceptions.UnLinkFailedException;
@@ -60,11 +61,25 @@ public class Authentication {
 	//TODO USERPROFILE email & username change propagation
 	//TODO USERCONFIG set email & username privacy & respect (in both legacy apis)
 	//TODO USERCONFIG set email & username
-	//TODO NOW allow redirect url on login
-	//TODO NOW move jars into kbase/jars
 	//TODO DEPLOY jetty should start app immediately & fail if app fails
 	//TODO CONFIG set token cache time to be sent to client via api
 	//TODO NOW set keep me logged in on login page
+	
+	/* TODO ROLES feature: delete custom roles (see below)
+	 * Delete role from all users
+	 * Delete role from system:
+	 * 1) Remove role from all users
+	 * 2) delete role from system
+	 * 3) Remove role from all users again
+	 * 4) On getting a user, any roles that aren't in the system should be
+	 * removed
+	 * 
+	 * Still a possibility of a race condition allowing adding a deleted role to
+	 * a user after step 3, and then the role being re-added with different
+	 * semantics, which would mean that users that erroneously have the role
+	 * would be granted the new semantics, which is wrong
+	 * Might not be worth worrying about
+	 */
 	
 	private final AuthStorage storage;
 	private final IdentityProviderFactory idFactory;
@@ -163,8 +178,8 @@ public class Authentication {
 			throws AuthStorageException, MissingParameterException,
 			InvalidTokenException, UnauthorizedException {
 		checkString(tokenName, "token name");
-		//TODO NOW make token types - login & extended lifetime
-		//TODO NOW only login tokens can create other tokens, and login tokens can't create login tokens
+		//TODO TOKEN make token types - login & extended lifetime
+		//TODO TOKEN only login tokens can create other tokens, and login tokens can't create login tokens
 		final AuthUser au = getUser(token);
 		final Role reqRole = serverToken ? Role.SERV_TOKEN : Role.DEV_TOKEN;
 		if (!Role.hasRole(au.getRoles(), reqRole)) {
@@ -276,12 +291,11 @@ public class Authentication {
 
 	public void setCustomRole(
 			final IncomingToken incomingToken,
-			final String name,
+			final String id,
 			final String description)
 			throws MissingParameterException, AuthStorageException {
 		//TODO ADMIN check user is admin
-		storage.setCustomRole(new CustomRole(
-				UUID.randomUUID(), name, description));
+		storage.setCustomRole(new CustomRole(id, description));
 	}
 
 	public Set<CustomRole> getCustomRoles(final IncomingToken incomingToken)
@@ -293,12 +307,18 @@ public class Authentication {
 	public void updateCustomRoles(
 			final IncomingToken adminToken,
 			final UserName userName,
-			final Set<UUID> roleIds)
-			throws AuthStorageException, NoSuchUserException {
+			final Set<String> roleIds)
+			throws AuthStorageException, NoSuchUserException,
+			NoSuchRoleException {
 		//TODO ADMIN check user is admin
 		final Set<CustomRole> roles = storage.getCustomRoles(roleIds);
-		final Set<String> rstr = roles.stream().map(r -> r.getName())
+		final Set<String> rstr = roles.stream().map(r -> r.getID())
 				.collect(Collectors.toSet());
+		for (final String r: roleIds) {
+			if (!rstr.contains(r)) {
+				throw new NoSuchRoleException(r);
+			}
+		}
 		storage.setCustomRoles(userName, rstr);
 	}
 
