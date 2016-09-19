@@ -1,5 +1,6 @@
 package us.kbase.auth2.lib;
 
+import java.util.Date;
 import java.util.Set;
 
 public class LocalUser extends AuthUser {
@@ -17,10 +18,13 @@ public class LocalUser extends AuthUser {
 			final String fullName,
 			final Set<Role> roles,
 			final Set<String> customRoles,
+			final Date created,
+			final Date lastLogin,
 			final byte[] passwordHash,
 			final byte[] salt,
 			final boolean forceReset) {
-		super(userName, email, fullName, null, roles, customRoles);
+		super(userName, email, fullName, null, roles, customRoles, created,
+				lastLogin);
 		//TODO NOW check for nulls & empty strings - should email & fullName be allowed as empty strings?
 		this.passwordHash = passwordHash;
 		this.salt = salt;

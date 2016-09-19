@@ -3,6 +3,7 @@ package us.kbase.auth2.lib.storage.mongo;
 
 import java.util.Arrays;
 import java.util.Base64;
+import java.util.Date;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.LinkedList;
@@ -244,11 +245,13 @@ public class MongoStorage implements AuthStorage {
 				.append(Fields.USER_LOCAL, true)
 				.append(Fields.USER_EMAIL, local.getEmail())
 				.append(Fields.USER_FULL_NAME, local.getFullName())
+				.append(Fields.USER_ROLES, new LinkedList<String>())
+				.append(Fields.USER_CUSTOM_ROLES, new LinkedList<String>())
+				.append(Fields.USER_CREATED, local.getCreated())
+				.append(Fields.USER_LAST_LOGIN, local.getLastLogin())
 				.append(Fields.USER_RESET_PWD, local.forceReset())
 				.append(Fields.USER_PWD_HSH, pwdhsh)
-				.append(Fields.USER_SALT, salt)
-				.append(Fields.USER_ROLES, new LinkedList<String>())
-				.append(Fields.USER_CUSTOM_ROLES, new LinkedList<String>());
+				.append(Fields.USER_SALT, salt);
 		try {
 			db.getCollection(COL_USERS).insertOne(u);
 		} catch (MongoWriteException mwe) {
@@ -282,6 +285,8 @@ public class MongoStorage implements AuthStorage {
 				user.getString(Fields.USER_FULL_NAME),
 				new HashSet<>(roles),
 				new HashSet<>(croles),
+				user.getDate(Fields.USER_CREATED),
+				user.getDate(Fields.USER_LAST_LOGIN),
 				Base64.getDecoder().decode(
 						user.getString(Fields.USER_PWD_HSH)),
 				Base64.getDecoder().decode(user.getString(Fields.USER_SALT)),
@@ -308,7 +313,9 @@ public class MongoStorage implements AuthStorage {
 				.append(Fields.USER_FULL_NAME, user.getFullName())
 				.append(Fields.USER_ROLES, new LinkedList<String>())
 				.append(Fields.USER_CUSTOM_ROLES, new LinkedList<String>())
-				.append(Fields.USER_IDENTITIES, Arrays.asList(id));
+				.append(Fields.USER_IDENTITIES, Arrays.asList(id))
+				.append(Fields.USER_CREATED, user.getCreated())
+				.append(Fields.USER_LAST_LOGIN, user.getLastLogin());
 		try {
 			db.getCollection(COL_USERS).insertOne(u);
 		} catch (MongoWriteException mwe) {
@@ -459,7 +466,9 @@ public class MongoStorage implements AuthStorage {
 				user.getString(Fields.USER_FULL_NAME),
 				toIdentities(ids),
 				new HashSet<>(roles),
-				new HashSet<>(croles));
+				new HashSet<>(croles),
+				user.getDate(Fields.USER_CREATED),
+				user.getDate(Fields.USER_LAST_LOGIN));
 	}
 
 	@Override
@@ -604,8 +613,9 @@ public class MongoStorage implements AuthStorage {
 			newIDs.remove(update);
 			newIDs.add(remoteID.withID(update.getID()));
 			user = new AuthUser(user.getUserName(), user.getEmail(),
-					user.getFullName(), newIDs, user.getRoles(),
-					user.getCustomRoles());
+					user.getFullName(), newIDs,
+					user.getRoles(), user.getCustomRoles(),
+					user.getCreated(), user.getLastLogin());
 			updateIdentity(remoteID);
 		}
 		return user;
@@ -820,7 +830,6 @@ public class MongoStorage implements AuthStorage {
 	@Override
 	public void updateUser(final UserName userName, final UserUpdate update)
 			throws NoSuchUserException, AuthStorageException{
-		final Document q = new Document(Fields.USER_NAME, userName.getName());
 		if (!update.hasUpdates()) {
 			return; //noop
 		}
@@ -831,9 +840,17 @@ public class MongoStorage implements AuthStorage {
 		if (update.getEmail() != null) {
 			d.append(Fields.USER_EMAIL, update.getEmail());
 		}
-		final Document a = new Document("$set", d);
+		updateUser(userName, d);
+	}
+
+	private void updateUser(
+			final UserName userName,
+			final Document update)
+			throws NoSuchUserException, AuthStorageException {
+		final Document q = new Document(Fields.USER_NAME, userName.getName());
+		final Document u = new Document("$set", update);
 		try {
-			final UpdateResult r = db.getCollection(COL_USERS).updateOne(q, a);
+			final UpdateResult r = db.getCollection(COL_USERS).updateOne(q, u);
 			if (r.getMatchedCount() != 1) {
 				throw new NoSuchUserException(userName.getName());
 			}
@@ -842,5 +859,12 @@ public class MongoStorage implements AuthStorage {
 			throw new AuthStorageException(
 					"Connection to database failed", me);
 		}
+	}
+	
+	@Override
+	public void setLastLogin(final UserName user, final Date lastLogin) 
+			throws NoSuchUserException, AuthStorageException {
+		final Document d = new Document(Fields.USER_LAST_LOGIN, lastLogin);
+		updateUser(user, d);
 	}
 }

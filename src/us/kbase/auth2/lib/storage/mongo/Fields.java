@@ -16,6 +16,8 @@ public class Fields {
 	public static final String USER_LOCAL = "lcl";
 	public static final String USER_ROLES = "roles";
 	public static final String USER_CUSTOM_ROLES = "custrls";
+	public static final String USER_CREATED = "create";
+	public static final String USER_LAST_LOGIN = "login";
 	// these 3 are for local accounts only
 	public static final String USER_PWD_HSH = "pwdhsh";
 	public static final String USER_SALT = "salt";

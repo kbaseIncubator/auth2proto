@@ -119,6 +119,8 @@ public class Admin {
 		ret.put("full", au.getFullName());
 		ret.put("email", au.getEmail());
 		ret.put("local", au.isLocal());
+		ret.put("created", au.getCreated().getTime());
+		ret.put("lastlogin", au.getLastLogin().getTime());
 		final Set<Role> r = au.getRoles();
 		//TODO ADMIN only show admin button if root user
 		//TODO ADMIN only allow changing admin status if root user

@@ -2,10 +2,12 @@
 <body>
 <h3>User info</h3>
 {{#user}}
-User name: {{user}}</br>
-Full name: {{full}}</br>
-Email: {{email}}</br>
-Local: {{local}}</br>
+User name: {{user}}<br/>
+Full name: {{full}}<br/>
+Email: {{email}}<br/>
+Created: {{created}}<br/>
+Last login: {{lastlogin}}<br/>
+Local: {{local}}<br/>
 <h3>Roles:</h3>
 <form action="{{roleurl}}" method="post">
 	Create developer token: <input type="checkbox" name="dev" {{#dev}}checked{{/dev}}/><br/>

@@ -58,8 +58,7 @@ public class Login {
 
 	//TODO TEST
 	//TODO JAVADOC
-	//TODO NOW add last login date
-	//TODO NOW add account created date
+
 	@Inject
 	private Authentication auth;
 	

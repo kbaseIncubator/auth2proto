@@ -60,6 +60,8 @@ public class Me {
 		ret.put("local", u.isLocal());
 		ret.put("fullname", u.getFullName());
 		ret.put("email", u.getEmail());
+		ret.put("created", u.getCreated().getTime());
+		ret.put("lastlogin", u.getLastLogin().getTime());
 		ret.put("customroles", u.getCustomRoles());
 		ret.put("unlink", u.getIdentities().size() > 1);
 		ret.put("roles", u.getRoles().stream().map(r -> r.getDescription())

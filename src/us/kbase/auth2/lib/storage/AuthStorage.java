@@ -1,5 +1,6 @@
 package us.kbase.auth2.lib.storage;
 
+import java.util.Date;
 import java.util.Set;
 import java.util.UUID;
 
@@ -48,6 +49,12 @@ public interface AuthStorage {
 	LocalUser getLocalUser(UserName userName)
 			throws AuthStorageException, NoSuchUserException;
 	
+	void updateUser(UserName userName, UserUpdate update)
+			throws NoSuchUserException, AuthStorageException;
+	
+	void setLastLogin(UserName userName, Date lastLogin)
+			throws NoSuchUserException, AuthStorageException;
+	
 	/** Store a token in the database. No checking is done on the validity
 	 * of the token - passing in tokens with bad data is a programming error.
 	 * @param t the token to store.
@@ -94,7 +101,4 @@ public interface AuthStorage {
 
 	void unlink(UserName userName, UUID id)
 			throws AuthStorageException, UnLinkFailedException;
-
-	void updateUser(UserName userName, UserUpdate update)
-			throws NoSuchUserException, AuthStorageException;
 }

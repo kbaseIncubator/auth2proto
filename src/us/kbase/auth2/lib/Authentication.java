@@ -4,6 +4,7 @@ import static us.kbase.auth2.lib.Utils.checkString;
 
 import java.security.NoSuchAlgorithmException;
 import java.util.Arrays;
+import java.util.Date;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.Iterator;
@@ -124,7 +125,7 @@ public class Authentication {
 		final byte[] passwordHash = pwdcrypt.getEncryptedPassword(
 				pwd.getPassword(), salt);
 		final LocalUser lu = new LocalUser(userName, email, fullName, null,
-				null, passwordHash, salt, true);
+				null, new Date(), null, passwordHash, salt, true);
 		//TODO NOW store creation date
 		storage.createLocalUser(lu);
 		return pwd;
@@ -151,7 +152,20 @@ public class Authentication {
 				//TODO CONFIG make token lifetime configurable
 				14 * 24 * 60 * 60 * 1000);
 		storage.storeToken(t.getHashedToken());
+		setLastLogin(userName);
 		return t;
+	}
+
+	// used when it's known that the user exists
+	private void setLastLogin(final UserName userName)
+			throws AuthStorageException {
+		try {
+			storage.setLastLogin(userName, new Date());
+		} catch (NoSuchUserException e) {
+			throw new AuthStorageException(
+					"Something is very broken. User should exist but doesn't: "
+							+ e.getMessage(), e);
+		}
 	}
 
 	public TokenSet getTokens(final IncomingToken token)
@@ -377,6 +391,7 @@ public class Authentication {
 					//TODO CONFIG make token lifetime configurable
 					user.getUserName(), 14 * 24 * 60 * 60 * 1000);
 			storage.storeToken(t.getHashedToken());
+			setLastLogin(user.getUserName());
 			lr = new LoginToken(t);
 		} else {
 			final TemporaryToken tt = new TemporaryToken(tokens.getToken(),
@@ -445,8 +460,9 @@ public class Authentication {
 		
 		final RemoteIdentityWithID match =
 				getIdentity(token, identityID);
+		final Date now = new Date();
 		storage.createUser(new AuthUser(userName, email, fullName,
-				new HashSet<>(Arrays.asList(match)), null, null));
+				new HashSet<>(Arrays.asList(match)), null, null, now, now));
 		final NewToken nt = new NewToken(TokenType.LOGIN, tokens.getToken(),
 				userName,
 				//TODO CONFIG make token lifetime configurable
@@ -472,6 +488,7 @@ public class Authentication {
 				//TODO CONFIG make token lifetime configurable
 				14 * 24 * 60 * 60 * 1000);
 		storage.storeToken(nt.getHashedToken());
+		setLastLogin(u.getUserName());
 		return nt;
 	}
 	
