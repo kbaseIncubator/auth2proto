@@ -1,8 +1,10 @@
 package us.kbase.auth2.lib.storage.mongo;
 
+import static us.kbase.auth2.lib.Utils.clear;
 
 import java.util.Arrays;
 import java.util.Base64;
+import java.util.Collections;
 import java.util.Date;
 import java.util.HashMap;
 import java.util.HashSet;
@@ -231,6 +233,46 @@ public class MongoStorage implements AuthStorage {
 							"Failed to create index: " + me.getMessage(), me);
 				}
 			}
+		}
+	}
+	
+
+	@Override
+	public void createRoot(
+			final UserName root,
+			final String fullName,
+			final String email,
+			final HashSet<Role> roles,
+			final Date created,
+			final byte[] passwordHash,
+			final byte[] salt) throws AuthStorageException {
+		
+		final String encpwd = Base64.getEncoder().encodeToString(passwordHash);
+		clear(passwordHash);
+		final String encsalt = Base64.getEncoder().encodeToString(salt);
+		clear(salt);
+		final Document q = new Document(Fields.USER_NAME, root.getName());
+		final List<String> rolestr = roles.stream().map(r -> r.getID())
+				.collect(Collectors.toList());
+		final Document set = new Document(
+				Fields.USER_LOCAL, true)
+				.append(Fields.USER_ROLES, rolestr)
+				.append(Fields.USER_RESET_PWD, false)
+				.append(Fields.USER_PWD_HSH, encpwd)
+				.append(Fields.USER_SALT, encsalt);
+		final Document setIfMissing = new Document(
+				Fields.USER_EMAIL, email)
+				.append(Fields.USER_FULL_NAME, fullName)
+				.append(Fields.USER_CUSTOM_ROLES, Collections.emptyList())
+				.append(Fields.USER_CREATED, created)
+				.append(Fields.USER_LAST_LOGIN, null);
+		final Document u = new Document("$set", set)
+				.append("$setOnInsert", setIfMissing);
+		try {
+			db.getCollection(COL_USERS).updateOne(q, u,
+					new UpdateOptions().upsert(true));
+		} catch (MongoException e) {
+			throw new AuthStorageException("Connection to database failed", e);
 		}
 	}
 	

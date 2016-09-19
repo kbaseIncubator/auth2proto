@@ -12,9 +12,10 @@ public enum Role {
 	/* first arg is ID, second arg is description. ID CANNOT change
 	 * since that field is stored in the DB.
 	 */
-	ADMIN		("Admin", "Administrator"),
-	DEV_TOKEN	("DevToken", "Create developer tokens"),
-	SERV_TOKEN	("ServToken", "Create server tokens");
+	CREATE_ADMIN	("CreateAdmin", "Create administrator"),
+	ADMIN			("Admin", "Administrator"),
+	DEV_TOKEN		("DevToken", "Create developer tokens"),
+	SERV_TOKEN		("ServToken", "Create server tokens");
 	
 	private static final Map<String, Role> ROLE_MAP = new HashMap<>();
 	static {
@@ -54,7 +55,10 @@ public enum Role {
 			return Arrays.asList(Role.SERV_TOKEN, Role.DEV_TOKEN);
 		}
 		if (Role.DEV_TOKEN.equals(role)) {
-			return Arrays.asList((Role.DEV_TOKEN));
+			return Arrays.asList(Role.DEV_TOKEN);
+		}
+		if (Role.CREATE_ADMIN.equals(role)) {
+			return Arrays.asList(Role.CREATE_ADMIN);
 		}
 		return new LinkedList<>();
 	}

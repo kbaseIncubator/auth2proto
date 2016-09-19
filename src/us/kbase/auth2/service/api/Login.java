@@ -46,6 +46,7 @@ import us.kbase.auth2.lib.exceptions.InvalidTokenException;
 import us.kbase.auth2.lib.exceptions.MissingParameterException;
 import us.kbase.auth2.lib.exceptions.NoSuchIdentityProviderException;
 import us.kbase.auth2.lib.exceptions.NoTokenProvidedException;
+import us.kbase.auth2.lib.exceptions.UnauthorizedException;
 import us.kbase.auth2.lib.exceptions.UserExistsException;
 import us.kbase.auth2.lib.identity.IdentityProvider;
 import us.kbase.auth2.lib.identity.RemoteIdentityWithID;
@@ -269,7 +270,8 @@ public class Login {
 			@FormParam("private") final String nameAndEmailPrivate)
 			throws AuthenticationException, AuthStorageException,
 				UserExistsException, NoTokenProvidedException,
-				MissingParameterException, IllegalParameterException {
+				MissingParameterException, IllegalParameterException,
+				UnauthorizedException {
 		if (token == null || token.trim().isEmpty()) {
 			throw new NoTokenProvidedException(
 					"Missing in-process-login-token");

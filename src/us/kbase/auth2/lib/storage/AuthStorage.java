@@ -1,6 +1,7 @@
 package us.kbase.auth2.lib.storage;
 
 import java.util.Date;
+import java.util.HashSet;
 import java.util.Set;
 import java.util.UUID;
 
@@ -25,6 +26,27 @@ import us.kbase.auth2.lib.token.TemporaryHashedToken;
 public interface AuthStorage {
 	
 	//TODO JAVADOC
+	
+
+	/** Create or update the root user.
+	 * The password hash and salt are cleared as soon as possible.
+	 * fullName, email, and created are only set when creating the root user
+	 * for the first time.
+	 * Custom roles are set to the null set when creating the root user, but
+	 * are otherwise left alone.
+	 * @param root the root user name
+	 * @param fullName the root user's full name.
+	 * @param email the root user's email.
+	 * @param roles the root user's roles.
+	 * @param created the root user account's creation date.
+	 * @param passwordHash the hash of the root user's password.
+	 * @param salt the password salt.
+	 * @throws AuthStorageException if a problem connecting with the storage
+	 * system occurs. 
+	 */
+	void createRoot(UserName root, String fullName, String email,
+			HashSet<Role> roles, Date created, byte[] passwordHash,
+			byte[] salt) throws AuthStorageException;
 	
 	/** Create a new local account. Note that new accounts are always created
 	 * with no roles.

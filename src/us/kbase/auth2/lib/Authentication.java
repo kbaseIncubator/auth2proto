@@ -1,6 +1,7 @@
 package us.kbase.auth2.lib;
 
 import static us.kbase.auth2.lib.Utils.checkString;
+import static us.kbase.auth2.lib.Utils.clear;
 
 import java.security.NoSuchAlgorithmException;
 import java.util.Arrays;
@@ -109,15 +110,35 @@ public class Authentication {
 		this.idFactory = identityProviderFactory;
 	}
 
-
+	// don't expose this method to general users, blatantly obviously
+	public void createRoot(final Password pwd) throws AuthStorageException {
+		if (pwd == null) {
+			throw new NullPointerException("pwd");
+		}
+		final byte[] salt = pwdcrypt.generateSalt();
+		final byte[] passwordHash = pwdcrypt.getEncryptedPassword(
+				pwd.getPassword(), salt);
+		pwd.clear();
+		storage.createRoot(UserName.ROOT, "root", "root@unknown.unknown",
+				new HashSet<>(Arrays.asList(Role.CREATE_ADMIN)),
+				new Date(), passwordHash, salt);
+		clear(passwordHash);
+		clear(salt);
+	}
+	
 	public Password createLocalUser(
 			final UserName userName,
 			final String fullName,
 			final String email)
 			throws AuthStorageException, UserExistsException,
-			MissingParameterException {
+			MissingParameterException, UnauthorizedException {
+		//TODO ADMIN check user is admin
 		if (userName == null) {
 			throw new NullPointerException("userName");
+		}
+		if (userName.isRoot()) {
+			throw new UnauthorizedException(ErrorType.UNAUTHORIZED,
+					"Cannot create ROOT user");
 		}
 		checkString(fullName, "full name");
 		checkString(email, "email");
@@ -128,6 +149,8 @@ public class Authentication {
 		final LocalUser lu = new LocalUser(userName, email, fullName, null,
 				null, new Date(), null, passwordHash, salt, true);
 		storage.createLocalUser(lu);
+		clear(passwordHash);
+		clear(salt);
 		return pwd;
 	}
 	
@@ -300,7 +323,8 @@ public class Authentication {
 			final IncomingToken adminToken,
 			final UserName userName,
 			final Set<Role> roles)
-			throws NoSuchUserException, AuthStorageException {
+			throws NoSuchUserException, AuthStorageException,
+			UnauthorizedException {
 		//TODO ADMIN check user is admin
 		for (final Role r: roles) {
 			if (r == null) {
@@ -309,6 +333,10 @@ public class Authentication {
 		}
 		if (userName == null) {
 			throw new NullPointerException("userName");
+		}
+		if (userName.isRoot()) {
+			throw new UnauthorizedException(ErrorType.UNAUTHORIZED,
+					"Cannot change ROOT roles");
 		}
 		storage.setRoles(userName, roles);
 	}
@@ -455,9 +483,15 @@ public class Authentication {
 			final boolean sessionLogin,
 			final boolean privateNameEmail)
 			throws AuthStorageException, AuthenticationException,
-				UserExistsException {
+				UserExistsException, UnauthorizedException {
 		//TODO USER_CONFIG handle sessionLogin, privateNameEmail
-		
+		if (userName == null) {
+			throw new NullPointerException("userName");
+		}
+		if (userName.isRoot()) {
+			throw new UnauthorizedException(ErrorType.UNAUTHORIZED,
+					"Cannot create ROOT user");
+		}
 		final RemoteIdentityWithID match =
 				getIdentity(token, identityID);
 		final Date now = new Date();

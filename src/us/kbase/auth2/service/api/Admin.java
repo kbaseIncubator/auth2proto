@@ -37,6 +37,7 @@ import us.kbase.auth2.lib.exceptions.IllegalParameterException;
 import us.kbase.auth2.lib.exceptions.MissingParameterException;
 import us.kbase.auth2.lib.exceptions.NoSuchRoleException;
 import us.kbase.auth2.lib.exceptions.NoSuchUserException;
+import us.kbase.auth2.lib.exceptions.UnauthorizedException;
 import us.kbase.auth2.lib.exceptions.UserExistsException;
 import us.kbase.auth2.lib.storage.exceptions.AuthStorageException;
 import us.kbase.auth2.lib.token.IncomingToken;
@@ -81,7 +82,8 @@ public class Admin {
 			@FormParam("full") final String fullName,
 			@FormParam("email") final String email)
 			throws AuthStorageException, UserExistsException,
-			MissingParameterException, IllegalParameterException {
+			MissingParameterException, IllegalParameterException,
+			UnauthorizedException {
 		//TODO ADMIN check user is admin
 		//TODO LOG log
 		//TODO INPUT email class with proper checking (probably not validation)
@@ -154,7 +156,7 @@ public class Admin {
 			final MultivaluedMap<String, String> form)
 			throws NoSuchUserException, AuthStorageException,
 			NoSuchRoleException, MissingParameterException,
-			IllegalParameterException {
+			IllegalParameterException, UnauthorizedException {
 		//TODO ADMIN get adminname from token & check
 		final Set<Role> roles = new HashSet<>();
 		//TODO UI Needs to be smarter - built in role names can clash w/ custom
