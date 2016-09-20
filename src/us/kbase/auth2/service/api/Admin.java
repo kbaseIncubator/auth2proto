@@ -2,6 +2,7 @@ package us.kbase.auth2.service.api;
 
 import static us.kbase.auth2.service.api.APIUtils.relativize;
 
+import java.util.Date;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.LinkedList;
@@ -124,13 +125,15 @@ public class Admin {
 		ret.put("email", au.getEmail());
 		ret.put("local", au.isLocal());
 		ret.put("created", au.getCreated().getTime());
-		ret.put("lastlogin", au.getLastLogin().getTime());
+		final Date lastLogin = au.getLastLogin();
+		ret.put("lastlogin", lastLogin == null ? null : lastLogin.getTime());
 		final Set<Role> r = au.getRoles();
 		//TODO ADMIN only show admin button if root user
 		//TODO ADMIN only allow changing admin status if root user
 		ret.put("admin", Role.ADMIN.isSatisfiedBy(r));
 		ret.put("serv", Role.SERV_TOKEN.isSatisfiedBy(r));
 		ret.put("dev", Role.DEV_TOKEN.isSatisfiedBy(r));
+		ret.put("createadmin", Role.CREATE_ADMIN.isSatisfiedBy(r));
 		return ret;
 	}
 	
@@ -160,6 +163,7 @@ public class Admin {
 		//TODO ADMIN get adminname from token & check
 		final Set<Role> roles = new HashSet<>();
 		//TODO UI Needs to be smarter - built in role names can clash w/ custom
+		addRoleFromForm(form, roles, "createadmin", Role.CREATE_ADMIN);
 		addRoleFromForm(form, roles, "admin", Role.ADMIN);
 		addRoleFromForm(form, roles, "dev", Role.DEV_TOKEN);
 		addRoleFromForm(form, roles, "serv", Role.SERV_TOKEN);

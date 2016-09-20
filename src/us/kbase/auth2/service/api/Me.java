@@ -2,6 +2,7 @@ package us.kbase.auth2.service.api;
 
 import static us.kbase.auth2.service.api.APIUtils.relativize;
 
+import java.util.Date;
 import java.util.HashMap;
 import java.util.LinkedList;
 import java.util.List;
@@ -60,7 +61,8 @@ public class Me {
 		ret.put("fullname", u.getFullName());
 		ret.put("email", u.getEmail());
 		ret.put("created", u.getCreated().getTime());
-		ret.put("lastlogin", u.getLastLogin().getTime());
+		final Date ll = u.getLastLogin();
+		ret.put("lastlogin", ll == null ? null : ll.getTime());
 		ret.put("customroles", u.getCustomRoles());
 		ret.put("unlink", u.getIdentities().size() > 1);
 		ret.put("roles", u.getRoles().stream().map(r -> r.getDescription())

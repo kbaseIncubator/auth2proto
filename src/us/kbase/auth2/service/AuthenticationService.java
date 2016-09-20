@@ -9,8 +9,6 @@ import org.glassfish.jersey.server.mvc.mustache.MustacheMvcFeature;
 import org.slf4j.LoggerFactory;
 
 import com.mongodb.MongoClient;
-import com.mongodb.MongoException;
-import com.mongodb.client.MongoDatabase;
 
 import ch.qos.logback.classic.Level;
 import ch.qos.logback.classic.Logger;
@@ -19,11 +17,8 @@ import us.kbase.auth2.lib.identity.GlobusIdentityProvider
 		.GlobusIdentityProviderConfigurator;
 import us.kbase.auth2.lib.identity.GoogleIdentityProvider
 		.GoogleIdentityProviderConfigurator;
-import us.kbase.auth2.lib.identity.IdentityProviderConfig;
 import us.kbase.auth2.lib.identity.IdentityProviderFactory;
-import us.kbase.auth2.lib.storage.AuthStorage;
 import us.kbase.auth2.lib.storage.exceptions.StorageInitException;
-import us.kbase.auth2.lib.storage.mongo.MongoStorage;
 import us.kbase.auth2.service.LoggingFilter;
 import us.kbase.auth2.service.exceptions.AuthConfigurationException;
 import us.kbase.auth2.service.exceptions.ExceptionHandler;
@@ -82,9 +77,13 @@ public class AuthenticationService extends ResourceConfig {
 
 	private void buildApp(final AuthConfig c)
 			throws StorageInitException, AuthConfigurationException {
+		final AuthBuilder ab;
 		synchronized(this) {
 			if (mc == null) {
-				mc = buildMongo(c);
+				ab = new AuthBuilder(c);
+				mc = ab.getMongoClient();
+			} else {
+				ab = new AuthBuilder(c, mc);
 			}
 		}
 		packages("us.kbase.auth2.service.api");
@@ -94,7 +93,7 @@ public class AuthenticationService extends ResourceConfig {
 		property(MustacheMvcFeature.TEMPLATE_BASE_PATH, templatePath);
 		register(LoggingFilter.class);
 		register(ExceptionHandler.class);
-		final Authentication auth = buildAuth(c, mc);
+		final Authentication auth = ab.getAuth();
 		register(new AbstractBinder() {
 			@Override
 			protected void configure() {
@@ -107,50 +106,6 @@ public class AuthenticationService extends ResourceConfig {
 		});
 	}
 	
-	private MongoClient buildMongo(final AuthConfig c) {
-		//TODO ZLATER handle shards
-		try {
-			return new MongoClient(c.getMongoHost());
-		} catch (MongoException e) {
-			LoggerFactory.getLogger(getClass()).error(
-					"Failed to connect to MongoDB: " + e.getMessage(), e);
-			throw e;
-		}
-	}
-	
-	private Authentication buildAuth(final AuthConfig c, final MongoClient mc)
-			throws StorageInitException, AuthConfigurationException {
-		final MongoDatabase db;
-		try {
-			db = mc.getDatabase(c.getMongoDatabase());
-		} catch (MongoException e) {
-			LoggerFactory.getLogger(getClass()).error(
-					"Failed to get database from MongoDB: " + e.getMessage(),
-					e);
-			throw e;
-		}
-		//TODO MONGO & TEST authenticate to db with user/pwd
-		final AuthStorage s = new MongoStorage(db);
-		return new Authentication(s, getIdentityProviders(c));
-	}
-	
-	private IdentityProviderFactory getIdentityProviders(final AuthConfig c)
-			throws AuthConfigurationException {
-		final IdentityProviderFactory fac =
-				IdentityProviderFactory.getInstance();
-		for (final IdentityProviderConfig idc:
-				c.getIdentityProviderConfigs()) {
-			try {
-				fac.configure(idc);
-			} catch (IllegalArgumentException e) {
-				throw new AuthConfigurationException(String.format(
-						"Error registering identity provider %s: %s",
-						idc.getIdentityProviderName(),  e.getMessage()), e);
-			}
-		}
-		return fac;
-	}
-
 	static void shutdown() {
 		mc.close();
 	}
