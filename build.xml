@@ -25,6 +25,7 @@
     <include name="apache_commons/commons-codec-1.8.jar"/>
     <include name="google/guava-18.0.jar"/>
     <include name="ini4j/ini4j-0.5.2.jar"/>
+    <include name="jcommander/jcommander-1.48.jar"/>
     <include name="mongo/mongo-java-driver-3.3.0.jar"/>
     <include name="mustache/compiler-0.9.3.jar"/>
   </fileset>
@@ -99,6 +100,9 @@
     <path refid="compile.classpath"/>
     <fileset file="${dist}/${jar.file}"/>
   </path>
+	
+  <target name="build" depends="compile,buildwar,script"
+    description="build everything"/>
 
   <target name="init" description="make directories">
     <!-- Create the output directory structure-->
@@ -196,6 +200,14 @@
       <test name="us.kbase.common.test.schemamanager.SchemaManagerTest"/>
     </junit>
     <fail message="Test failure detected, check test results." if="test.failed" />
+  </target>
+	
+  <target name="script" depends="compile" description="create cli script">
+    <pathconvert targetos="unix" property="lib.classpath" refid="compile.classpath"/>
+    <echo file="./manage_auth">#!/bin/sh
+java -cp ${dist}/${jar.file}:${lib.classpath} us.kbase.auth2.cli.AuthCLI $@
+    </echo>
+    <chmod file="./manage_auth" perm="a+x"/>
   </target>
 	
   <target name="clean" description="clean up" >
