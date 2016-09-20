@@ -74,8 +74,7 @@ To start server
 ---------------
 start mongodb  
 cd into the auth2 repo  
-ant compile  
-ant buildwar  
+ant build  
 copy deploy.cfg.example to deploy.cfg and fill in appropriately  
 `export KB_DEPLOYMENT_CONFIG=<path to deploy.cfg>`  
 cd jettybase  
