@@ -47,7 +47,7 @@ public enum Role {
 		return ROLE_MAP.get(id);
 	}
 	
-	public static List<Role> grantedRoles(final Role role) {
+	public static List<Role> includedRoles(final Role role) {
 		if (Role.ADMIN.equals(role)) {
 			return Arrays.asList(Role.ADMIN, Role.SERV_TOKEN, Role.DEV_TOKEN);
 		}
@@ -65,7 +65,7 @@ public enum Role {
 	
 	public boolean isSatisfiedBy(final Set<Role> possessed) {
 		final Set<Role> granted = possessed.stream()
-				.flatMap(r -> grantedRoles(r).stream())
+				.flatMap(r -> includedRoles(r).stream())
 				.collect(Collectors.toSet());
 		return granted.contains(this);
 		

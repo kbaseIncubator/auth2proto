@@ -6,8 +6,8 @@ Unit tests & documentation for code in this repo is not required.
 Current endpoints
 -----------------
 
-/admin/localaccount?admin=&lt;some name&gt;  
-create a local account. The admin param is a temporary placeholder.
+/admin/localaccount  
+create a local account.
 
 /admin/user/&lt;user name&gt;  
 View user and modify user roles.
@@ -77,8 +77,17 @@ cd into the auth2 repo
 ant build  
 copy deploy.cfg.example to deploy.cfg and fill in appropriately  
 `export KB_DEPLOYMENT_CONFIG=<path to deploy.cfg>`  
+set a root password
+`./manageauth -d <path to deploy.cfg> -r`
 cd jettybase  
 `./jettybase$ java -jar -Djetty.port=<port> <path to jetty install>/start.jar`  
+
+Administer the server
+---------------------
+Login to a local account as `***ROOT***` with the password you set. Create a
+local account and assign it the create administrator role. That account can
+then be used to create further administrators (including itself) without
+needing to login as root.
 
 Start & stop server w/o a pid
 -----------------------------

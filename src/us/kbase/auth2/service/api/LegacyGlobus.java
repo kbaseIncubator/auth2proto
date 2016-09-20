@@ -84,14 +84,14 @@ public class LegacyGlobus {
 
 	private String getGlobusToken(final String xtoken, String token)
 			throws UnauthorizedException {
-		if (token == null || token.isEmpty()) {
+		if (token == null || token.trim().isEmpty()) {
 			token = xtoken;
-			if (token == null || token.isEmpty()) {
+			if (token == null || token.trim().isEmpty()) {
 				// globus throws a 403 instead of a 401
-				throw new UnauthorizedException(ErrorType.NO_TOKEN, "");
+				throw new UnauthorizedException(ErrorType.NO_TOKEN);
 			}
 		}
-		return token;
+		return token.trim();
 	}
 	
 	// note does not return identity_id

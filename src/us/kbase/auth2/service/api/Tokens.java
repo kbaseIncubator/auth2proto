@@ -1,6 +1,7 @@
 package us.kbase.auth2.service.api;
 
 import static us.kbase.auth2.service.api.APIUtils.getLoginCookie;
+import static us.kbase.auth2.service.api.APIUtils.getToken;
 import static us.kbase.auth2.service.api.APIUtils.relativize;
 
 import java.util.HashMap;
@@ -112,8 +113,7 @@ public class Tokens {
 			throws AuthStorageException,
 			NoSuchTokenException, NoTokenProvidedException,
 			InvalidTokenException {
-		checkToken(userToken);
-		auth.revokeToken(new IncomingToken(userToken), tokenId);
+		auth.revokeToken(getToken(userToken), tokenId);
 	}
 	
 	@DELETE
@@ -125,10 +125,10 @@ public class Tokens {
 			throws AuthStorageException,
 			NoSuchTokenException, NoTokenProvidedException,
 			InvalidTokenException {
-		final String token = cookieToken == null || cookieToken.isEmpty() ?
+		final String token =
+				cookieToken == null || cookieToken.trim().isEmpty() ?
 				headerToken : cookieToken;
-		checkToken(token);
-		auth.revokeToken(new IncomingToken(token), tokenId);
+		auth.revokeToken(getToken(token), tokenId);
 	}
 	
 	@POST
@@ -137,8 +137,7 @@ public class Tokens {
 			@CookieParam("token") final String cookieToken)
 			throws AuthStorageException, NoTokenProvidedException,
 			InvalidTokenException {
-		checkToken(cookieToken);
-		auth.revokeTokens(new IncomingToken(cookieToken));
+		auth.revokeTokens(getToken(cookieToken));
 		return Response.ok().cookie(getLoginCookie(null)).build();
 	}
 	
@@ -151,8 +150,7 @@ public class Tokens {
 			InvalidTokenException {
 		final String token = cookieToken == null || cookieToken.isEmpty() ?
 				headerToken : cookieToken;
-		checkToken(token);
-		auth.revokeTokens(new IncomingToken(token));
+		auth.revokeTokens(getToken(token));
 	}
 			
 
@@ -163,24 +161,14 @@ public class Tokens {
 			throws AuthStorageException, MissingParameterException,
 			NoTokenProvidedException, InvalidTokenException,
 			UnauthorizedException {
-		checkToken(userToken);
-		return new APINewToken(auth.createToken(new IncomingToken(userToken),
+		return new APINewToken(auth.createToken(getToken(userToken),
 				tokenName, "server".equals(tokenType)));
 	}
 
-	private void checkToken(final String token)
-			throws NoTokenProvidedException {
-		if (token == null || token.isEmpty()) {
-			throw new NoTokenProvidedException(
-					"An authentication token must be supplied in the request.");
-		}
-	}
-	
 	private Map<String, Object> getTokens(final String token)
 			throws AuthStorageException, NoTokenProvidedException,
 			InvalidTokenException {
-		checkToken(token);
-		final IncomingToken iToken = new IncomingToken(token);
+		final IncomingToken iToken = getToken(token);
 		final AuthUser au = auth.getUser(iToken);
 		final TokenSet ts = auth.getTokens(iToken);
 		final Map<String, Object> ret = new HashMap<>();

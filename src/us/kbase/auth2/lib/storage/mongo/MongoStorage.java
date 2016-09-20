@@ -242,7 +242,7 @@ public class MongoStorage implements AuthStorage {
 			final UserName root,
 			final String fullName,
 			final String email,
-			final HashSet<Role> roles,
+			final Set<Role> roles,
 			final Date created,
 			final byte[] passwordHash,
 			final byte[] salt) throws AuthStorageException {

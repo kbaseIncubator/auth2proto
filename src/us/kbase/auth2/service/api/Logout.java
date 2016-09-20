@@ -1,5 +1,6 @@
 package us.kbase.auth2.service.api;
 
+import static us.kbase.auth2.service.api.APIUtils.getToken;
 import static us.kbase.auth2.service.api.APIUtils.getLoginCookie;
 import static us.kbase.auth2.service.api.APIUtils.relativize;
 
@@ -24,7 +25,6 @@ import us.kbase.auth2.lib.exceptions.InvalidTokenException;
 import us.kbase.auth2.lib.exceptions.NoTokenProvidedException;
 import us.kbase.auth2.lib.storage.exceptions.AuthStorageException;
 import us.kbase.auth2.lib.token.HashedToken;
-import us.kbase.auth2.lib.token.IncomingToken;
 
 @Path("/logout")
 public class Logout {
@@ -39,8 +39,7 @@ public class Logout {
 			@Context final UriInfo uriInfo)
 			throws AuthStorageException, NoTokenProvidedException,
 			InvalidTokenException {
-		checkToken(token);
-		final HashedToken ht = auth.getToken(new IncomingToken(token));
+		final HashedToken ht = auth.getToken(getToken(token));
 		return ImmutableMap.of("user", ht.getUserName().getName(),
 				"logouturl", relativize(uriInfo, "/logout/result"));
 	}
@@ -50,8 +49,7 @@ public class Logout {
 	public Response logoutResult(
 			@CookieParam("token") final String token)
 			throws AuthStorageException, NoTokenProvidedException {
-		checkToken(token);
-		final HashedToken ht = auth.revokeToken(new IncomingToken(token));
+		final HashedToken ht = auth.revokeToken(getToken(token));
 		return Response.ok(
 				new Viewable("/logoutresult",
 						ImmutableMap.of("user", ht == null ? null :
@@ -59,14 +57,4 @@ public class Logout {
 				.cookie(getLoginCookie(null))
 				.build();
 	}
-	
-	//TODO CODE make this a convenience method - API helper class
-	private void checkToken(final String token)
-			throws NoTokenProvidedException {
-		if (token == null || token.isEmpty()) {
-			throw new NoTokenProvidedException(
-					"An authentication token must be supplied in the request.");
-		}
-	}
-	
 }

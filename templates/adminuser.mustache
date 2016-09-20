@@ -14,9 +14,13 @@ Local: {{local}}<br/>
 	Create server token: <input type="checkbox" name="serv" {{#serv}}checked{{/serv}}/><br/>
 	Admin: <input type="checkbox" name="admin" {{#admin}}checked{{/admin}}/><br/>
 	Create admin: <input type="checkbox" name="createadmin" {{#createadmin}}checked{{/createadmin}}/><br/>
+<input type="submit" value="Update"/>
 {{/user}}
 
 <h3>Custom roles:</h3>
+{{#hascustom}}
+<form action="{{customroleurl}}" method="post">
+{{/hascustom}}
 {{#custom}}
 <p>
 ID: {{id}} <input type="checkbox" name="{{id}}" {{#has}}checked{{/has}}/><br/>
@@ -24,9 +28,10 @@ Description:<br/>
 {{desc}}
 </p>
 {{/custom}}
+{{#hascustom}}
 <input type="submit" value="Update"/>
 </form>
-
+{{/hascustom}}
 
 </body>
 </html>

@@ -54,6 +54,10 @@ public class AuthUser {
 		this.lastLogin = lastLogin;
 	}
 
+	public boolean isRoot() {
+		return userName.isRoot();
+	}
+	
 	public String getFullName() {
 		return fullName;
 	}

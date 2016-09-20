@@ -127,12 +127,14 @@ public class Authentication {
 	}
 	
 	public Password createLocalUser(
+			final IncomingToken adminToken,
 			final UserName userName,
 			final String fullName,
 			final String email)
 			throws AuthStorageException, UserExistsException,
-			MissingParameterException, UnauthorizedException {
-		//TODO ADMIN check user is admin
+			MissingParameterException, UnauthorizedException,
+			InvalidTokenException {
+		getAdmin(adminToken, true);
 		if (userName == null) {
 			throw new NullPointerException("userName");
 		}
@@ -310,49 +312,107 @@ public class Authentication {
 	public AuthUser getUserAsAdmin(
 			final IncomingToken adminToken,
 			final UserName userName)
-			throws AuthStorageException, NoSuchUserException {
+			throws AuthStorageException, NoSuchUserException,
+			InvalidTokenException, UnauthorizedException {
 		if (userName == null) {
 			throw new NullPointerException("userName");
 		}
-		//TODO ADMIN check user is admin
+		getAdmin(adminToken, true);
 		return storage.getUser(userName);
 	}
 
+	private AuthUser getAdmin(final IncomingToken adminToken)
+			throws AuthStorageException, InvalidTokenException,
+			UnauthorizedException {
+		return getAdmin(adminToken, false);
+	}
+	
+	private AuthUser getAdmin(
+			final IncomingToken adminToken,
+			final boolean allowRootAndCreateAdminRole)
+			throws AuthStorageException, InvalidTokenException,
+			UnauthorizedException {
+		//TODO ADMIN try with ROOT Role
+		final AuthUser u = getUser(adminToken);
+		if (allowRootAndCreateAdminRole && (u.isRoot() ||
+				Role.CREATE_ADMIN.isSatisfiedBy(u.getRoles()))) {
+			return u;
+		}
+		if (Role.ADMIN.isSatisfiedBy(u.getRoles())) {
+			return u;
+		}
+		throw new UnauthorizedException(ErrorType.UNAUTHORIZED);
+	}
 
+	private final static Set<Role> CREATE_ADMIN =
+			new HashSet<>(Arrays.asList(Role.CREATE_ADMIN));
+	
 	public void updateRoles(
 			final IncomingToken adminToken,
 			final UserName userName,
 			final Set<Role> roles)
 			throws NoSuchUserException, AuthStorageException,
-			UnauthorizedException {
-		//TODO ADMIN check user is admin
+			UnauthorizedException, InvalidTokenException {
+		if (userName == null) {
+			throw new NullPointerException("userName");
+		}
+		if (roles == null) {
+			throw new NullPointerException("roles");
+		}
+		if (adminToken == null) {
+			throw new NullPointerException("adminToken");
+		}
 		for (final Role r: roles) {
 			if (r == null) {
 				throw new NullPointerException("no null roles");
 			}
 		}
-		if (userName == null) {
-			throw new NullPointerException("userName");
-		}
+		
+		//TODO ADMIN differentiate between set and unset. Currently any admin can unset the CREATEADMIN or ADMIN roles.
 		if (userName.isRoot()) {
 			throw new UnauthorizedException(ErrorType.UNAUTHORIZED,
 					"Cannot change ROOT roles");
 		}
+		// hmm - make a ROOT Role?
+		final AuthUser u = getAdmin(adminToken, true);
+		if (roles.equals(CREATE_ADMIN) && u.isRoot()) {
+			storage.setRoles(userName, roles);
+			return;
+		}
+		if (roles.contains(Role.CREATE_ADMIN) && !u.isRoot()) {
+			throwUnauth(Role.CREATE_ADMIN);
+		}
+		if (roles.contains(Role.ADMIN) &&
+				!Role.CREATE_ADMIN.isSatisfiedBy(u.getRoles())) {
+			throwUnauth(Role.ADMIN);
+		}
+		if (!Role.ADMIN.isSatisfiedBy(u.getRoles())) {
+			throw new UnauthorizedException(ErrorType.UNAUTHORIZED,
+					"Not authorized to grant requested roles");
+		}
 		storage.setRoles(userName, roles);
+	}
+
+	private void throwUnauth(Role r) throws UnauthorizedException {
+		throw new UnauthorizedException(ErrorType.UNAUTHORIZED,
+				String.format("Not authorized to grant the %s role",
+						r.getDescription()));
 	}
 
 	public void setCustomRole(
 			final IncomingToken incomingToken,
 			final String id,
 			final String description)
-			throws MissingParameterException, AuthStorageException {
-		//TODO ADMIN check user is admin
+			throws MissingParameterException, AuthStorageException,
+			InvalidTokenException, UnauthorizedException {
+		getAdmin(incomingToken);
 		storage.setCustomRole(new CustomRole(id, description));
 	}
 
 	public Set<CustomRole> getCustomRoles(final IncomingToken incomingToken)
-			throws AuthStorageException {
-		//TODO ADMIN check user is admin
+			throws AuthStorageException, InvalidTokenException,
+			UnauthorizedException {
+		getAdmin(incomingToken, true);
 		return storage.getCustomRoles();
 	}
 
@@ -361,8 +421,8 @@ public class Authentication {
 			final UserName userName,
 			final Set<String> roleIds)
 			throws AuthStorageException, NoSuchUserException,
-			NoSuchRoleException {
-		//TODO ADMIN check user is admin
+			NoSuchRoleException, InvalidTokenException, UnauthorizedException {
+		getAdmin(adminToken);
 		final Set<CustomRole> roles = storage.getCustomRoles(roleIds);
 		final Set<String> rstr = roles.stream().map(r -> r.getID())
 				.collect(Collectors.toSet());
@@ -375,6 +435,7 @@ public class Authentication {
 	}
 
 
+	//TODO CODE don't expose id providers. Expose a smaller interface mainly to hide the client secret.
 	public List<IdentityProvider> getIdentityProviders() {
 		return idFactory.getProviders();
 	}
@@ -384,7 +445,7 @@ public class Authentication {
 		return tokens.getToken();
 	}
 
-
+	//TODO CODE don't expose id providers. Expose a smaller interface mainly to hide the client secret.
 	public IdentityProvider getIdentityProvider(final String provider)
 			throws NoSuchIdentityProviderException {
 		return idFactory.getProvider(provider);

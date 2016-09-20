@@ -1,5 +1,6 @@
 package us.kbase.auth2.service.api;
 
+import static us.kbase.auth2.service.api.APIUtils.getToken;
 import static us.kbase.auth2.service.api.APIUtils.relativize;
 
 import java.util.Date;
@@ -30,7 +31,6 @@ import us.kbase.auth2.lib.exceptions.NoTokenProvidedException;
 import us.kbase.auth2.lib.exceptions.UnLinkFailedException;
 import us.kbase.auth2.lib.identity.RemoteIdentityWithID;
 import us.kbase.auth2.lib.storage.exceptions.AuthStorageException;
-import us.kbase.auth2.lib.token.IncomingToken;
 
 @Path("/me")
 public class Me {
@@ -49,10 +49,7 @@ public class Me {
 			throws NoTokenProvidedException, InvalidTokenException,
 			AuthStorageException {
 		//TODO CONFIG_USER handle keep logged in, private
-		if (token == null || token.trim().isEmpty()) {
-			throw new NoTokenProvidedException();
-		}
-		final AuthUser u = auth.getUser(new IncomingToken(token));
+		final AuthUser u = auth.getUser(getToken(token));
 		final Map<String, Object> ret = new HashMap<>();
 		ret.put("userupdateurl", relativize(uriInfo, "/me"));
 		ret.put("unlinkprefixurl", relativize(uriInfo, "/me/"));
@@ -88,12 +85,9 @@ public class Me {
 			AuthStorageException {
 		//TODO INPUT check inputs
 		//TODO CONFIG_USER handle keep logged in, private
-		if (token == null || token.trim().isEmpty()) {
-			throw new NoTokenProvidedException();
-		}
 		final UserUpdate uu = new UserUpdate().withEmail(email)
 				.withFullName(fullname);
-		auth.updateUser(new IncomingToken(token), uu);
+		auth.updateUser(getToken(token), uu);
 	}
 	
 	@POST
@@ -103,11 +97,7 @@ public class Me {
 			@PathParam("id") final UUID id)
 			throws NoTokenProvidedException, InvalidTokenException,
 			AuthStorageException, UnLinkFailedException {
-		//TODO CODE make a get token method that returns an incomingtoken
-		if (token == null || token.trim().isEmpty()) {
-			throw new NoTokenProvidedException();
-		}
 		// id can't be null
-		auth.unlink(new IncomingToken(token), id);
+		auth.unlink(getToken(token), id);
 	}
 }

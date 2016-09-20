@@ -1,7 +1,6 @@
 package us.kbase.auth2.lib.storage;
 
 import java.util.Date;
-import java.util.HashSet;
 import java.util.Set;
 import java.util.UUID;
 
@@ -45,7 +44,7 @@ public interface AuthStorage {
 	 * system occurs. 
 	 */
 	void createRoot(UserName root, String fullName, String email,
-			HashSet<Role> roles, Date created, byte[] passwordHash,
+			Set<Role> roles, Date created, byte[] passwordHash,
 			byte[] salt) throws AuthStorageException;
 	
 	/** Create a new local account. Note that new accounts are always created
