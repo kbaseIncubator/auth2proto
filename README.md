@@ -1,3 +1,9 @@
+Obsolete
+========
+
+Development moved to https://github.com/kbase/auth2
+
+
 Temporary and experimental code for the auth server rewrite. Eventually 
 useful code will be migrated (with unit tests & documentation) to kbase/auth2.
 
