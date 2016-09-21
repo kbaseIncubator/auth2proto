@@ -22,6 +22,7 @@ accounts and tests if any, allow setting auth service url
 * Narrative Method Store
 * Data Import Export
 * Search
+* Give docker-compose example including nginx config
 
 Auth service work
 -----------------

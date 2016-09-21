@@ -102,4 +102,16 @@ Start & stop server w/o a pid
 
 Omit the stop key to have jetty generate one for you.
 
+Building a Docker image
+-----------------------
 
+Build the image
+
+    cd auth2proto
+    docker build -t auth2 .
+
+Create the deployment.cfg (see above)
+
+Run the image standalone  (this assumes mongo and nginx are already configured)
+
+    docker run -d --name auth2 -v ./deployment.cfg:/config/deployment.cfg -p 8080:8080 auth2
