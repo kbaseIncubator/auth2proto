@@ -1,7 +1,6 @@
 <html>
 <body>
 <h3>User info</h3>
-{{#user}}
 User name: {{user}}<br/>
 Full name: {{full}}<br/>
 Email: {{email}}<br/>
@@ -15,7 +14,7 @@ Local: {{local}}<br/>
 	Admin: <input type="checkbox" name="admin" {{#admin}}checked{{/admin}}/><br/>
 	Create admin: <input type="checkbox" name="createadmin" {{#createadmin}}checked{{/createadmin}}/><br/>
 <input type="submit" value="Update"/>
-{{/user}}
+</form>
 
 <h3>Custom roles:</h3>
 {{#hascustom}}

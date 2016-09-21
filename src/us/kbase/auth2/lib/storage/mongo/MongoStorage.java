@@ -164,7 +164,6 @@ public class MongoStorage implements AuthStorage {
 		
 		//TODO MISC check workspace startup for stuff to port over
 		//TODO ROOT check / set config with root user
-		//TODO ROOt check root password or something and warn if not set
 		checkConfig();
 		ensureIndexes();
 	}

@@ -12,6 +12,7 @@ public enum Role {
 	/* first arg is ID, second arg is description. ID CANNOT change
 	 * since that field is stored in the DB.
 	 */
+	ROOT			("Root", "Root"),
 	CREATE_ADMIN	("CreateAdmin", "Create administrator"),
 	ADMIN			("Admin", "Administrator"),
 	DEV_TOKEN		("DevToken", "Create developer tokens"),
@@ -47,25 +48,32 @@ public enum Role {
 		return ROLE_MAP.get(id);
 	}
 	
-	public static List<Role> includedRoles(final Role role) {
-		if (Role.ADMIN.equals(role)) {
+	public List<Role> included() {
+		if (Role.ADMIN.equals(this)) {
 			return Arrays.asList(Role.ADMIN, Role.SERV_TOKEN, Role.DEV_TOKEN);
 		}
-		if (Role.SERV_TOKEN.equals(role)) {
+		if (Role.SERV_TOKEN.equals(this)) {
 			return Arrays.asList(Role.SERV_TOKEN, Role.DEV_TOKEN);
 		}
-		if (Role.DEV_TOKEN.equals(role)) {
-			return Arrays.asList(Role.DEV_TOKEN);
-		}
-		if (Role.CREATE_ADMIN.equals(role)) {
+		return Arrays.asList(this);
+	}
+	
+	public List<Role> grant() {
+		if (Role.ROOT.equals(this)) {
 			return Arrays.asList(Role.CREATE_ADMIN);
+		}
+		if (Role.CREATE_ADMIN.equals(this)) {
+			return Arrays.asList(Role.ADMIN);
+		}
+		if (Role.ADMIN.equals(this)) {
+			return Arrays.asList(Role.SERV_TOKEN, Role.DEV_TOKEN);
 		}
 		return new LinkedList<>();
 	}
 	
 	public boolean isSatisfiedBy(final Set<Role> possessed) {
 		final Set<Role> granted = possessed.stream()
-				.flatMap(r -> includedRoles(r).stream())
+				.flatMap(r -> r.included().stream())
 				.collect(Collectors.toSet());
 		return granted.contains(this);
 		

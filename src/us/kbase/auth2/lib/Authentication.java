@@ -68,6 +68,7 @@ public class Authentication {
 	//TODO CONFIG set token cache time to be sent to client via api
 	//TODO UI set keep me logged in on login page
 	//TODO PWD last pwd reset field for local users
+	//TODO CONFIG service 1st start should start with id providers disabled (thus no logins possible except for root)
 	
 	/* TODO ROLES feature: delete custom roles (see below)
 	 * Delete role from all users
@@ -120,7 +121,7 @@ public class Authentication {
 				pwd.getPassword(), salt);
 		pwd.clear();
 		storage.createRoot(UserName.ROOT, "root", "root@unknown.unknown",
-				new HashSet<>(Arrays.asList(Role.CREATE_ADMIN)),
+				new HashSet<>(Arrays.asList(Role.ROOT)),
 				new Date(), passwordHash, salt);
 		clear(passwordHash);
 		clear(salt);
@@ -134,7 +135,7 @@ public class Authentication {
 			throws AuthStorageException, UserExistsException,
 			MissingParameterException, UnauthorizedException,
 			InvalidTokenException {
-		getAdmin(adminToken, true);
+		getUser(adminToken, Role.ROOT, Role.CREATE_ADMIN, Role.ADMIN);
 		if (userName == null) {
 			throw new NullPointerException("userName");
 		}
@@ -245,9 +246,34 @@ public class Authentication {
 	
 	// gets user for token
 	public AuthUser getUser(final IncomingToken token)
-			throws AuthStorageException, InvalidTokenException {
+			throws InvalidTokenException, AuthStorageException {
+		try {
+			return getUser(token, new Role[0]);
+		} catch (UnauthorizedException e) {
+			throw new RuntimeException(
+					"Good job dude, you just broke reality", e); 
+		}
+	}
+	
+	// gets user for token
+	private AuthUser getUser(
+			final IncomingToken token,
+			final Role ... required)
+			throws AuthStorageException, InvalidTokenException,
+			UnauthorizedException {
 		final HashedToken ht = getToken(token);
-		return getUser(ht);
+		final AuthUser u = getUser(ht);
+		if (required.length > 0) {
+			final Set<Role> has = u.getRoles().stream()
+					.flatMap(r -> r.included().stream())
+					.collect(Collectors.toSet());
+			has.retainAll(Arrays.asList(required)); // intersection
+			if (has.isEmpty()) {
+				throw new UnauthorizedException(ErrorType.UNAUTHORIZED);
+			}
+		}
+		
+		return u;
 	}
 
 	// assumes hashed token is good
@@ -317,35 +343,9 @@ public class Authentication {
 		if (userName == null) {
 			throw new NullPointerException("userName");
 		}
-		getAdmin(adminToken, true);
+		getUser(adminToken, Role.ROOT, Role.CREATE_ADMIN, Role.ADMIN);
 		return storage.getUser(userName);
 	}
-
-	private AuthUser getAdmin(final IncomingToken adminToken)
-			throws AuthStorageException, InvalidTokenException,
-			UnauthorizedException {
-		return getAdmin(adminToken, false);
-	}
-	
-	private AuthUser getAdmin(
-			final IncomingToken adminToken,
-			final boolean allowRootAndCreateAdminRole)
-			throws AuthStorageException, InvalidTokenException,
-			UnauthorizedException {
-		//TODO ADMIN try with ROOT Role
-		final AuthUser u = getUser(adminToken);
-		if (allowRootAndCreateAdminRole && (u.isRoot() ||
-				Role.CREATE_ADMIN.isSatisfiedBy(u.getRoles()))) {
-			return u;
-		}
-		if (Role.ADMIN.isSatisfiedBy(u.getRoles())) {
-			return u;
-		}
-		throw new UnauthorizedException(ErrorType.UNAUTHORIZED);
-	}
-
-	private final static Set<Role> CREATE_ADMIN =
-			new HashSet<>(Arrays.asList(Role.CREATE_ADMIN));
 	
 	public void updateRoles(
 			final IncomingToken adminToken,
@@ -368,35 +368,46 @@ public class Authentication {
 			}
 		}
 		
-		//TODO ADMIN differentiate between set and unset. Currently any admin can unset the CREATEADMIN or ADMIN roles.
 		if (userName.isRoot()) {
 			throw new UnauthorizedException(ErrorType.UNAUTHORIZED,
 					"Cannot change ROOT roles");
 		}
-		// hmm - make a ROOT Role?
-		final AuthUser u = getAdmin(adminToken, true);
-		if (roles.equals(CREATE_ADMIN) && u.isRoot()) {
-			storage.setRoles(userName, roles);
-			return;
+		final AuthUser admin = getUser(adminToken,
+				Role.ROOT, Role.CREATE_ADMIN, Role.ADMIN);
+		/* TODO CODE RACE fix race condition when updating roles
+		 * Send the prior roles in with the new roles. Have the storage system
+		 * throw a special exception when the roles aren't the same, then
+		 * retry until it works with a retry fail count to prevent infinite
+		 * loops.
+		 */
+		//TODO ROLES allow removing your own roles (except for root)
+		final AuthUser u = storage.getUser(userName);
+		final Set<Role> canGrant = admin.getRoles().stream()
+				.flatMap(r -> r.grant().stream()).collect(Collectors.toSet());
+		
+		final Set<Role> add = new HashSet<>(roles);
+		add.removeAll(u.getRoles());
+		final Set<Role> sub = new HashSet<>(u.getRoles());
+		sub.removeAll(roles);
+		
+		add.removeAll(canGrant);
+		sub.removeAll(canGrant);
+		if (!add.isEmpty()) {
+			throwUnauth("grant", add);
 		}
-		if (roles.contains(Role.CREATE_ADMIN) && !u.isRoot()) {
-			throwUnauth(Role.CREATE_ADMIN);
-		}
-		if (roles.contains(Role.ADMIN) &&
-				!Role.CREATE_ADMIN.isSatisfiedBy(u.getRoles())) {
-			throwUnauth(Role.ADMIN);
-		}
-		if (!Role.ADMIN.isSatisfiedBy(u.getRoles())) {
-			throw new UnauthorizedException(ErrorType.UNAUTHORIZED,
-					"Not authorized to grant requested roles");
+		if (!sub.isEmpty()) {
+			throwUnauth("remove", sub);
 		}
 		storage.setRoles(userName, roles);
 	}
 
-	private void throwUnauth(Role r) throws UnauthorizedException {
+	private void throwUnauth(final String action, final Set<Role> roles)
+			throws UnauthorizedException {
 		throw new UnauthorizedException(ErrorType.UNAUTHORIZED,
-				String.format("Not authorized to grant the %s role",
-						r.getDescription()));
+				String.format("Not authorized to %s role(s): %s", action,
+						String.join(", ",
+								roles.stream().map(r -> r.getDescription())
+								.collect(Collectors.toSet()))));
 	}
 
 	public void setCustomRole(
@@ -405,14 +416,14 @@ public class Authentication {
 			final String description)
 			throws MissingParameterException, AuthStorageException,
 			InvalidTokenException, UnauthorizedException {
-		getAdmin(incomingToken);
+		getUser(incomingToken, Role.ADMIN);
 		storage.setCustomRole(new CustomRole(id, description));
 	}
 
 	public Set<CustomRole> getCustomRoles(final IncomingToken incomingToken)
 			throws AuthStorageException, InvalidTokenException,
 			UnauthorizedException {
-		getAdmin(incomingToken, true);
+		getUser(incomingToken, Role.ROOT, Role.CREATE_ADMIN, Role.ADMIN);
 		return storage.getCustomRoles();
 	}
 
@@ -422,7 +433,7 @@ public class Authentication {
 			final Set<String> roleIds)
 			throws AuthStorageException, NoSuchUserException,
 			NoSuchRoleException, InvalidTokenException, UnauthorizedException {
-		getAdmin(adminToken);
+		getUser(adminToken, Role.ADMIN);
 		final Set<CustomRole> roles = storage.getCustomRoles(roleIds);
 		final Set<String> rstr = roles.stream().map(r -> r.getID())
 				.collect(Collectors.toSet());

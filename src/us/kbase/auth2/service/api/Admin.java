@@ -121,7 +121,7 @@ public class Admin {
 		final Set<CustomRole> roles = auth.getCustomRoles(adminToken);
 		final Map<String, Object> ret = new HashMap<>();
 		ret.put("custom", setUpCustomRoles(roles, au.getCustomRoles()));
-		ret.put("hascustom", !au.getCustomRoles().isEmpty());
+		ret.put("hascustom", !roles.isEmpty());
 		ret.put("roleurl", relativize(uriInfo,
 				"/admin/user/" + user + "/roles"));
 		ret.put("customroleurl", relativize(uriInfo,

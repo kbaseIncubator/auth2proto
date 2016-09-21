@@ -8,7 +8,7 @@ public class CustomRole {
 	private final String desc;
 	
 	//TODO ROLES The id should be sanity checked for length and url safety. Note that the id is permanent.
-	//TODO LATER ROLES remove role from all users function
+	//TODO ZLATER ROLES remove role from all users function
 	
 	public CustomRole(final String id, final String desc)
 			throws MissingParameterException {
