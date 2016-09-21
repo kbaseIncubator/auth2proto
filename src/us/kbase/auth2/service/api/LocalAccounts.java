@@ -27,6 +27,7 @@ import us.kbase.auth2.lib.Authentication;
 import us.kbase.auth2.lib.Password;
 import us.kbase.auth2.lib.UserName;
 import us.kbase.auth2.lib.exceptions.AuthenticationException;
+import us.kbase.auth2.lib.exceptions.IllegalParameterException;
 import us.kbase.auth2.lib.exceptions.MissingParameterException;
 import us.kbase.auth2.lib.storage.exceptions.AuthStorageException;
 import us.kbase.auth2.lib.token.NewToken;
@@ -37,7 +38,7 @@ public class LocalAccounts {
 	//TODO TEST
 	//TODO JAVADOC
 
-	//TODO NOW reset pwd
+	//TODO PWD reset pwd
 
 	@Inject
 	private Authentication auth;
@@ -60,7 +61,7 @@ public class LocalAccounts {
 			//checkbox, so "on" = checked, null = not checked
 			@FormParam("stayLoggedIn") final String stayLoggedIn)
 			throws AuthStorageException, MissingParameterException,
-			AuthenticationException {
+			AuthenticationException, IllegalParameterException {
 		if (userName == null || userName.isEmpty()) {
 			throw new MissingParameterException("user");
 		}
@@ -69,9 +70,9 @@ public class LocalAccounts {
 		}
 		final NewToken t = auth.localLogin(new UserName(userName),
 				new Password(pwd.toCharArray()));
-		//TODO NOW log
+		//TODO LOG log
 		pwd = null; // try to get pwd GC'd as quickly as possible
-		//TODO NOW if reset required, do reset
+		//TODO PWD if reset required, do reset
 		return Response.seeOther(toURI("/me"))
 				.cookie(getLoginCookie(t, stayLoggedIn == null))
 				.build();

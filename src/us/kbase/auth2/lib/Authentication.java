@@ -1,9 +1,11 @@
 package us.kbase.auth2.lib;
 
 import static us.kbase.auth2.lib.Utils.checkString;
+import static us.kbase.auth2.lib.Utils.clear;
 
 import java.security.NoSuchAlgorithmException;
 import java.util.Arrays;
+import java.util.Date;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.Iterator;
@@ -22,6 +24,7 @@ import us.kbase.auth2.lib.exceptions.InvalidTokenException;
 import us.kbase.auth2.lib.exceptions.LinkFailedException;
 import us.kbase.auth2.lib.exceptions.MissingParameterException;
 import us.kbase.auth2.lib.exceptions.NoSuchIdentityProviderException;
+import us.kbase.auth2.lib.exceptions.NoSuchRoleException;
 import us.kbase.auth2.lib.exceptions.NoSuchTokenException;
 import us.kbase.auth2.lib.exceptions.NoSuchUserException;
 import us.kbase.auth2.lib.exceptions.UnLinkFailedException;
@@ -36,6 +39,7 @@ import us.kbase.auth2.lib.storage.exceptions.AuthStorageException;
 import us.kbase.auth2.lib.token.NewToken;
 import us.kbase.auth2.lib.token.TemporaryToken;
 import us.kbase.auth2.lib.token.TokenSet;
+import us.kbase.auth2.lib.token.TokenType;
 import us.kbase.auth2.lib.token.HashedToken;
 import us.kbase.auth2.lib.token.IncomingToken;
 
@@ -49,22 +53,38 @@ public class Authentication {
 	//TODO AUTH handle root user somehow (spec chars unallowed in usernames?)
 	//TODO AUTH server root should return server version (and urls for endpoints?)
 	//TODO AUTH check workspace for other useful things like the schema manager
-	//TODO NOW logging everywhere - on login, on logout, on create / delete / expire token
+	//TODO LOG logging everywhere - on login, on logout, on create / delete / expire token
 	//TODO SCOPES configure scopes via ui
 	//TODO SCOPES configure scope on login via ui
 	//TODO SCOPES restricted scopes - allow for specific roles or users (or for specific clients via oauth2)
 	//TODO ADMIN revoke user token, revoke all tokens for a user, revoke all tokens
 	//TODO ADMIN deactivate account
 	//TODO ADMIN force user pwd reset
-	//TODO NOW tokens - redirect to standard login if not logged in (other pages as well)
+	//TODO TOKEN tokens - redirect to standard login if not logged in (other pages as well)
 	//TODO USERPROFILE email & username change propagation
 	//TODO USERCONFIG set email & username privacy & respect (in both legacy apis)
 	//TODO USERCONFIG set email & username
-	//TODO NOW allow redirect url on login
-	//TODO NOW move jars into kbase/jars
 	//TODO DEPLOY jetty should start app immediately & fail if app fails
 	//TODO CONFIG set token cache time to be sent to client via api
-	//TODO NOW set keep me logged in on login page
+	//TODO UI set keep me logged in on login page
+	//TODO PWD last pwd reset field for local users
+	//TODO CONFIG service 1st start should start with id providers disabled (thus no logins possible except for root)
+	
+	/* TODO ROLES feature: delete custom roles (see below)
+	 * Delete role from all users
+	 * Delete role from system:
+	 * 1) Remove role from all users
+	 * 2) delete role from system
+	 * 3) Remove role from all users again
+	 * 4) On getting a user, any roles that aren't in the system should be
+	 * removed
+	 * 
+	 * Still a possibility of a race condition allowing adding a deleted role to
+	 * a user after step 3, and then the role being re-added with different
+	 * semantics, which would mean that users that erroneously have the role
+	 * would be granted the new semantics, which is wrong
+	 * Might not be worth worrying about
+	 */
 	
 	private final AuthStorage storage;
 	private final IdentityProviderFactory idFactory;
@@ -91,15 +111,37 @@ public class Authentication {
 		this.idFactory = identityProviderFactory;
 	}
 
-
+	// don't expose this method to general users, blatantly obviously
+	public void createRoot(final Password pwd) throws AuthStorageException {
+		if (pwd == null) {
+			throw new NullPointerException("pwd");
+		}
+		final byte[] salt = pwdcrypt.generateSalt();
+		final byte[] passwordHash = pwdcrypt.getEncryptedPassword(
+				pwd.getPassword(), salt);
+		pwd.clear();
+		storage.createRoot(UserName.ROOT, "root", "root@unknown.unknown",
+				new HashSet<>(Arrays.asList(Role.ROOT)),
+				new Date(), passwordHash, salt);
+		clear(passwordHash);
+		clear(salt);
+	}
+	
 	public Password createLocalUser(
+			final IncomingToken adminToken,
 			final UserName userName,
 			final String fullName,
 			final String email)
 			throws AuthStorageException, UserExistsException,
-			MissingParameterException {
+			MissingParameterException, UnauthorizedException,
+			InvalidTokenException {
+		getUser(adminToken, Role.ROOT, Role.CREATE_ADMIN, Role.ADMIN);
 		if (userName == null) {
 			throw new NullPointerException("userName");
+		}
+		if (userName.isRoot()) {
+			throw new UnauthorizedException(ErrorType.UNAUTHORIZED,
+					"Cannot create ROOT user");
 		}
 		checkString(fullName, "full name");
 		checkString(email, "email");
@@ -108,9 +150,10 @@ public class Authentication {
 		final byte[] passwordHash = pwdcrypt.getEncryptedPassword(
 				pwd.getPassword(), salt);
 		final LocalUser lu = new LocalUser(userName, email, fullName, null,
-				null, passwordHash, salt, true);
-		//TODO NOW store creation date
+				null, new Date(), null, passwordHash, salt, true);
 		storage.createLocalUser(lu);
+		clear(passwordHash);
+		clear(salt);
 		return pwd;
 	}
 	
@@ -129,12 +172,26 @@ public class Authentication {
 					"Username / password mismatch");
 		}
 		pwd.clear();
-		//TODO NOW if reset required, make reset token
-		final NewToken t = new NewToken(tokens.getToken(), userName,
+		//TODO PWD if reset required, make reset token
+		final NewToken t = new NewToken(TokenType.LOGIN, tokens.getToken(),
+				userName,
 				//TODO CONFIG make token lifetime configurable
 				14 * 24 * 60 * 60 * 1000);
 		storage.storeToken(t.getHashedToken());
+		setLastLogin(userName);
 		return t;
+	}
+
+	// used when it's known that the user exists
+	private void setLastLogin(final UserName userName)
+			throws AuthStorageException {
+		try {
+			storage.setLastLogin(userName, new Date());
+		} catch (NoSuchUserException e) {
+			throw new AuthStorageException(
+					"Something is very broken. User should exist but doesn't: "
+							+ e.getMessage(), e);
+		}
 	}
 
 	public TokenSet getTokens(final IncomingToken token)
@@ -163,9 +220,14 @@ public class Authentication {
 			throws AuthStorageException, MissingParameterException,
 			InvalidTokenException, UnauthorizedException {
 		checkString(tokenName, "token name");
-		final AuthUser au = getUser(token);
+		final HashedToken t = getToken(token);
+		if (!t.getTokenType().equals(TokenType.LOGIN)) {
+			throw new UnauthorizedException(ErrorType.UNAUTHORIZED,
+					"Only login tokens may be used to create a token");
+		}
+		final AuthUser au = getUser(t);
 		final Role reqRole = serverToken ? Role.SERV_TOKEN : Role.DEV_TOKEN;
-		if (!Role.hasRole(au.getRoles(), reqRole)) {
+		if (!reqRole.isSatisfiedBy(au.getRoles())) {
 			throw new UnauthorizedException(ErrorType.UNAUTHORIZED,
 					"User %s is not authorized to create this token type.");
 		}
@@ -176,16 +238,46 @@ public class Authentication {
 		} else {
 			life = 90L * 24L * 60L * 60L * 1000L;
 		}
-		final NewToken t = new NewToken(tokenName, tokens.getToken(),
-				au.getUserName(), life);
-		storage.storeToken(t.getHashedToken());
-		return t;
+		final NewToken nt = new NewToken(TokenType.EXTENDED_LIFETIME,
+				tokenName, tokens.getToken(), au.getUserName(), life);
+		storage.storeToken(nt.getHashedToken());
+		return nt;
 	}
 	
 	// gets user for token
 	public AuthUser getUser(final IncomingToken token)
-			throws AuthStorageException, InvalidTokenException {
+			throws InvalidTokenException, AuthStorageException {
+		try {
+			return getUser(token, new Role[0]);
+		} catch (UnauthorizedException e) {
+			throw new RuntimeException(
+					"Good job dude, you just broke reality", e); 
+		}
+	}
+	
+	// gets user for token
+	private AuthUser getUser(
+			final IncomingToken token,
+			final Role ... required)
+			throws AuthStorageException, InvalidTokenException,
+			UnauthorizedException {
 		final HashedToken ht = getToken(token);
+		final AuthUser u = getUser(ht);
+		if (required.length > 0) {
+			final Set<Role> has = u.getRoles().stream()
+					.flatMap(r -> r.included().stream())
+					.collect(Collectors.toSet());
+			has.retainAll(Arrays.asList(required)); // intersection
+			if (has.isEmpty()) {
+				throw new UnauthorizedException(ErrorType.UNAUTHORIZED);
+			}
+		}
+		
+		return u;
+	}
+
+	// assumes hashed token is good
+	private AuthUser getUser(final HashedToken ht) throws AuthStorageException {
 		try {
 			return storage.getUser(ht.getUserName());
 		} catch (NoSuchUserException e) {
@@ -205,8 +297,8 @@ public class Authentication {
 		if (ht.getUserName().equals(u.getUserName())) {
 			return u;
 		} else {
-			//TODO NOW this shouldn't return roles
-			//TODO NOW only return fullname & email if info is public - actually, never return email
+			//TODO PRIVACY this shouldn't return roles
+			//TODO PRIVACY only return fullname & email if info is public - actually, never return email
 			return u;
 		}
 	}
@@ -246,61 +338,115 @@ public class Authentication {
 	public AuthUser getUserAsAdmin(
 			final IncomingToken adminToken,
 			final UserName userName)
-			throws AuthStorageException, NoSuchUserException {
+			throws AuthStorageException, NoSuchUserException,
+			InvalidTokenException, UnauthorizedException {
 		if (userName == null) {
 			throw new NullPointerException("userName");
 		}
-		//TODO ADMIN check user is admin
+		getUser(adminToken, Role.ROOT, Role.CREATE_ADMIN, Role.ADMIN);
 		return storage.getUser(userName);
 	}
-
-
+	
 	public void updateRoles(
 			final IncomingToken adminToken,
 			final UserName userName,
 			final Set<Role> roles)
-			throws NoSuchUserException, AuthStorageException {
-		//TODO ADMIN check user is admin
+			throws NoSuchUserException, AuthStorageException,
+			UnauthorizedException, InvalidTokenException {
+		if (userName == null) {
+			throw new NullPointerException("userName");
+		}
+		if (roles == null) {
+			throw new NullPointerException("roles");
+		}
+		if (adminToken == null) {
+			throw new NullPointerException("adminToken");
+		}
 		for (final Role r: roles) {
 			if (r == null) {
 				throw new NullPointerException("no null roles");
 			}
 		}
-		if (userName == null) {
-			throw new NullPointerException("userName");
+		
+		if (userName.isRoot()) {
+			throw new UnauthorizedException(ErrorType.UNAUTHORIZED,
+					"Cannot change ROOT roles");
+		}
+		final AuthUser admin = getUser(adminToken,
+				Role.ROOT, Role.CREATE_ADMIN, Role.ADMIN);
+		/* TODO CODE RACE fix race condition when updating roles
+		 * Send the prior roles in with the new roles. Have the storage system
+		 * throw a special exception when the roles aren't the same, then
+		 * retry until it works with a retry fail count to prevent infinite
+		 * loops.
+		 */
+		//TODO ROLES allow removing your own roles (except for root)
+		final AuthUser u = storage.getUser(userName);
+		final Set<Role> canGrant = admin.getRoles().stream()
+				.flatMap(r -> r.grants().stream()).collect(Collectors.toSet());
+		
+		final Set<Role> add = new HashSet<>(roles);
+		add.removeAll(u.getRoles());
+		final Set<Role> sub = new HashSet<>(u.getRoles());
+		sub.removeAll(roles);
+		
+		add.removeAll(canGrant);
+		sub.removeAll(canGrant);
+		if (!add.isEmpty()) {
+			throwUnauth("grant", add);
+		}
+		if (!sub.isEmpty()) {
+			throwUnauth("remove", sub);
 		}
 		storage.setRoles(userName, roles);
 	}
 
+	private void throwUnauth(final String action, final Set<Role> roles)
+			throws UnauthorizedException {
+		throw new UnauthorizedException(ErrorType.UNAUTHORIZED,
+				String.format("Not authorized to %s role(s): %s", action,
+						String.join(", ",
+								roles.stream().map(r -> r.getDescription())
+								.collect(Collectors.toSet()))));
+	}
+
 	public void setCustomRole(
 			final IncomingToken incomingToken,
-			final String name,
+			final String id,
 			final String description)
-			throws MissingParameterException, AuthStorageException {
-		//TODO ADMIN check user is admin
-		storage.setCustomRole(new CustomRole(
-				UUID.randomUUID(), name, description));
+			throws MissingParameterException, AuthStorageException,
+			InvalidTokenException, UnauthorizedException {
+		getUser(incomingToken, Role.ADMIN);
+		storage.setCustomRole(new CustomRole(id, description));
 	}
 
 	public Set<CustomRole> getCustomRoles(final IncomingToken incomingToken)
-			throws AuthStorageException {
-		//TODO ADMIN check user is admin
+			throws AuthStorageException, InvalidTokenException,
+			UnauthorizedException {
+		getUser(incomingToken, Role.ROOT, Role.CREATE_ADMIN, Role.ADMIN);
 		return storage.getCustomRoles();
 	}
 
 	public void updateCustomRoles(
 			final IncomingToken adminToken,
 			final UserName userName,
-			final Set<UUID> roleIds)
-			throws AuthStorageException, NoSuchUserException {
-		//TODO ADMIN check user is admin
+			final Set<String> roleIds)
+			throws AuthStorageException, NoSuchUserException,
+			NoSuchRoleException, InvalidTokenException, UnauthorizedException {
+		getUser(adminToken, Role.ADMIN);
 		final Set<CustomRole> roles = storage.getCustomRoles(roleIds);
-		final Set<String> rstr = roles.stream().map(r -> r.getName())
+		final Set<String> rstr = roles.stream().map(r -> r.getID())
 				.collect(Collectors.toSet());
+		for (final String r: roleIds) {
+			if (!rstr.contains(r)) {
+				throw new NoSuchRoleException(r);
+			}
+		}
 		storage.setCustomRoles(userName, rstr);
 	}
 
 
+	//TODO CODE don't expose id providers. Expose a smaller interface mainly to hide the client secret.
 	public List<IdentityProvider> getIdentityProviders() {
 		return idFactory.getProviders();
 	}
@@ -310,7 +456,7 @@ public class Authentication {
 		return tokens.getToken();
 	}
 
-
+	//TODO CODE don't expose id providers. Expose a smaller interface mainly to hide the client secret.
 	public IdentityProvider getIdentityProvider(final String provider)
 			throws NoSuchIdentityProviderException {
 		return idFactory.getProvider(provider);
@@ -341,10 +487,11 @@ public class Authentication {
 		final LoginToken lr;
 		if (hasUser.size() == 1 && noUser.isEmpty()) {
 			final AuthUser user = hasUser.values().iterator().next();
-			final NewToken t = new NewToken(tokens.getToken(),
+			final NewToken t = new NewToken(TokenType.LOGIN, tokens.getToken(),
 					//TODO CONFIG make token lifetime configurable
 					user.getUserName(), 14 * 24 * 60 * 60 * 1000);
 			storage.storeToken(t.getHashedToken());
+			setLastLogin(user.getUserName());
 			lr = new LoginToken(t);
 		} else {
 			final TemporaryToken tt = new TemporaryToken(tokens.getToken(),
@@ -408,14 +555,22 @@ public class Authentication {
 			final boolean sessionLogin,
 			final boolean privateNameEmail)
 			throws AuthStorageException, AuthenticationException,
-				UserExistsException {
-		//TODO NOW handle sessionLogin, privateNameEmail
-		
+				UserExistsException, UnauthorizedException {
+		//TODO USER_CONFIG handle sessionLogin, privateNameEmail
+		if (userName == null) {
+			throw new NullPointerException("userName");
+		}
+		if (userName.isRoot()) {
+			throw new UnauthorizedException(ErrorType.UNAUTHORIZED,
+					"Cannot create ROOT user");
+		}
 		final RemoteIdentityWithID match =
 				getIdentity(token, identityID);
+		final Date now = new Date();
 		storage.createUser(new AuthUser(userName, email, fullName,
-				new HashSet<>(Arrays.asList(match)), null, null));
-		final NewToken nt = new NewToken(tokens.getToken(), userName,
+				new HashSet<>(Arrays.asList(match)), null, null, now, now));
+		final NewToken nt = new NewToken(TokenType.LOGIN, tokens.getToken(),
+				userName,
 				//TODO CONFIG make token lifetime configurable
 				14 * 24 * 60 * 60 * 1000);
 		storage.storeToken(nt.getHashedToken());
@@ -434,10 +589,12 @@ public class Authentication {
 					"There is no account linked to the provided identity");
 		}
 		
-		final NewToken nt = new NewToken(tokens.getToken(), u.getUserName(),
+		final NewToken nt = new NewToken(TokenType.LOGIN, tokens.getToken(),
+				u.getUserName(),
 				//TODO CONFIG make token lifetime configurable
 				14 * 24 * 60 * 60 * 1000);
 		storage.storeToken(nt.getHashedToken());
+		setLastLogin(u.getUserName());
 		return nt;
 	}
 	

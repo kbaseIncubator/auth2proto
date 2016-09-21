@@ -1,6 +1,7 @@
 package us.kbase.auth2.lib;
 
 import java.util.Collections;
+import java.util.Date;
 import java.util.HashSet;
 import java.util.Set;
 
@@ -20,6 +21,8 @@ public class AuthUser {
 	private final Set<Role> roles;
 	private final Set<String> customRoles;
 	private final Set<RemoteIdentityWithID> identities;
+	private final Date created;
+	private final Date lastLogin;
 	
 	public AuthUser(
 			final UserName userName,
@@ -27,9 +30,11 @@ public class AuthUser {
 			final String fullName,
 			Set<RemoteIdentityWithID> identities,
 			Set<Role> roles,
-			Set<String> customRoles) {
+			Set<String> customRoles,
+			final Date created,
+			final Date lastLogin) {
 		super();
-		//TODO NOW check for nulls & empty strings - should email & fullName be allowed as empty strings?
+		//TODO INPUT check for nulls & empty strings - should email & fullName be allowed as empty strings?
 		this.fullName = fullName;
 		this.email = email;
 		this.userName = userName;
@@ -45,8 +50,14 @@ public class AuthUser {
 			customRoles = new HashSet<>();
 		}
 		this.customRoles = Collections.unmodifiableSet(customRoles);
+		this.created = created;
+		this.lastLogin = lastLogin;
 	}
 
+	public boolean isRoot() {
+		return userName.isRoot();
+	}
+	
 	public String getFullName() {
 		return fullName;
 	}
@@ -75,6 +86,14 @@ public class AuthUser {
 		return identities;
 	}
 	
+	public Date getCreated() {
+		return created;
+	}
+
+	public Date getLastLogin() {
+		return lastLogin;
+	}
+
 	public RemoteIdentityWithID getIdentity(final RemoteIdentity ri) {
 		for (final RemoteIdentityWithID rid: identities) {
 			if (rid.getRemoteID().equals(ri.getRemoteID())) {
@@ -88,10 +107,12 @@ public class AuthUser {
 	public int hashCode() {
 		final int prime = 31;
 		int result = 1;
+		result = prime * result + ((created == null) ? 0 : created.hashCode());
 		result = prime * result + ((customRoles == null) ? 0 : customRoles.hashCode());
 		result = prime * result + ((email == null) ? 0 : email.hashCode());
 		result = prime * result + ((fullName == null) ? 0 : fullName.hashCode());
 		result = prime * result + ((identities == null) ? 0 : identities.hashCode());
+		result = prime * result + ((lastLogin == null) ? 0 : lastLogin.hashCode());
 		result = prime * result + ((roles == null) ? 0 : roles.hashCode());
 		result = prime * result + ((userName == null) ? 0 : userName.hashCode());
 		return result;
@@ -109,6 +130,13 @@ public class AuthUser {
 			return false;
 		}
 		AuthUser other = (AuthUser) obj;
+		if (created == null) {
+			if (other.created != null) {
+				return false;
+			}
+		} else if (!created.equals(other.created)) {
+			return false;
+		}
 		if (customRoles == null) {
 			if (other.customRoles != null) {
 				return false;
@@ -135,6 +163,13 @@ public class AuthUser {
 				return false;
 			}
 		} else if (!identities.equals(other.identities)) {
+			return false;
+		}
+		if (lastLogin == null) {
+			if (other.lastLogin != null) {
+				return false;
+			}
+		} else if (!lastLogin.equals(other.lastLogin)) {
 			return false;
 		}
 		if (roles == null) {

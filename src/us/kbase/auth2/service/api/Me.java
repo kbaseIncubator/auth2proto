@@ -1,7 +1,9 @@
 package us.kbase.auth2.service.api;
 
+import static us.kbase.auth2.service.api.APIUtils.getToken;
 import static us.kbase.auth2.service.api.APIUtils.relativize;
 
+import java.util.Date;
 import java.util.HashMap;
 import java.util.LinkedList;
 import java.util.List;
@@ -29,14 +31,12 @@ import us.kbase.auth2.lib.exceptions.NoTokenProvidedException;
 import us.kbase.auth2.lib.exceptions.UnLinkFailedException;
 import us.kbase.auth2.lib.identity.RemoteIdentityWithID;
 import us.kbase.auth2.lib.storage.exceptions.AuthStorageException;
-import us.kbase.auth2.lib.token.IncomingToken;
 
 @Path("/me")
 public class Me {
 
 	//TODO TEST
 	//TODO JAVADOC
-	//TODO NOW don't expose provider IDs. Make own id for the remote id. Check entire UI for this.
 	
 	@Inject
 	private Authentication auth;
@@ -48,11 +48,8 @@ public class Me {
 			@Context final UriInfo uriInfo)
 			throws NoTokenProvidedException, InvalidTokenException,
 			AuthStorageException {
-		//TODO NOW handle keep logged in, private
-		if (token == null || token.trim().isEmpty()) {
-			throw new NoTokenProvidedException();
-		}
-		final AuthUser u = auth.getUser(new IncomingToken(token));
+		//TODO CONFIG_USER handle keep logged in, private
+		final AuthUser u = auth.getUser(getToken(token));
 		final Map<String, Object> ret = new HashMap<>();
 		ret.put("userupdateurl", relativize(uriInfo, "/me"));
 		ret.put("unlinkprefixurl", relativize(uriInfo, "/me/"));
@@ -60,9 +57,12 @@ public class Me {
 		ret.put("local", u.isLocal());
 		ret.put("fullname", u.getFullName());
 		ret.put("email", u.getEmail());
+		ret.put("created", u.getCreated().getTime());
+		final Date ll = u.getLastLogin();
+		ret.put("lastlogin", ll == null ? null : ll.getTime());
 		ret.put("customroles", u.getCustomRoles());
 		ret.put("unlink", u.getIdentities().size() > 1);
-		ret.put("roles", u.getRoles().stream().map(r -> r.getRole())
+		ret.put("roles", u.getRoles().stream().map(r -> r.getDescription())
 				.collect(Collectors.toList()));
 		final List<Map<String, String>> idents = new LinkedList<>();
 		ret.put("idents", idents);
@@ -83,14 +83,11 @@ public class Me {
 			@FormParam("email") final String email)
 			throws NoTokenProvidedException, InvalidTokenException,
 			AuthStorageException {
-		//TODO NOW check inputs
-		//TODO NOW handle keep logged in, private
-		if (token == null || token.trim().isEmpty()) {
-			throw new NoTokenProvidedException();
-		}
+		//TODO INPUT check inputs
+		//TODO CONFIG_USER handle keep logged in, private
 		final UserUpdate uu = new UserUpdate().withEmail(email)
 				.withFullName(fullname);
-		auth.updateUser(new IncomingToken(token), uu);
+		auth.updateUser(getToken(token), uu);
 	}
 	
 	@POST
@@ -100,11 +97,7 @@ public class Me {
 			@PathParam("id") final UUID id)
 			throws NoTokenProvidedException, InvalidTokenException,
 			AuthStorageException, UnLinkFailedException {
-		//TODO NOW make a get token method that returns an incomingtoken
-		if (token == null || token.trim().isEmpty()) {
-			throw new NoTokenProvidedException();
-		}
 		// id can't be null
-		auth.unlink(new IncomingToken(token), id);
+		auth.unlink(getToken(token), id);
 	}
 }

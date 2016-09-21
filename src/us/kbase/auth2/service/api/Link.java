@@ -1,5 +1,6 @@
 package us.kbase.auth2.service.api;
 
+import static us.kbase.auth2.service.api.APIUtils.getToken;
 import static us.kbase.auth2.service.api.APIUtils.getMaxCookieAge;
 import static us.kbase.auth2.service.api.APIUtils.relativize;
 import static us.kbase.auth2.service.api.APIUtils.upperCase;
@@ -54,7 +55,7 @@ public class Link {
 
 	//TODO JAVADOC
 	//TODO TEST
-	//TODO NOW can probably share some code with /login
+	//TODO CODE can probably share some code with /login
 	
 	@Inject
 	private Authentication auth;
@@ -66,9 +67,8 @@ public class Link {
 			@Context UriInfo uriInfo)
 			throws NoSuchIdentityProviderException, NoTokenProvidedException,
 			InvalidTokenException, AuthStorageException {
-		if (token == null || token.trim().isEmpty()) {
-			throw new NoTokenProvidedException();
-		}
+
+		final IncomingToken incToken = getToken(token);
 		
 		//TODO CONFIG allow enable & disable of id providers.
 		if (provider != null && !provider.trim().isEmpty()) {
@@ -80,7 +80,7 @@ public class Link {
 					.cookie(getStateCookie(state))
 					.build();
 		} else {
-			final AuthUser u = auth.getUser(new IncomingToken(token));
+			final AuthUser u = auth.getUser(incToken);
 			final Map<String, Object> ret = new HashMap<>();
 			ret.put("user", u.getUserName().getName());
 			ret.put("local", u.isLocal());
@@ -122,15 +122,11 @@ public class Link {
 			throws MissingParameterException, AuthenticationException,
 			NoSuchProviderException, AuthStorageException,
 			NoTokenProvidedException, LinkFailedException {
-		if (token == null || token.trim().isEmpty()) {
-			throw new NoTokenProvidedException();
-		}
-		
-		//TODO NOW handle error in params (provider, state)
+		//TODO INPUT handle error in params (provider, state)
 		provider = upperCase(provider);
 		final MultivaluedMap<String, String> qps =
 				uriInfo.getQueryParameters();
-		//TODO NOW handle returned OAuth error code in queryparams
+		//TODO ERRHANDLE handle returned OAuth error code in queryparams
 		final IdentityProvider idp = auth.getIdentityProvider(provider);
 		final String authcode = qps.getFirst(idp.getAuthCodeQueryParamName());
 		final String retstate = qps.getFirst("state"); //may need to be configurable
@@ -142,7 +138,7 @@ public class Link {
 			throw new AuthenticationException(ErrorType.AUTHENTICATION_FAILED,
 					"State values do not match, this may be a CXRF attack");
 		}
-		final LinkToken lt = auth.link(new IncomingToken(token), provider,
+		final LinkToken lt = auth.link(getToken(token), provider,
 				authcode);
 		final Response r;
 		// always redirect so the authcode doesn't remain in the title bar

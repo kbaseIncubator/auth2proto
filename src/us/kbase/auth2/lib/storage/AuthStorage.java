@@ -1,5 +1,6 @@
 package us.kbase.auth2.lib.storage;
 
+import java.util.Date;
 import java.util.Set;
 import java.util.UUID;
 
@@ -25,6 +26,27 @@ public interface AuthStorage {
 	
 	//TODO JAVADOC
 	
+
+	/** Create or update the root user.
+	 * The password hash and salt are cleared as soon as possible.
+	 * fullName, email, and created are only set when creating the root user
+	 * for the first time.
+	 * Custom roles are set to the null set when creating the root user, but
+	 * are otherwise left alone.
+	 * @param root the root user name
+	 * @param fullName the root user's full name.
+	 * @param email the root user's email.
+	 * @param roles the root user's roles.
+	 * @param created the root user account's creation date.
+	 * @param passwordHash the hash of the root user's password.
+	 * @param salt the password salt.
+	 * @throws AuthStorageException if a problem connecting with the storage
+	 * system occurs. 
+	 */
+	void createRoot(UserName root, String fullName, String email,
+			Set<Role> roles, Date created, byte[] passwordHash,
+			byte[] salt) throws AuthStorageException;
+	
 	/** Create a new local account. Note that new accounts are always created
 	 * with no roles.
 	 * @param local the user to create.
@@ -47,6 +69,12 @@ public interface AuthStorage {
 
 	LocalUser getLocalUser(UserName userName)
 			throws AuthStorageException, NoSuchUserException;
+	
+	void updateUser(UserName userName, UserUpdate update)
+			throws NoSuchUserException, AuthStorageException;
+	
+	void setLastLogin(UserName userName, Date lastLogin)
+			throws NoSuchUserException, AuthStorageException;
 	
 	/** Store a token in the database. No checking is done on the validity
 	 * of the token - passing in tokens with bad data is a programming error.
@@ -72,7 +100,7 @@ public interface AuthStorage {
 
 	Set<CustomRole> getCustomRoles() throws AuthStorageException;
 
-	Set<CustomRole> getCustomRoles(Set<UUID> roleIds)
+	Set<CustomRole> getCustomRoles(Set<String> roleIds)
 			throws AuthStorageException;
 
 	void setCustomRoles(UserName userName, Set<String> roles)
@@ -94,7 +122,4 @@ public interface AuthStorage {
 
 	void unlink(UserName userName, UUID id)
 			throws AuthStorageException, UnLinkFailedException;
-
-	void updateUser(UserName userName, UserUpdate update)
-			throws NoSuchUserException, AuthStorageException;
 }

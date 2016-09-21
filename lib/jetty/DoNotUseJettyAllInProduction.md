@@ -1,1 +1,0 @@
-https://dev.eclipse.org/mhonarc/lists/jetty-users/msg06030.html

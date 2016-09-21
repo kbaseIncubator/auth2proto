@@ -14,7 +14,7 @@ public class RemoteIdentity {
 			final RemoteIdentityID remoteID,
 			final RemoteIdentityDetails details) {
 		super();
-		//TODO NOW check for null & .trim().isEmpty()
+		//TODO INPUT check for null & .trim().isEmpty()
 		if (remoteID == null) {
 			throw new NullPointerException("id");
 		}
