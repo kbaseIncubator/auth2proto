@@ -16,6 +16,7 @@ import org.slf4j.LoggerFactory;
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
 
+import us.kbase.auth2.service.SLF4JAutoLogger;
 import us.kbase.auth2.service.template.TemplateProcessor;
 
 
@@ -29,6 +30,8 @@ public class ExceptionHandler implements ExceptionMapper<Throwable> {
 	@Inject
 	private TemplateProcessor template;
 	private final ObjectMapper mapper = new ObjectMapper();
+	@Inject
+	private SLF4JAutoLogger logger;
 
 	@Override
 	public Response toResponse(Throwable ex) {
@@ -37,7 +40,7 @@ public class ExceptionHandler implements ExceptionMapper<Throwable> {
 		LoggerFactory.getLogger(getClass()).error("Logging exception:", ex);
 
 		//TODO AUTH make including trace configurable
-		final ErrorMessage em = new ErrorMessage(ex, true);
+		final ErrorMessage em = new ErrorMessage(ex, logger.getCallID(), true);
 		String ret;
 		if (mt.equals(MediaType.APPLICATION_JSON_TYPE)) {
 			final Map<String, Object> err = new HashMap<>();

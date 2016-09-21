@@ -1,15 +1,53 @@
 package us.kbase.auth2.lib;
 
+import static us.kbase.auth2.lib.Utils.checkString;
+
+import java.util.regex.Matcher;
+import java.util.regex.Pattern;
+
+import us.kbase.auth2.lib.exceptions.IllegalParameterException;
+import us.kbase.auth2.lib.exceptions.MissingParameterException;
+
 public class UserName {
 
+	//TODO TEST
+	//TODO JAVADOC
+	
+	// this must never be a valid username 
+	private final static String ROOT_NAME = "***ROOT***";
+	public final static UserName ROOT;
+	static {
+		try {
+			ROOT = new UserName(ROOT_NAME);
+		} catch (IllegalParameterException | MissingParameterException e) {
+			throw new RuntimeException("Programming error: " +
+					e.getMessage(), e);
+		}
+	}
+	private final static Pattern INVALID_USER_NAME =
+			Pattern.compile("[^\\w-]");
+	private final static int MAX_NAME_LENGTH = 100;
+	
 	private final String name;
 
-	public UserName(final String name) {
-		if (name == null) {
-			throw new NullPointerException("name");
+	public UserName(final String name)
+			throws MissingParameterException, IllegalParameterException {
+		checkString(name, "user name", MAX_NAME_LENGTH);
+		if (name.trim().equals(ROOT_NAME)) {
+			this.name = ROOT_NAME;
+		} else {
+			final Matcher m = INVALID_USER_NAME.matcher(name);
+			if (m.find()) {
+				throw new IllegalArgumentException(String.format(
+						"Illegal character in user name %s: %s",
+						name, m.group()));
+			}
+			this.name = name.trim();
 		}
-		//TODO NOW appropriate checking for name - size, allowed chars, special root name
-		this.name = name;
+	}
+	
+	public boolean isRoot() {
+		return name.equals(ROOT_NAME);
 	}
 
 	public String getName() {

@@ -13,6 +13,7 @@ public class NewToken {
 	//TODO TEST
 	//TODO JAVADOC
 	
+	private final TokenType type;
 	private final String tokenName;
 	private final String token;
 	private final UserName userName;
@@ -21,16 +22,21 @@ public class NewToken {
 	private final UUID id = UUID.randomUUID();
 	
 	public NewToken(
+			final TokenType type,
 			final String token,
 			final UserName userName,
 			final long lifetimeInms) {
 		checkString(token, "token", true);
+		if (type == null) {
+			throw new NullPointerException("type");
+		}
 		if (userName == null) {
 			throw new NullPointerException("userName");
 		}
 		if (lifetimeInms < 0) {
 			throw new IllegalArgumentException("lifetime must be >= 0");
 		}
+		this.type = type;
 		this.tokenName = null;
 		this.token = token;
 		this.userName = userName;
@@ -39,18 +45,23 @@ public class NewToken {
 	}
 	
 	public NewToken(
+			final TokenType type,
 			final String tokenName,
 			final String token,
 			final UserName userName,
 			final long lifetimeInms) {
 		checkString(token, "token", true);
 		checkString(tokenName, "tokenName", true);
+		if (type == null) {
+			throw new NullPointerException("type");
+		}
 		if (userName == null) {
 			throw new NullPointerException("userName");
 		}
 		if (lifetimeInms < 0) {
 			throw new IllegalArgumentException("lifetime must be >= 0");
 		}
+		this.type = type;
 		this.tokenName = tokenName;
 		this.token = token;
 		this.userName = userName;
@@ -58,6 +69,10 @@ public class NewToken {
 				addLong(creationDate.getTime(), lifetimeInms));
 	}
 
+	public TokenType getTokenType() {
+		return type;
+	}
+	
 	public String getTokenName() {
 		return tokenName;
 	}
@@ -83,7 +98,7 @@ public class NewToken {
 	}
 
 	public HashedToken getHashedToken() {
-		return new HashedToken(tokenName, id, HashedToken.hash(token),
+		return new HashedToken(type, tokenName, id, HashedToken.hash(token),
 				userName, creationDate, expirationDate);
 	}
 

@@ -1,24 +1,25 @@
 package us.kbase.auth2.service.api;
 
+import static us.kbase.auth2.service.api.APIUtils.getToken;
 import static us.kbase.auth2.service.api.APIUtils.relativize;
 
+import java.util.Date;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.LinkedList;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
-import java.util.UUID;
 
 import javax.inject.Inject;
 import javax.ws.rs.Consumes;
+import javax.ws.rs.CookieParam;
 import javax.ws.rs.FormParam;
 import javax.ws.rs.GET;
 import javax.ws.rs.POST;
 import javax.ws.rs.Path;
 import javax.ws.rs.PathParam;
 import javax.ws.rs.Produces;
-import javax.ws.rs.QueryParam;
 import javax.ws.rs.core.Context;
 import javax.ws.rs.core.MediaType;
 import javax.ws.rs.core.MultivaluedMap;
@@ -34,8 +35,13 @@ import us.kbase.auth2.lib.CustomRole;
 import us.kbase.auth2.lib.Password;
 import us.kbase.auth2.lib.Role;
 import us.kbase.auth2.lib.UserName;
+import us.kbase.auth2.lib.exceptions.IllegalParameterException;
+import us.kbase.auth2.lib.exceptions.InvalidTokenException;
 import us.kbase.auth2.lib.exceptions.MissingParameterException;
+import us.kbase.auth2.lib.exceptions.NoSuchRoleException;
 import us.kbase.auth2.lib.exceptions.NoSuchUserException;
+import us.kbase.auth2.lib.exceptions.NoTokenProvidedException;
+import us.kbase.auth2.lib.exceptions.UnauthorizedException;
 import us.kbase.auth2.lib.exceptions.UserExistsException;
 import us.kbase.auth2.lib.storage.exceptions.AuthStorageException;
 import us.kbase.auth2.lib.token.IncomingToken;
@@ -47,7 +53,7 @@ public class Admin {
 	//TODO JAVADOC
 
 	//TODO ADMIN reset user pwd
-	//TODO NOW find user
+	//TODO ADMIN find user
 	
 	@Inject
 	private Authentication auth;
@@ -62,11 +68,8 @@ public class Admin {
 	@Template(name = "/adminlocalaccount")
 	@Produces(MediaType.TEXT_HTML)
 	public Map<String, String> createLocalAccountStart(
-			@QueryParam("admin") final String adminName,
 			@Context final UriInfo uriInfo) {
-		//TODO ADMIN get adminName from token
-		return ImmutableMap.of("name", adminName,
-				"targeturl",
+		return ImmutableMap.of("targeturl",
 					relativize(uriInfo, "/admin/localaccount/create"));
 	}
 	
@@ -76,18 +79,20 @@ public class Admin {
 	@Produces(MediaType.TEXT_HTML)
 	@Template(name = "/adminlocalaccountcreated")
 	public Map<String, String> createLocalAccountComplete(
+			@CookieParam("token") final String adminToken,
 			@FormParam("user") final String userName,
 			@FormParam("full") final String fullName,
 			@FormParam("email") final String email)
 			throws AuthStorageException, UserExistsException,
-			MissingParameterException {
-		//TODO ADMIN check user is admin
-		//TODO NOW log
-		//TODO NOW email class with proper checking (probably not validation)
+			MissingParameterException, IllegalParameterException,
+			UnauthorizedException, InvalidTokenException,
+			NoTokenProvidedException {
+		//TODO LOG log
+		//TODO INPUT email class with proper checking (probably not validation)
 		if (userName == null) {
 			throw new MissingParameterException("userName");
 		}
-		final Password pwd = auth.createLocalUser(
+		final Password pwd = auth.createLocalUser(getToken(adminToken),
 				new UserName(userName), fullName, email);
 		final Map<String, String> ret = ImmutableMap.of(
 				"user", userName,
@@ -103,28 +108,38 @@ public class Admin {
 	@Template(name = "/adminuser")
 	@Produces(MediaType.TEXT_HTML)
 	public Map<String, Object> userDisplay(
+			@CookieParam("token") final String incToken,
 			@PathParam("user") final String user,
 			@Context final UriInfo uriInfo)
-		throws AuthStorageException, NoSuchUserException {
-		//TODO ADMIN get adminname from token & check
-		final IncomingToken adminToken = new IncomingToken("fake");
+			throws AuthStorageException, NoSuchUserException,
+			MissingParameterException, IllegalParameterException,
+			InvalidTokenException, UnauthorizedException,
+			NoTokenProvidedException {
+		final IncomingToken adminToken = getToken(incToken);
 		final AuthUser au = auth.getUserAsAdmin(
 				adminToken, new UserName(user));
 		final Set<CustomRole> roles = auth.getCustomRoles(adminToken);
 		final Map<String, Object> ret = new HashMap<>();
 		ret.put("custom", setUpCustomRoles(roles, au.getCustomRoles()));
+		ret.put("hascustom", !roles.isEmpty());
 		ret.put("roleurl", relativize(uriInfo,
 				"/admin/user/" + user + "/roles"));
+		ret.put("customroleurl", relativize(uriInfo,
+				"/admin/user/" + user + "/customroles"));
 		ret.put("user", au.getUserName().getName());
 		ret.put("full", au.getFullName());
 		ret.put("email", au.getEmail());
 		ret.put("local", au.isLocal());
+		ret.put("created", au.getCreated().getTime());
+		final Date lastLogin = au.getLastLogin();
+		ret.put("lastlogin", lastLogin == null ? null : lastLogin.getTime());
 		final Set<Role> r = au.getRoles();
 		//TODO ADMIN only show admin button if root user
 		//TODO ADMIN only allow changing admin status if root user
-		ret.put("admin", Role.hasRole(r, Role.ADMIN));
-		ret.put("serv", Role.hasRole(r, Role.SERV_TOKEN));
-		ret.put("dev", Role.hasRole(r, Role.DEV_TOKEN));
+		ret.put("admin", Role.ADMIN.isSatisfiedBy(r));
+		ret.put("serv", Role.SERV_TOKEN.isSatisfiedBy(r));
+		ret.put("dev", Role.DEV_TOKEN.isSatisfiedBy(r));
+		ret.put("createadmin", Role.CREATE_ADMIN.isSatisfiedBy(r));
 		return ret;
 	}
 	
@@ -135,10 +150,9 @@ public class Admin {
 		final List<Map<String, Object>> ret = new LinkedList<>();
 		for (final CustomRole r: roles) {
 			ret.add(ImmutableMap.of(
-					"name", r.getName(),
 					"desc", r.getDesc(),
-					"id", r.getId(),
-					"has", set.contains(r.getName())));
+					"id", r.getID(),
+					"has", set.contains(r.getID())));
 		}
 		return ret;
 	}
@@ -147,30 +161,41 @@ public class Admin {
 	@Path("/user/{user}/roles")
 	@Consumes(MediaType.APPLICATION_FORM_URLENCODED)
 	public void changeRoles(
+			@CookieParam("token") final String incToken,
 			@PathParam("user") final String user,
 			final MultivaluedMap<String, String> form)
-			throws NoSuchUserException, AuthStorageException {
-		//TODO ADMIN get adminname from token & check
+			throws NoSuchUserException, AuthStorageException,
+			NoSuchRoleException, MissingParameterException,
+			IllegalParameterException, UnauthorizedException,
+			InvalidTokenException, NoTokenProvidedException {
 		final Set<Role> roles = new HashSet<>();
+		addRoleFromForm(form, roles, "createadmin", Role.CREATE_ADMIN);
 		addRoleFromForm(form, roles, "admin", Role.ADMIN);
 		addRoleFromForm(form, roles, "dev", Role.DEV_TOKEN);
 		addRoleFromForm(form, roles, "serv", Role.SERV_TOKEN);
-		final IncomingToken adminToken = new IncomingToken("fake");
-		auth.updateRoles(adminToken, new UserName(user), roles);
-		auth.updateCustomRoles(adminToken, new UserName(user),
-				getRoleIds(form));
-		
+		auth.updateRoles(getToken(incToken), new UserName(user), roles);
+	}
+	
+	@POST
+	@Path("/user/{user}/customroles")
+	@Consumes(MediaType.APPLICATION_FORM_URLENCODED)
+	public void changeCustomRoles(
+			@CookieParam("token") final String incToken,
+			@PathParam("user") final String user,
+			final MultivaluedMap<String, String> form)
+			throws NoSuchUserException, AuthStorageException,
+			NoSuchRoleException, MissingParameterException,
+			IllegalParameterException, UnauthorizedException,
+			InvalidTokenException, NoTokenProvidedException {
+		final UserName userName = new UserName(user);
+		auth.updateCustomRoles(getToken(incToken), userName, getRoleIds(form));
 	}
 
-	private Set<UUID> getRoleIds(final MultivaluedMap<String, String> form) {
-		final Set<UUID> ret = new HashSet<>();
+	private Set<String> getRoleIds(final MultivaluedMap<String, String> form) {
+		final Set<String> ret = new HashSet<>();
 		for (final String s: form.keySet()) {
 			if (form.get(s) != null) {
-				try {
-					ret.add(UUID.fromString(s));
-				} catch (IllegalArgumentException e) {
-					//pass
-				}
+					ret.add(s);
 			}
 		}
 		return ret;
@@ -189,11 +214,12 @@ public class Admin {
 	@GET
 	@Path("/customroles")
 	@Template(name = "/admincustomroles")
-	public Map<String, Object> customRoles(@Context final UriInfo uriInfo)
-			throws AuthStorageException {
-		//TODO ADMIN check is admin
-		final Set<CustomRole> roles = auth.getCustomRoles(
-				new IncomingToken("fake"));
+	public Map<String, Object> customRoles(
+			@CookieParam("token") final String incToken,
+			@Context final UriInfo uriInfo)
+			throws AuthStorageException, InvalidTokenException,
+			UnauthorizedException, NoTokenProvidedException {
+		final Set<CustomRole> roles = auth.getCustomRoles(getToken(incToken));
 		return ImmutableMap.of(
 				"custroleurl", relativize(uriInfo, "/admin/customroles/set"),
 				"roles", roles);
@@ -202,11 +228,13 @@ public class Admin {
 	@POST // should take PUT as well
 	@Path("/customroles/set")
 	public void createCustomRole(
-			@FormParam("name") final String roleName,
+			@CookieParam("token") final String incToken,
+			@FormParam("id") final String roleId,
 			@FormParam("desc") final String description)
-			throws MissingParameterException, AuthStorageException {
-		//TODO ADMIN check is admin
-		auth.setCustomRole(new IncomingToken("fake"), roleName, description);
+			throws MissingParameterException, AuthStorageException,
+			InvalidTokenException, UnauthorizedException,
+			NoTokenProvidedException {
+		auth.setCustomRole(getToken(incToken), roleId, description);
 	}
 
 }

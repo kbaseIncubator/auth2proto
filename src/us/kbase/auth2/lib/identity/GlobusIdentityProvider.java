@@ -148,7 +148,7 @@ public class GlobusIdentityProvider implements IdentityProvider {
 		@SuppressWarnings("unchecked")
 		final List<Map<String, String>> sids =
 				(List<Map<String, String>>) ids.get("identities");
-		//TODO NOW check that all identities are in returned list
+		//TODO CODE check that all identities are in returned list
 		final Set<RemoteIdentity> secondaries = makeSecondaryIdents(sids);
 		return secondaries;
 	}
@@ -217,7 +217,7 @@ public class GlobusIdentityProvider implements IdentityProvider {
 			//TODO TEST with 500s with HTML
 			@SuppressWarnings("unchecked")
 			final Map<String, Object> mtemp = r.readEntity(Map.class);
-			//TODO NOW handle {error=?} in object and check response code
+			//TODO IDPROVERR handle {error=?} in object and check response code
 			return mtemp;
 		} finally {
 			if (r != null) {
@@ -258,7 +258,7 @@ public class GlobusIdentityProvider implements IdentityProvider {
 			@SuppressWarnings("unchecked")
 			//TODO TEST with 500s with HTML
 			final Map<String, Object> mtemp = r.readEntity(Map.class);
-			//TODO NOW handle {error=?} in object and check response code
+			//TODO IDPROVERR handle {error=?} in object and check response code
 			return mtemp;
 		} finally {
 			if (r != null) {

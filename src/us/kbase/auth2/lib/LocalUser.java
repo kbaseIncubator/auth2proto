@@ -1,5 +1,6 @@
 package us.kbase.auth2.lib;
 
+import java.util.Date;
 import java.util.Set;
 
 public class LocalUser extends AuthUser {
@@ -17,11 +18,21 @@ public class LocalUser extends AuthUser {
 			final String fullName,
 			final Set<Role> roles,
 			final Set<String> customRoles,
+			final Date created,
+			final Date lastLogin,
 			final byte[] passwordHash,
 			final byte[] salt,
 			final boolean forceReset) {
-		super(userName, email, fullName, null, roles, customRoles);
-		//TODO NOW check for nulls & empty strings - should email & fullName be allowed as empty strings?
+		super(userName, email, fullName, null, roles, customRoles, created,
+				lastLogin);
+		// what's the right # here? Have to rely on user to some extent
+		if (passwordHash == null || passwordHash.length < 10) {
+			throw new IllegalArgumentException(
+					"passwordHash missing or too small");
+		}
+		if (salt == null || salt.length < 2) {
+			throw new NullPointerException("salt missing or too small");
+		}
 		this.passwordHash = passwordHash;
 		this.salt = salt;
 		this.forceReset = forceReset;

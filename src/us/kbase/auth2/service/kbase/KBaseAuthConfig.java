@@ -6,6 +6,8 @@ import java.net.MalformedURLException;
 import java.net.URI;
 import java.net.URISyntaxException;
 import java.net.URL;
+import java.nio.file.Path;
+import java.nio.file.Paths;
 import java.util.Collections;
 import java.util.HashSet;
 import java.util.Map;
@@ -19,6 +21,7 @@ import us.kbase.auth2.service.AuthConfig;
 import us.kbase.auth2.service.SLF4JAutoLogger;
 import us.kbase.auth2.service.exceptions.AuthConfigurationException;
 import us.kbase.common.service.JsonServerSyslog;
+import us.kbase.common.service.JsonServerSyslog.RpcInfo;
 
 public class KBaseAuthConfig implements AuthConfig {
 	
@@ -56,13 +59,22 @@ public class KBaseAuthConfig implements AuthConfig {
 	private final Set<IdentityProviderConfig> providers;
 
 	public KBaseAuthConfig() throws AuthConfigurationException {
-		final Map<String, String> cfg = getConfig();
+		this(getConfigPathFromEnv(), false);
+	}
+	
+	public KBaseAuthConfig(final Path filepath, final boolean nullLogger) 
+			throws AuthConfigurationException {
+		final Map<String, String> cfg = getConfig(filepath);
 		final String ln = getString(KEY_LOG_NAME, cfg);
-		logger = new JsonServerSysLogAutoLogger(new JsonServerSyslog(
-				ln == null ? DEFAULT_LOG_NAME : ln,
-				//TODO KBASECOMMON allow null for the fake config prop arg
-				"thisisafakekeythatshouldntexistihope",
-				JsonServerSyslog.LOG_LEVEL_INFO, true));
+		if (nullLogger) {
+			logger = new NullLogger();
+		} else {
+			logger = new JsonServerSysLogAutoLogger(new JsonServerSyslog(
+					ln == null ? DEFAULT_LOG_NAME : ln,
+					//TODO KBASECOMMON allow null for the fake config prop arg
+					"thisisafakekeythatshouldntexistihope",
+					JsonServerSyslog.LOG_LEVEL_INFO, true));
+		}
 		try {
 			mongoHost = getString(KEY_MONGO_HOST, cfg, true);
 			mongoDB = getString(KEY_MONGO_DB, cfg, true);
@@ -81,8 +93,10 @@ public class KBaseAuthConfig implements AuthConfig {
 			mongop = null; //gc
 			providers = getProviders(cfg);
 		} catch (AuthConfigurationException e) {
-			LoggerFactory.getLogger(getClass()).error(
-					"Configuration error", e);
+			if (!nullLogger) {
+				LoggerFactory.getLogger(getClass()).error(
+						"Configuration error", e);
+			}
 			throw e;
 		}
 	}
@@ -152,6 +166,19 @@ public class KBaseAuthConfig implements AuthConfig {
 					url, key, CFG_LOC, cfg.get(TEMP_KEY_CFG_FILE)));
 		}
 	}
+	
+	private static class NullLogger implements SLF4JAutoLogger {
+
+		@Override
+		public void setCallInfo(String method, String id, String ipAddress) {
+			//  do nothing
+		}
+
+		@Override
+		public String getCallID() {
+			return null;
+		}
+	}
 
 	private static class JsonServerSysLogAutoLogger
 			implements SLF4JAutoLogger {
@@ -161,6 +188,22 @@ public class KBaseAuthConfig implements AuthConfig {
 		private JsonServerSysLogAutoLogger(JsonServerSyslog logger) {
 			super();
 			this.logger = logger;
+		}
+
+		@Override
+		public void setCallInfo(
+				final String method,
+				final String id,
+				final String ipAddress) {
+			final RpcInfo rpc = JsonServerSyslog.getCurrentRpcInfo();
+			rpc.setId(id);
+			rpc.setIp(ipAddress);
+			rpc.setMethod(method);
+		}
+
+		@Override
+		public String getCallID() {
+			return JsonServerSyslog.getCurrentRpcInfo().getId();
 		}
 	}
 	
@@ -190,15 +233,21 @@ public class KBaseAuthConfig implements AuthConfig {
 		}
 	}
 
-	private Map<String, String> getConfig() throws AuthConfigurationException {
+	private static Path getConfigPathFromEnv()
+			throws AuthConfigurationException {
 		final String file = System.getProperty(KB_DEP) == null ?
 				System.getenv(KB_DEP) : System.getProperty(KB_DEP);
-		if (file == null) {
+		if (file == null || file.trim().isEmpty()) {
 			throw new AuthConfigurationException(String.format(
 					"Deployment configuration variable %s not in " +
-					"environment or system properties", KB_DEP));
+							"environment or system properties", KB_DEP));
 		}
-		final File deploy = new File(file).getAbsoluteFile();
+		return Paths.get(file);
+	}
+	
+	private Map<String, String> getConfig(final Path file)
+			throws AuthConfigurationException {
+		final File deploy = file.normalize().toAbsolutePath().toFile();
 		final Ini ini;
 		try {
 			ini = new Ini(deploy);

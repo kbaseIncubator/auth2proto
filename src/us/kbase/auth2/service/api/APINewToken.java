@@ -10,7 +10,8 @@ public class APINewToken extends APIToken {
 	//TODO JAVADOC
 	
 	public APINewToken(final NewToken token) {
-		super(token.getTokenName(), token.getId(), token.getUserName(),
+		super(token.getTokenType(), token.getTokenName(), token.getId(),
+				token.getUserName(),
 				token.getCreationDate(), token.getExpirationDate());
 		this.token = token.getToken();
 	}

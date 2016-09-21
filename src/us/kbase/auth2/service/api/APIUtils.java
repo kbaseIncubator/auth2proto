@@ -9,6 +9,8 @@ import javax.ws.rs.core.Cookie;
 import javax.ws.rs.core.NewCookie;
 import javax.ws.rs.core.UriInfo;
 
+import us.kbase.auth2.lib.exceptions.NoTokenProvidedException;
+import us.kbase.auth2.lib.token.IncomingToken;
 import us.kbase.auth2.lib.token.NewToken;
 import us.kbase.auth2.lib.token.TemporaryToken;
 
@@ -99,5 +101,13 @@ public class APIUtils {
 			return first;
 		}
 		return first + provider.substring(first.length());
+	}
+	
+	public static IncomingToken getToken(final String token)
+			throws NoTokenProvidedException {
+		if (token == null || token.trim().isEmpty()) {
+			throw new NoTokenProvidedException();
+		}
+		return new IncomingToken(token.trim());
 	}
 }

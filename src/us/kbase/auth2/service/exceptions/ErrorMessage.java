@@ -19,7 +19,6 @@ import us.kbase.auth2.lib.exceptions.AuthException;
 import us.kbase.auth2.lib.exceptions.AuthenticationException;
 import us.kbase.auth2.lib.exceptions.NoDataException;
 import us.kbase.auth2.lib.exceptions.UnauthorizedException;
-import us.kbase.common.service.JsonServerSyslog;
 
 @JsonInclude(Include.NON_NULL)
 public class ErrorMessage {
@@ -40,11 +39,14 @@ public class ErrorMessage {
 	@JsonIgnore
 	private final boolean hasException;
 	
-	public ErrorMessage(final Throwable ex, final boolean includeTrace) {
+	public ErrorMessage(
+			final Throwable ex,
+			final String callID,
+			final boolean includeTrace) {
 		if (ex == null) {
-			throw new NullPointerException("exp");
+			throw new NullPointerException("ex");
 		}
-		callID = JsonServerSyslog.getCurrentRpcInfo().getId(); // may be null
+		this.callID = callID; // null ok
 		if (includeTrace) {
 			final StringWriter st = new StringWriter();
 			ex.printStackTrace(new PrintWriter(st));

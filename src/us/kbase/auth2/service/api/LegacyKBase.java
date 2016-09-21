@@ -53,7 +53,7 @@ public class LegacyKBase {
 			@FormParam("fields") String fields)
 			throws AuthStorageException,
 			MissingParameterException, InvalidTokenException {
-		if (token == null || token.isEmpty()) {
+		if (token == null || token.trim().isEmpty()) {
 			throw new MissingParameterException("token");
 		}
 		if (fields == null) {
@@ -75,7 +75,7 @@ public class LegacyKBase {
 			}
 		}
 
-		final IncomingToken in = new IncomingToken(token);
+		final IncomingToken in = new IncomingToken(token.trim());
 		if (name || email) {
 			final AuthUser u = auth.getUser(in);
 			if (name) {
