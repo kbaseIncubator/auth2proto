@@ -58,7 +58,7 @@ public enum Role {
 		return Arrays.asList(this);
 	}
 	
-	public List<Role> grant() {
+	public List<Role> grants() {
 		if (Role.ROOT.equals(this)) {
 			return Arrays.asList(Role.CREATE_ADMIN);
 		}

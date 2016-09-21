@@ -383,7 +383,7 @@ public class Authentication {
 		//TODO ROLES allow removing your own roles (except for root)
 		final AuthUser u = storage.getUser(userName);
 		final Set<Role> canGrant = admin.getRoles().stream()
-				.flatMap(r -> r.grant().stream()).collect(Collectors.toSet());
+				.flatMap(r -> r.grants().stream()).collect(Collectors.toSet());
 		
 		final Set<Role> add = new HashSet<>(roles);
 		add.removeAll(u.getRoles());
